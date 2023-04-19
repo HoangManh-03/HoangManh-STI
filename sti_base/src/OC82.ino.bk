@@ -1,0 +1,254 @@
+/*
+
+Name:  	STI OC Board.
+Author:	Hoang Van Quang - 10/07/2020
+Info : Điều khiển bàn nâng.
+
+1. Mat ket noi vat ly ( cap usb ) --> Stop
+2. Mat ket noi ROS                --> Stop
+3. Co cmd_vel nhung dong co khong quay 
+4. Driver bao loi 
+
+*/
+
+#if (ARDUINO >= 100)
+#include <Arduino.h>
+#else
+#include <WProgram.h>
+#endif
+#include "WiFi.h"
+#include "ros.h"
+#include "ros/time.h"
+#include "oc_config.h"
+#include "OC_LIFT.h"
+#include "sti_msgs/Lift_status.h"
+#include "sti_msgs/Lift_control.h"
+#include "std_msgs/Bool.h"
+
+OC_LIFT oc_lift(ENB_LIFTER, LIFTER_HG, LIFTER_LW, SS_UP, SS_DOWN, SS_LIFT, TIME_CHECK_ERROR);
+
+//callback function prototypes
+void OC_controlCallback(const sti_msgs::Lift_control &lf_ctr);
+void connectCheckCallback(const std_msgs::Bool &ck);
+
+ros::NodeHandle nh;
+
+sti_msgs::Lift_control liftControl;
+sti_msgs::Lift_status liftStatus;
+
+ros::Publisher liftPub("lift_status", &liftStatus); // Gửi trạng thái.
+ 
+ros::Subscriber<sti_msgs::Lift_control> liftSub("lift_control", OC_controlCallback); // Nhận điều khiển.
+ros::Subscriber<std_msgs::Bool> connectSub("check_mc", connectCheckCallback); // Dữ liệu kiểm tra kết nối với PC.
+
+bool is_readControl = 0;
+bool is_completed = 0; // báo đã hoàn thành nhiệm vị hiện tại.
+int pre_mis = 0; // Lưu nhiệm vụ thực hiện hiện tại. 
+
+int sensorLift = 0; // trạng thái cảm biến phát hiện có kệ trên thân AGV ko.
+int sensorUp = 0; // trạng thái cảm biến phát hiện có kệ trên thân AGV ko.
+int sensorDown = 0; // trạng thái cảm biến phát hiện có kệ trên thân AGV ko.
+int status = 0; // trạng thái điều khiển bàn nâng.
+bool flag_error = 0; // Cờ báo lỗi.
+bool flagRequirESP_Reset = 0;
+
+bool is_reset = 0; // Lưu lại xem đã thực hiện reset chưa. tránh tình huống bị cho reset liên tục.
+bool is_commandCheckPC = 0;
+bool is_receiveCheckPC = 0;
+
+unsigned long pre_pubTime = 0;
+unsigned long preCheckTime = 0;
+
+void OC_controlCallback(const sti_msgs::Lift_control &lf_ctr)
+{
+	liftControl = lf_ctr;
+	is_readControl = 1;
+}
+
+void connectCheckCallback(const std_msgs::Bool &ck)
+{
+	is_commandCheckPC = 1;
+	is_receiveCheckPC = 1;
+}
+// pub dữ liệu STATUS .
+void pub_data() { //checked
+
+    if ((millis() - pre_pubTime) >= (1000 / PUB_STATUS_FREQUENCY))
+    {
+		pre_pubTime = millis();
+		liftStatus.status.data = status; // status
+		liftStatus.sensorLift.data = sensorLift; // sensor 
+		liftStatus.sensorUp.data = sensorUp; // sensor 
+		liftStatus.sensorDown.data = sensorDown; // sensor 
+		
+		liftPub.publish(&liftStatus);
+    }
+}
+
+// Kiểm tra kết nối với PC: Nếu sau thời gian T ko nhận được lệnh -> lỗi.
+bool communicationCheck(){
+	// if (!nh.connected()){ // Mất kết nối với ROS -> phát yêu cầu dừng động cơ -> Restart Esp.
+	// 	flagRequirESP_Reset = 1;
+	// 	// nh.loginfo("Lost ROS");
+	// 	// return 1;
+	// }
+
+	if ((millis() - preCheckTime) >= (1000 / CHECK_CONNECT_PC_FREQUENCY)) { // Sau thời gian T.
+		preCheckTime = millis();
+		if (is_commandCheckPC == 1){ // Mà không nhận được dữ liệu mới -> lỗi.	
+			is_commandCheckPC = 0;		
+			return 0;
+		}else{
+			nh.loginfo("Time Out");
+			return 1; // Lỗi.
+		}
+	}
+	return 0;
+}
+// ---------------------------------------------------------------------- SETUP
+void setup()
+{
+    WiFi.mode(WIFI_OFF);
+    btStop();
+    nh.initNode();
+    nh.getHardware()->setBaud(57600); //57600
+
+    nh.advertise(liftPub);
+	nh.subscribe(liftSub);
+	nh.subscribe(connectSub);
+
+	delay(50);
+	// ---------------------------------- Lift.
+	oc_lift.setAll();
+	// oc_lift.test_liftDown();
+	// oc_lift.test_liftUp();
+    while (!nh.connected()) 
+    {
+        nh.spinOnce();
+    }
+	delay(50);
+
+    nh.loginfo("STI VietNam - OC OK ('_')");
+	delay(200);
+	oc_lift.stopAndReset();
+	preCheckTime = millis();
+}
+
+void loop(){
+	// std_msgs::Int16 mis;
+	// mis = 0;
+	int mis = 0;
+	int aa = 0;
+
+	if (!nh.connected()){ // Mất kết nối với ROS -> phát yêu cầu dừng động cơ -> Restart Esp.
+		flagRequirESP_Reset = 1;
+		// nh.loginfo("Lost ROS");
+		// return 1;
+	}
+
+	if (is_receiveCheckPC == 1){	// Chỉ bắt đầu khi nhận được lệnh kiểm tra kết nối đầu tiền.
+		if (communicationCheck() == 1){
+			// flagRequirESP_Reset = 1;
+			flag_error = 1;
+			// nh.loginfo("Requir Restart");
+		}
+	}else{
+		preCheckTime = millis();
+	}
+
+	if (flagRequirESP_Reset == 1){
+		oc_lift.stopAndReset();
+		delay(1000);
+		ESP.restart();
+	}
+
+	if (is_readControl == 1){	//  Chỉ hoạt động khi có tin nhắn lệnh đầu tiên.
+		mis = liftControl.control.data;
+		if (pre_mis != mis){	// Khởi tạo lại quy trình khi có sự thay đổi về lệnh.
+			is_completed = 0;
+			pre_mis = mis;
+			oc_lift.stopAndReset();
+			flag_error = 0;
+			is_reset = 0;
+		}
+
+		if (liftControl.reset.data == 1){ // Xóa lỗi + Khởi tạo lại quy trình.
+			if (is_reset == 0){
+				flag_error = 0;
+				oc_lift.stopAndReset();
+				is_reset = 1;
+				is_completed = 0;
+			}
+
+		}else{
+			is_reset = 0;
+		}
+
+		if (flag_error == 0){	// nếu ko có lỗi.
+			if (is_completed == 0){
+				if (mis == 0){
+					status = 0;
+					oc_lift.stopAndReset();
+
+				}else if (mis == 1){	// Nhiệm vu hạ kệ.
+					aa = oc_lift.liftDown();
+					if(aa == -1){		// error
+						flag_error = 1; //
+					}else if(aa == 0){	// run
+						status = 1;
+					}else if(aa == 1){	// completed
+						is_completed = 1;
+					}
+
+				}else if (mis == 2){	// Nhiệm vu nâng kệ.
+					aa = oc_lift.liftUp();
+					if(aa == -1){		// error
+						flag_error = 1; //
+					}else if(aa == 0){	// run
+						status = 2;
+					}else if(aa == 1){	// completed
+						is_completed = 1;
+					}
+				}
+			}else{	// Khi đã hoàn thành nhiệm vụ.
+				if (mis == 1) 
+					status = 3; // hoan thanh ha ke
+				else
+					status = 4; // hoan thanh nang ke
+				// oc_lift.stopAndReset();
+			}
+		}else{	// Khi có lỗi.
+			status = -1;
+
+			oc_lift.stopAndReset();
+		}
+	}else{	// Đang chờ nhiệm vụ đầu tiên.
+		status = 0;
+	}
+
+	sensorLift = oc_lift.readSensorLift(); // Đọc cảm biến phát hiện kệ.
+	sensorUp = oc_lift.readSensorUp(); // Đọc cảm biến phát hiện kệ.
+	sensorDown = oc_lift.readSensorDown(); // Đọc cảm biến phát hiện kệ.
+
+	pub_data();
+	nh.spinOnce();
+
+    // static unsigned long prev_debug_time = 0;
+	// if(0)
+    // {
+    //     if ((millis() - prev_debug_time) >= (100))
+    //     {
+    //         printDebug();
+    //         prev_debug_time = millis();
+    //     }
+    // }
+}
+
+// void printDebug(){
+//     char buffer[100];
+// 	sprintf(buffer, "En_Trai = %ld - En_Phai = %ld", get_encoder1(), get_encoder2());
+// 	sprintf(buffer, "M: %d | %d | %d | %d ", digitalRead(MOTOR1_ENCODER_A), digitalRead(MOTOR1_ENCODER_B), digitalRead(MOTOR2_ENCODER_A), digitalRead(MOTOR2_ENCODER_B)); // 50-70 us/ loop 
+
+//     sprintf(buffer, "time = %ld",t); // 50-70 us/ loop 
+//     nh.loginfo(buffer);
+// }

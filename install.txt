@@ -1,0 +1,422 @@
+# - update:
+sudo apt-get update
+sudo apt-get upgrade
+-------------------------- install Version Desktop ---------------------------
+sudo apt-get install ubuntu-unity-desktop
+(choose "gdm3")
+
+sudo apt-get autoremove gnome-shell
+-------------------------- rule usb ------------------------------------------
+sudo nano /etc/udev/rules.d/100-com_sti.rules
+	
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="stibase_main822", SYMLINK+="stibase_main822",OWNER="agv", GROUP="agv", MODE="0666"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="stibase_hc82", SYMLINK+="stibase_hc82",OWNER="agv", GROUP="agv", MODE="0666"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="stibase_sc82", SYMLINK+="stibase_sc82",OWNER="agv", GROUP="agv", MODE="0666"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="stibase_mc821", SYMLINK+="stibase_mc821",OWNER="agv", GROUP="agv", MODE="0666"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="stibase_sc821", SYMLINK+="stibase_sc821",OWNER="agv", GROUP="agv", MODE="0666"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="stibase_imu", SYMLINK+="stibase_imu",OWNER="agv", GROUP="agv", MODE="0666"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="stibase_motor", SYMLINK+="stibase_motor",OWNER="agv", GROUP="agv", MODE="0666"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="stibase_loadcell", SYMLINK+="stibase_loadcell",OWNER="agv", GROUP="agv", MODE="0666"
+
+sudo service udev restart && sudo udevadm control --reload-rules && udevadm trigger
+---------------------------- samba ----------------------------------------
+https://linuxize.com/post/how-to-install-and-configure-samba-on-ubuntu-18-04/
+1: sudo apt update
+2: sudo apt install samba
+3: sudo systemctl status smbd
+#Configuring firewall
+4: sudo ufw allow 'Samba'
+5: sudo nano /etc/samba/smb.conf
+6,Add:
+[catkin_japan]
+	comment = Samba on Ubuntu
+	path = /home/stivietnam/catkin_ws
+	read only = no
+	browsable = yes
+7: sudo service smbd restart	
+8: sudo smbpasswd -a name_pc  
+write my passwork
+9: sudo service smbd start
+-------------------------------- Fix samba error ------------------------------------
+1, sudo nano /etc/samba/smb.conf
+2, Add 2 line:
+"
+	client min protocol = NT1
+	server min protocol = NT1
+"
+-> To:
+#======================= Global Settings =======================
+[global]
+
+>> Result:
+[global]
+   client min protocol = NT1
+   server min protocol = NT1
+
+3, sudo service smbd restart
+---------------------------- SSH Server ----------------------------------------
+sudo apt-get install openssh-server
+sudo nano /etc/ssh/sshd_config --> port 1997
+sudo service ssh restart
+-------------------------- platformio install ------------------------------------------
+Link: https://docs.platformio.org/en/latest/quickstart.html
+Download core platform:
+1, sudo apt install python3-pip
+2, pip install -U platformio
+
+-------------------------- platformio use ------------------------------------------
+1, create new directory:
+ mkdir path_to_the_new_directory
+2, go to it:
+cd path_to_the_new_directory
+3:Create Project:
+ platformio init --board uno
+platformio init --board esp32dev
+4:
+pio init --ide vscode
+5 Edit file "platformio.ini" if need:
+	include - Put project header files here
+	lib - Put here project specific (private) libraries
+	src - Put project source files here
+	platformio.ini - Project Configuration File
+6, go to folder "src" create file code name: 
+main.cpp and Add code.
+cd src/u
+touch main.cpp
+nano main.cpp
+7: 
+pio run. Process (build) all environments specified in “platformio.ini” (Project Configuration File)
+pio run --target upload. Build project and upload firmware to the all devices specified in “platformio.ini” (Project Configuration File)
+pio run --target clean. Clean project (delete compiled objects)
+pio run -e uno. Process only uno environment
+pio run -e uno -t upload. Build project only for uno and upload firmware
+
+pio [OPTIONS] COMMAND
+platformio [OPTIONS] COMMAND
+
+"pio" is the alias of "platformio" command:
+platformio --help
+platformio COMMAND --help
+upload: platformio run --target upload
+Set : monitor_baud = 9600
+Create PIO Account:
+pio account register
+Login with credentials (will be sent to your e-mail):
+pio account login
+Change temporary password (from e-mail) to permanent:
+pio account password
+pio account --help
+platformio account --help
+platformio account COMMAND --help
+
+pio account forgot [OPTIONS] 
+OPTIONS:  --username, -u
+platformio account login [OPTIONS]
+pio account login [OPTIONS]
+OPTIONS:
+--username, -u
+--password, -p
+Log out of PIO Account:
+pio account logout
+Change password for PIO Account:
+pio account password
+Create a new PIO Account. A registration is FREE:
+pio account register [OPTIONS] (--username, -u)
+how detailed information about PIO Account- Active groups and expiration + Group permissions:
+pio account show
+
+ ------ ID and config Board in PIO
+ID:______________Board:
+megaatmega2560    Mega2560
+Uno               Uno
+OpenCr:
+	[env:nucleo_f746zg]
+	platform = ststm32
+	board = nucleo_f746zg
+change microcontroller:
+	board_build.mcu = stm32f746zgt6
+change MCU frequency:
+board_build.f_cpu = 216000000L
+	; [env:esp32dev]io
+	; platform = espressif32
+	; board = esp32dev
+	; framework = arduino
+	; monitor_speed = 9600
+For board ESP32 DEVKIT:
+	[env:esp32dev]
+	platform = espressif32
+	board = esp32dev
+	framework = arduino
+	debug_tool = olimex-arm-usb-ocd-h
+Of company:
+	[env:nodemcu-32s]
+	platform = espressif32@1.6.0
+	board = nodemcu-32s
+	framework = arduino
+	monitor_speed = 115200
+	
+Library: OpenCR	
+List available devices: pio device list [OPTIONS]
+Option:
+--serial  (List available Serial Ports, default.)
+--logical (List available logical devices.)
+--mdns    (List multicast DNS services.)
+Add Lib for project: pio lib install "name_libraries"
+Example: pio lib install "rosserial_arduino"
+Enable Build file Test: test_build_project_src = true
+Arduinio build/upload different binaries: https://community.platformio.org/t/arduinio-build-upload-different-binaries/2575
+OpenCr Boar(Stm32F746zg):
+link Reference install board: http://emanual.robotis.com/docs/en/parts/controller/opencr10/#install-on-linux
+Turn on monitor: pio device monitor
+
+-------------------------------------------------------------------- Bo qua
+# - Network - PC NUCi5 : eno1 - PC PENTIUM :enp3s0 
+sudo nano /etc/network/interfaces
+
+sudo /etc/init.d/networking restart 
+(or : sudo service network-manager restart)
+
+source /etc/network/interfaces.d/*
+
+auto lo
+iface lo inet loopback
+
+auto eno1
+iface eno1 inet static
+# iface enp3s0 inet static
+    address 192.168.100.4
+    netmask 255.255.255.0
+    gateway 192.168.100.1
+    dns-nameservers 8.8.8.8
+------------------------ Set Ip ethernet PC------------------------ Bo qua
+address 192.168.100.2
+netmask 255.255.255.0
+gateway 192.168.100.1
+
+------------------------ Set Ip ethernet NAV--------------------------------------------	
+address 192.168.100.10
+netmask 255.255.255.0
+
+------------------------ File source --------------------------------------------
+#export ROS_MASTER_URI=http://192.168.1.63:11311
+#export ROS_HOSTNAME=192.168.1.63
+#export ROS_IP=192.168.1.63
+
+export ROS_MASTER_URI=http://127.0.0.1:11311
+export ROS_HOSTNAME=127.0.0.1
+export ROS_IP=127.0.0.1
+
+source /opt/ros/noetic/setup.bash
+source ~/catkin_ws/devel/setup.bash
+
+alias status='sudo systemctl status launch'
+alias stop='sudo systemctl stop launch'
+alias start='sudo systemctl daemon-reload && sudo systemctl start launch'
+alias web='roslaunch stibot_description sti_model.launch'
+    
+alias nb='sudo nano ~/.bashrc'
+alias sc='source ~/.bashrc'
+alias sd='source ~/catkin_ws/devel/setup.bash'
+alias check_usb='ls /dev/ | grep stibase'
+--------------------------------------------------------------------
+# - Install build pkg ROS:
+install:
+	sudo apt-get install python3-pip
+	sudo apt-get install python3-catkin-tools
+run: 
+	catkin build "name_pkg"
+---------------------------- Get IP ----------------------------------------
+sudo arp-scan --interface=wlp3s0 --localnet
+--------------------------------------------------------------------
+# - ROS Noetic
+http://wiki.ros.org/noetic/Installation/Ubuntu
+--------------------------------------------------------------------
+# - Install message ROS:
+sudo apt-get install ros-noetic-geographic-msgs
+
+--------------------------- htop -----------------------------------------
+sudo apt install htop
+--------------------------- modubus tk -----------------------------------------
+pip install modbus_tk
+--------------------------- Enb port -----------------------------------------
+sudo chmod a+rw /dev/ttyACM0
+--------------------------- Install rosserial -----------------------------------------
+# install rosserial
+sudo apt-get install ros-noetic-rosserial-python
+
+-------------------------------------------------------------------- Bo qua
+groups ${USER}
+sudo gpasswd --add ${USER} dialout
+sudo usermod -a -G dialout "${USER}"
+-------------------------------------------------------------------- Bo qua
+Install QT5
+sudo apt-get install qt5-default
+-------------------------------------------------------------------- Bo qua
+# Turn off top bar
+step 1: sudo apt install gnome-shell-extension-autohidetopbar
+step 2: turn on app: "Tweaks" -> "Extensions"  -> "Hide top bar"
+------------------------------- LOG -------------------------------------
+# get uptime 
+pip install uptime
+
+# check Temperature - CPU
+sudo apt install hddtemp lm-sensors 
+--------------------- APP -----------------------------------------------
+1, cd /home/stivietnam/Desktop
+2, touch sti.desktop
+3. nano sti.desktop
+4, Copy under content:
+"
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Terminal=false
+Exec=python3 /home/stivietnam/catkin_ws/src/app_ros/script/app_ros_vs2.py
+Name=sti
+Icon=/home/stivietnam/catkin_ws/src/app_ros/interface/logoSti.png
+Categories=Utility;
+"
+5, Exit file and save.
+6, sudo chmod +x *
+----------------------------- ifconfig ---------------------------------------
+sudo apt install net-tools
+Cau lenh:
+	sudo ifconfig enp1s0 down
+	sudo ifconfig enp1s0 up
+----------------------------- Name Port ---------------------------------------
+/dev/stibase_main822
+/dev/stibase_hc82
+/dev/stibase_sc82
+/dev/stibase_mc821
+/dev/stibase_sc821
+/dev/stibase_imu
+/dev/stibase_motor
+/dev/stibase_loadcell
+
+-------------------------------------------------------------------- Bo qua
+sudo add-apt-repository ppa:bamboo-engine/ibus-bamboo
+sudo apt-get update
+sudo apt-get install ibus-bamboo
+ibus restart
+
+------------------------------- upstart -------------------------------------
+1, sudo apt-get install ros-$distro-robot-upstart ( or: sudo apt-get install ros-noetic-robot-upstart)
+2, rosrun robot_upstart install launch_pkg/launch/kickoff/launchAll.launch
+3, sudo systemctl daemon-reload && sudo systemctl start launch
+4, sudo nano /usr/sbin/launch-start
+	export ROS_HOSTNAME=127.0.0.1
+	export ROS_MASTER_URI=http://127.0.0.1:11311
+	export ROS_IP=127.0.0.1
+
+	# export ROS_HOSTNAME=192.168.1.34
+	# export ROS_MASTER_URI=http://192.168.1.34:11311
+	# export ROS_IP=192.168.1.34
+>> rosrun robot_upstart uninstall launch
+--------------------------------------------------------------------
+------------------------------delete password--------------------------------------
+1:
+	sudo nano /etc/ssh/sshd_config --> PermitEmptyPasswords yes
+	sudo service ssh restart
+2:
+	sudo nano /etc/sudoers
+3: 
+add: 
+	<username>	ALL=(ALL:ALL) NOPASSWD: ALL
+below line:
+	%sudo	ALL=(ALL:ALL) ALL
+4: save and close
+5:
+	sudo passwd -d stivietnam
+--------------------------------------------------------------------
+------------------------ Setting Wifi Netpan -------------------------
+1, cd /etc/netplan
+2, sudo nano 01-network-manager-all.yaml
+3, Delete All, Copy below and pate:
+
+# Let NetworkManager manage all devices on this system
+network:
+  version: 2
+  renderer: NetworkManager
+  wifis:
+    wlo2:
+      optional: true
+      access-points:
+        "STI_VietNam_No8":
+          password: "66668888"
+      dhcp4: true
+
+4, sudo netplan apply
+5, Foget Wifi in Setting.
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+rostopic pub -r 4 /NN_cmdRequest sti_msgs/NN_cmdRequest "process: 0.0
+target_id: 1
+target_x: 7.370
+target_y: 6.920
+target_z: 0.0174
+tag: 0
+offset: 0.8
+list_id: [1, 0, 0, 0, 0]
+list_x: [7.370, 0, 0, 0 , 0]
+list_y: [6.920, 0, 0, 0, 0]
+list_speed: [0, 0, 0, 0, 0]
+before_mission: 66
+after_mission: 10
+id_command: 0
+command: 'Ve Sac'"
+--------------------------------------------------------------------
+rostopic pub -r 4 /NN_cmdRequest sti_msgs/NN_cmdRequest "process: 0.0
+target_id: 1
+target_x: 7.370
+target_y: 6.920
+target_z: 0.0174
+tag: 0
+offset: 0.8
+list_id: [5, 4, 3, 2, 1]
+list_x: [9.100, 9.138, 9.044, 9.032, 7.370]
+list_y: [-4.348, -2.430, 4.288, 6.930, 6.920]
+list_speed: [80, 100, 100, 100, 100]
+before_mission: 66
+after_mission: 10
+id_command: 0
+command: 'Xa - Ve Sac'"
+--------------------------------------------------------------------
+rostopic pub -r 4 /NN_cmdRequest sti_msgs/NN_cmdRequest "process: 0.0
+target_id: 5
+target_x: 9.100
+target_y: -4.348
+target_z: 3.141
+tag: 0
+offset: 1.0
+list_id: [1, 2, 3, 4, 5]
+list_x: [7.370, 9.032, 9.044, 9.138, 9.100]
+list_y: [6.920, 6.930, 4.288, -2.430, -4.348]
+list_speed: [80, 100, 100, 100, 100]
+before_mission: 66
+after_mission: 65
+id_command: 0
+command: 'Sac - Lay Line_2'"
+--------------------------------------------------------------------
+rostopic pub -r 4 /NN_cmdRequest sti_msgs/NN_cmdRequest "process: 0.0
+target_id: 6
+target_x: 3.204
+target_y: -4.160
+target_z: -1.5707
+tag: 0
+offset: 1.0
+list_id: [2, 3, 4, 5, 6]
+list_x: [9.100, 7.370, 4.350, 3.204, 0]
+list_y: [-4.348, -4.326, -4.326, -4.160, 0]
+list_speed: [80, 100, 100, 100, 100]
+before_mission: 65
+after_mission: 66
+id_command: 0
+command: 'Lay Line_2 - Tra Line_3 '"

@@ -1,0 +1,17 @@
+<launch>
+
+  <!-- nav350 Pi: 3.141592653 | -0.4152 0.0 -1 0 0 0-->
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="base_nav350_linker" args="-0.416 -0.006 -1 0 0 0 frame_nav350 frame_robot" /> -->
+
+  <!-- 03_06_2022 -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_nav350_linker" args="-0.404 -0.042 -1 0.036 0 0 frame_nav350 frame_robot" />
+
+  <node pkg="sicknav350" type="sicknav350_node" name="sickNav350" output="screen" >
+  <!-- <node pkg="sicknav350" type="sicknav350_node" name="sicknav350" output="screen" > -->
+    <param name="publish_tf" value="true" /> 
+    <param name="publish_odom_" value="true" /> 
+    <param name="publish_scan" value="true" /> 
+  </node>
+
+</launch>
+

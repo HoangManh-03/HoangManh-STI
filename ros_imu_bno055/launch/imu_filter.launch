@@ -1,0 +1,8 @@
+<launch>    
+	<node pkg="ros_imu_bno055" type="imu_filter.py" name="imu_filter" output="screen"> 
+        <param name="error_threshold" value="0.0018" />    <!-- 0.0014 0.0025 -->
+        <param name="error_coefficient" value="0.53392" /> <!-- 0.03392 -->
+        <param name="topic_subcribe" value="imu/data" />
+        <param name="topic_publish" value="imu_filter" />
+    </node>
+</launch>

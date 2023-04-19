@@ -1,0 +1,8 @@
+<launch>    
+	<node pkg="sicknav350" type="calibPose.py" name="calibPose" output="screen"> 
+        <param name="coefficient_x" value="0.0" />    <!-- 0.0014 0.0025 -->
+        <param name="coefficient_y" value="-0.014" /> <!-- 0.03392 -->
+		<param name="coefficient_z" value="0.000" /> <!-- 0.03392 -->
+		<param name="coefficient_angle" value="0.018" /> <!-- 0.03392 -->
+    </node>
+</launch>

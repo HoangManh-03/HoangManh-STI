@@ -1,0 +1,3 @@
+<launch>
+	<node pkg="sicknav350" name="robotPose_nav" type="robotPose_nav" />
+</launch>

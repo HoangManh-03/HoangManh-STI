@@ -1,0 +1,53 @@
+--------------------------
+Vấn đề đọc chất lượng gương để xác định gương bẩn không.
+
+Quy trình dự kiến đánh giá Gương phản xạ đạt hay không:
+   Dựa vào thông số  cường độ(chất lượng) "Quality (reliability)" (gọi tắt là Q) của mỗi gương mà cảm biến NAV350 trả về.
+   A, Giá trị lấy mẫu ban đầu (đi đến các điểm - Lấy giá trị - Lưu lại):
+      1, Vị trí hiện tại của AGV (x, y, g).
+      2, Vị trí của gương so với AGV.
+      3, Giá trị Q.
+
+   B, Giá trị lấy mẫu sau 1 thời gian sử dụng (đi đến các điểm - Lấy giá trị - Lưu lại):
+      1, Vị trí hiện tại của AGV (x, y, g).
+      2, Vị trí của gương so với AGV.
+      3, Giá trị Q.
+
+      Điều kiện so sánh 1: 
+         A1 - B1 tương đối trùng.
+         A2 - B2 tương đối trùng.
+         Nếu B3 < A3 1 khoảng n% -> không đạt.
+
+      Điều kiện so sánh 2: 
+         Nếu B3 < giá trị n -> không đạt.
+
+
+Vấn đề: 
+   TH1: Tạo chu trình đánh giá bằng tay. 
+      - Phải tạo 1 quy trình hoạt động riêng cho phần kiểm tra chất lượng gương và phải thực hiện khi lắp mới và vận hành -> phức tạp, mất thời gian.
+      - Nếu chỉ lau những gương kém. Nhũng gương đạt có thể 1,2 hôm sau có thể bị kém. Do bẩn dần.
+   TH2: Tạo chu trình đánh giá tự động. 
+      - Phát sinh thêm chu trình -> phức tạp.
+      - Nếu vừa đi vừa kiểm tra chất lượng gương -> Sai số lớn -> dễ cảnh báo sai.
+
+Thay vào đó:
+- Bảo dưỡng định kì cảm biến NAV350 và Gương phản xạ.
+
+------------------
+x: 8.42
+y: -2.276
+phi: 1.5765210064454667
+
+x: 8.424
+y: -2.279
+phi: 1.5736237598877
+
+
+x: 8.463
+y: -3.065
+phi: -1.5679688931123
+
+0.042
+
+
+

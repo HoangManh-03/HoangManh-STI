@@ -1,0 +1,15 @@
+
+<launch>
+
+  <!-- nav350 Pi: 3.141592653 | -0.4152 0.0 -1 0 0 0-->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_nav350_linker" args="-0.404 0.01 -1 0 0 0 frame_nav350 frame_robot" />
+  <!-- new -->
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="base_nav350_linker" args="-0.4152 0.0 -1 3.141592653 0 0 frame_nav350 frame_robot" /> -->
+
+  <node pkg="sicknav350" type="sicknav350_oldNode" name="sicknav350_old" output="screen" >
+    <param name="publish_tf" value="true" /> 
+    <param name="publish_odom_" value="true" /> 
+    <param name="publish_scan" value="true" /> 
+  </node>
+
+</launch>
