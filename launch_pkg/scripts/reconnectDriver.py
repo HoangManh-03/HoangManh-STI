@@ -341,9 +341,9 @@ class Reconnect_node():
 		# self.statusReconnect.loadcell.times = num
 
 		# -- parking
-		process, num = self.reconnect_parking.run_reconnect(self.isRuned_parking, self.timeReaded_parking)
-		self.statusReconnect.parking.sts = process
-		self.statusReconnect.parking.times = num
+		# process, num = self.reconnect_parking.run_reconnect(self.isRuned_parking, self.timeReaded_parking)
+		# self.statusReconnect.parking.sts = process
+		# self.statusReconnect.parking.times = num
 
 		# -- Goal Control
 		# process, num = self.reconnect_goalControl.run_reconnect(self.isRuned_goalControl, self.timeReaded_goalControl)

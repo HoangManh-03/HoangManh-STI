@@ -595,13 +595,25 @@ class goalControl():
         return _X_cv, _Y_cv
 
 
+    # def ptgt(self, denlta_time, time_s, v_s, v_f):
+    #     v_re = 0.0
+    #     denlta_time_now = rospy.Time.now().to_sec() - time_s
+    #     if denlta_time_now <= denlta_time :
+    #         v_re = v_s + (v_f-v_s)*denlta_time_now
+    #         if v_re >= v_f:
+    #             v_re = v_f
+
+    #     else:
+    #         v_re = v_f
+
+    #     return v_re
+    
     def ptgt(self, denlta_time, time_s, v_s, v_f):
         v_re = 0.0
         denlta_time_now = rospy.Time.now().to_sec() - time_s
+        a = (v_f-v_s)/denlta_time
         if denlta_time_now <= denlta_time :
-            v_re = v_s + (v_f-v_s)*denlta_time_now
-            if v_re >= v_f:
-                v_re = v_f
+            v_re = v_s + a*denlta_time_now
 
         else:
             v_re = v_f
@@ -1344,6 +1356,7 @@ class goalControl():
                             gt = self.turn_ar(theta,self.tolerance_rot_step1,self.vel_rot_step1)
                             if gt == -10:
                                 self.stop()
+                                rospy.sleep(0.3)
                                 self.stt_agv = 1
                                 self.is_need_turn_step1 = 0
                                 self.time_start_navi = rospy.Time.now().to_sec()
@@ -1553,6 +1566,7 @@ class goalControl():
                         gt = self.turn_ar(theta,self.tolerance_theta,self.vel_rot_step_f)
                         if gt == -10:
                             self.stop()
+                            rospy.sleep(0.3)
                             self.stt_agv = 0
                             self.completed_all = 1
                             del self.path_plan.poses[:]

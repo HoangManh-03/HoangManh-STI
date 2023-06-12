@@ -6,14 +6,7 @@ Developer: Hoang van Quang
 Company: STI Viet Nam
 Date  : 17/11/2020
 Update: 
->> 18/01/2022
-- Sua loi di lai cac diem cu khi mat ket noi server.
->> 19/01/2022
-- Check error lost server.
-- chú ý: cập nhật báo lỗi ở app_ros
->> 15/04/2022
-- Loi tranh nhau. Dung cho khi danh sach ID diem trong. 
->> 
+>> 20/04/2023
 """
 import roslib
 
@@ -150,7 +143,7 @@ class ros_control():
 
 		rospy.Subscriber("/status_goal_control", Status_goal_control, self.callback_goalControl)
 		self.status_goalControl = Status_goal_control() # sub from move_base
-		self.timeStampe_statusGoalControl = rospy.Time.now()
+		self.timeStampe_statusGoalControl = 0
 
 		rospy.Subscriber("/driver1_respond", Driver_respond, self.callback_driver1)
 		self.driver1_respond = Driver_respond()
@@ -250,8 +243,8 @@ class ros_control():
 		self.led_stopBarrier = 6  	# 6
 		# -- Mission server
 		self.statusTask_liftError = 64 # trang thái nâng kệ nhueng ko có kệ.
-		self.serverMission_liftUp = 65 # 1 65
-		self.serverMission_liftDown = 66 # 2 66
+		self.serverMission_liftUp = 1 # 65
+		self.serverMission_liftDown = 2 # 66
 		self.serverMission_charger = 6 # 5
 		self.serverMission_unknown = 0
 		self.serverMission_liftDown_charger = 5 # 6
@@ -644,7 +637,7 @@ class ros_control():
 
 	def detectLost_driver(self):
 		delta_t = rospy.Time.now() - self.timeStampe_driver
-		if (delta_t.to_sec() > 0.8):
+		if (delta_t.to_sec() > 0.4):
 			return 1
 		return 0
 
@@ -1031,11 +1024,11 @@ class ros_control():
 				self.EMC_reset = self.EMC_resetOff
 
 				# -- Add new: 23/12: Khi mat ket Driver, EMG duoc keo len.
-				# if (self.flag_error == 1):
-				# 	if (self.find_element(251, self.listError) == 1 or self.find_element(261, self.listError) == 1):
-				# 		self.EMC_write = self.EMC_writeOn
-				# 	else:
-				# 		self.EMC_write = self.EMC_writeOff
+				if (self.flag_error == 1):
+					if (self.find_element(251, self.listError) == 1 or self.find_element(261, self.listError) == 1):
+						self.EMC_write = self.EMC_writeOn
+					else:
+						self.EMC_write = self.EMC_writeOff
 				
 
 			# if (self.error_device != 0 or self.error_perform != 0 or self.error_move != 0):
@@ -1220,14 +1213,14 @@ class ros_control():
 					if self.before_mission == self.serverMission_unknown:
 						self.flag_Auto_to_Byhand = 0
 							
-					elif self.before_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
+					elif self.before_mission == self.serverMission_liftDown: # Hạ
 						self.liftTask = self.liftDown	
 
 						if self.lift_status.status.data == 3:  # Hoàn thành
 							self.liftTask = self.liftStop
 							self.flag_Auto_to_Byhand = 0
 
-					elif self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
+					elif self.before_mission == self.serverMission_liftUp: # Nâng
 						self.liftTask = self.liftUp				
 						if self.lift_status.status.data == 4:  # Hoàn thành
 							self.liftTask = self.liftStop
@@ -1238,13 +1231,13 @@ class ros_control():
 					if self.after_mission == self.serverMission_unknown:
 						self.flag_Auto_to_Byhand = 0
 							
-					elif self.after_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
+					elif self.after_mission == self.serverMission_liftDown: # Hạ
 						self.liftTask = self.liftDown				
 						if self.lift_status.status.data == 3:  # Hoàn thành
 							self.liftTask = self.liftStop
 							self.flag_Auto_to_Byhand = 0
 
-					elif self.after_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
+					elif self.after_mission == self.serverMission_liftUp: # Nâng
 						self.liftTask = self.liftUp				
 						if self.lift_status.status.data == 4:  # Hoàn thành
 							self.liftTask = self.liftStop
@@ -1283,7 +1276,7 @@ class ros_control():
 					# -- add new
 					self.completed_checkLift = 1
 					
-				elif self.before_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
+				elif self.before_mission == self.serverMission_liftDown: # Hạ
 					self.charger_requir = self.charger_off
 					self.liftTask = self.liftDown
 					
@@ -1293,7 +1286,7 @@ class ros_control():
 						self.completed_before_mission = 1
 
 
-				elif self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
+				elif self.before_mission == self.serverMission_liftUp: # Nâng
 					self.charger_requir = self.charger_off
 					self.liftTask = self.liftUp		
 					if self.lift_status.status.data == 4:  # Hoàn thành
@@ -1309,7 +1302,7 @@ class ros_control():
 		elif self.process == 44:	# Thuc hien kiểm tra kệ có trên bàn nâng ko.
 			if self.completed_checkLift == 0:
 				self.job_doing = 3
-				if self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
+				if self.before_mission == self.serverMission_liftUp: # Nâng
 					if self.lift_status.sensorLift.data == 0:
 						self.lastTime_checkLift = time.time()
 
@@ -1382,13 +1375,13 @@ class ros_control():
 					self.move_req.list_y = self.NN_cmdRequest.list_y
 					self.move_req.list_speed = self.NN_cmdRequest.list_speed
 
-					if self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
+					if self.before_mission == self.serverMission_liftUp: # Nâng
 						self.move_req.mission = 1
 					else:
 						self.move_req.mission = 0
 
 					# -- add 19/01/2022 : chuyen vung sick.
-					if self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
+					if self.before_mission == self.serverMission_liftUp: # Nâng
 						self.enb_move = 1 # -- vung To
 					else:
 						self.enb_move = 3 # -- vung Nho
@@ -1469,14 +1462,14 @@ class ros_control():
 					self.log_mess("info", "Last mission Not have Suf: ", self.after_mission)
 					self.completed_after_mission = 1
 					
-				elif self.after_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
+				elif self.after_mission == self.serverMission_liftDown: # Hạ
 					self.liftTask = self.liftDown
 					if self.lift_status.status.data == 3: # Hoàn thành
 						self.log_mess("info", "Last mission completed: ", self.serverMission_liftDown)
 						self.liftTask = self.liftStop
 						self.completed_after_mission = 1
 
-				elif self.after_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
+				elif self.after_mission == self.serverMission_liftUp: # Nâng
 					self.liftTask = self.liftUp				
 					if self.lift_status.status.data == 4: # Hoàn thành
 						self.log_mess("info", "Last mission completed: ", self.serverMission_liftUp)

@@ -86,6 +86,16 @@ add_message_files(
 	Lift_control.msg
 	Lift_status.msg
 	Imu_version1.msg
+	
+	#hoang
+	APathParking.msg
+	PointOfPath.msg
+
+	#new navi
+	PointRequestMove.msg
+	ListPointRequestMove.msg
+	LineRequestMove.msg
+	PathInfo.msg
 )	
 
 include_directories(

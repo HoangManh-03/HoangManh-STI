@@ -94,8 +94,8 @@ class driver():
 		self.perimeter = 0.47
 		self.transmission_ratio = 30
 
-		self.accelerationRate = 800 # [1 to 1,000,000] ms
-		self.decelerationRate = 320 # [1 to 1,000,000] ms
+		self.accelerationRate = 600 # [1 to 1,000,000] ms
+		self.decelerationRate = 300 # [1 to 1,000,000] ms
 		self.torqueLimiting = 200    # 0 to 10,000 (1=0.1%)
 		# -- 
 		self.reg_communicationTimeout = 5003 # P222
