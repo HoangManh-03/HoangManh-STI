@@ -80,6 +80,11 @@ class statusButton:
 		self.bt_resetFrameWork = 0
 		self.vs_speed = 50
 
+		self.try_start = 0
+		self.try_stop = 0
+		self.try_reset = 0
+
+
 class statusColor:
 	def __init__(self):
 	# --
@@ -176,6 +181,10 @@ class valueLable:
 		self.arrReflector = []
 		self.angleCompare = 0
 		# self. = ''
+		self.lbv_tryTarget_x = 0
+		self.lbv_tryTarget_y = 0
+		self.lbv_tryTarget_r = 0
+		self.lbv_tryTarget_d = 0
 
 class Reflector:
 	def __init__(self):
@@ -287,12 +296,36 @@ class WelcomeScreen(QDialog):
 		# -
 		self.bt_hideNav350.pressed.connect(self.pressed_hideNav350)
 		self.bt_refresh_showRelector.pressed.connect(self.pressed_refresh_showRelector)
-		# -
+		
+		# ------------------------
 		self.bt_tryTarget_show.pressed.connect(self.pressed_tryTarget)
 		self.bt_tryTarget_show.released.connect(self.released_tryTarget)
 		# -
 		self.bt_tryTarget_hide.pressed.connect(self.pressed_tryTarget_hide)
 		self.bt_tryTarget_hide.released.connect(self.released_tryTarget_hide)
+		# -
+		self.bt_tryTarget_up.pressed.connect(self.pressed_tryTarget_up)
+		self.bt_tryTarget_up.released.connect(self.released_tryTarget_up)
+		# # -
+		self.bt_tryTarget_down.pressed.connect(self.pressed_tryTarget_down)
+		self.bt_tryTarget_down.released.connect(self.released_tryTarget_down)
+		# # -
+		# self.bt_tryTarget_reset.pressed.connect(self.pressed_tryTarget_reset)
+		# self.bt_tryTarget_reset.released.connect(self.released_tryTarget_reset)
+		# # -
+		# self.bt_tryTarget_start.pressed.connect(self.pressed_tryTarget_start)
+		# self.bt_tryTarget_start.released.connect(self.released_tryTarget_start)
+		# # -
+		# self.bt_tryTarget_stop.pressed.connect(self.pressed_tryTarget_stop)
+		# self.bt_tryTarget_stop.released.connect(self.released_tryTarget_stop)
+		# -
+		self.bt_tryTarget_x.pressed.connect(self.pressed_tryTarget_x)
+		# -
+		self.bt_tryTarget_y.pressed.connect(self.pressed_tryTarget_y)
+		# -
+		self.bt_tryTarget_r.pressed.connect(self.pressed_tryTarget_r)
+		# -
+		self.bt_tryTarget_d.pressed.connect(self.pressed_tryTarget_d)
 
 		# -- -- -- Timer updata data
 		# -- Fast
@@ -312,7 +345,6 @@ class WelcomeScreen(QDialog):
 		self.modeRun_launch = 0
 		self.modeRun_byhand = 1
 		self.modeRun_auto = 2
-		self.modeRun_byhand_tryTarget = 3
 		self.modeRun_cancelMission = 5
 
 		self.modeRuning = self.modeRun_launch
@@ -325,6 +357,7 @@ class WelcomeScreen(QDialog):
 		# -- 
 		self.isShow_setting = 0
 		self.isShow_reflectorCheck = 0
+		self.isShow_tryTarget = 0
 		# -
 		self.robotPoseNow = Pose()
 		self.pointA = Point()
@@ -344,6 +377,12 @@ class WelcomeScreen(QDialog):
 		# - 
 		self.flag_updateShowReflector = 0
 		# self.show_reflector()
+
+		self.changeNow = 0
+		self.lbv_tryTarget_x.setText(str(self.valueLable.lbv_tryTarget_x))
+		self.lbv_tryTarget_y.setText(str(self.valueLable.lbv_tryTarget_y))
+		self.lbv_tryTarget_r.setText(str(self.valueLable.lbv_tryTarget_r))
+		self.lbv_tryTarget_d.setText(str(self.valueLable.lbv_tryTarget_d))
 
 	def process_fast(self):
 		self.pb_qualityWifi.setValue(self.valueLable.lbv_qualityWifi)
@@ -843,8 +882,8 @@ class WelcomeScreen(QDialog):
 
 	def pressed_reduceSpeed(self):
 		self.statusButton.vs_speed -= 10
-		if self.statusButton.vs_speed < 10:
-			self.statusButton.vs_speed = 10
+		if self.statusButton.vs_speed < 5:
+			self.statusButton.vs_speed = 5
 
 	def pressed_liftUp(self):
 		self.bt_lift_up.setStyleSheet("background-color: blue;")
@@ -878,23 +917,127 @@ class WelcomeScreen(QDialog):
 	# --
 	def pressed_tryTarget(self):
 		self.bt_tryTarget_show.setStyleSheet("background-color: blue;")
-		self.statusButton.bt_tryTarget = 1
+		self.isShow_tryTarget = 1
 		self.clicked_stop()
 
 	def released_tryTarget(self):
 		self.bt_tryTarget_show.setStyleSheet("background-color: white;")
-		self.statusButton.bt_tryTarget = 0
+		self.clicked_stop()
 
 	# --
 	def pressed_tryTarget_hide(self):
 		self.bt_tryTarget_show.setStyleSheet("background-color: blue;")
-		self.statusButton.bt_tryTarget_hide = 1
 		self.clicked_stop()
 
 	def released_tryTarget_hide(self):
 		self.bt_tryTarget_show.setStyleSheet("background-color: white;")
-		self.statusButton.bt_tryTarget_hide = 0
+		self.isShow_tryTarget = 0
+		self.clicked_stop()
 
+	# --
+	def pressed_tryTarget_up(self):
+		self.bt_tryTarget_up.setStyleSheet("background-color: blue;")
+		val_change = float(self.cb_unit.currentText())
+		# - X
+		if self.changeNow == 1:
+			self.valueLable.lbv_tryTarget_x += val_change
+		# - Y
+		if self.changeNow == 2:
+			self.valueLable.lbv_tryTarget_y += val_change
+		# - R
+		if self.changeNow == 3:
+			self.valueLable.lbv_tryTarget_r += val_change
+		# - D
+		if self.changeNow == 4:
+			self.valueLable.lbv_tryTarget_d += val_change
+			
+
+	def released_tryTarget_up(self):
+		self.bt_tryTarget_up.setStyleSheet("background-color: white;")
+		self.lbv_tryTarget_x.setText(str(round(self.valueLable.lbv_tryTarget_x, 3)))
+		self.lbv_tryTarget_y.setText(str(round(self.valueLable.lbv_tryTarget_y, 3)))
+		self.lbv_tryTarget_r.setText(str(round(self.valueLable.lbv_tryTarget_r, 3)))
+		self.lbv_tryTarget_d.setText(str(round(self.valueLable.lbv_tryTarget_d, 3)))
+
+	# --
+	def pressed_tryTarget_down(self):
+		self.bt_tryTarget_down.setStyleSheet("background-color: blue;")
+		val_change = float(self.cb_unit.currentText())
+		# - X
+		if self.changeNow == 1:
+			self.valueLable.lbv_tryTarget_x -= val_change
+		# - Y
+		if self.changeNow == 2:
+			self.valueLable.lbv_tryTarget_y -= val_change
+		# - R
+		if self.changeNow == 3:
+			self.valueLable.lbv_tryTarget_r -= val_change
+		# - D
+		if self.changeNow == 4:
+			self.valueLable.lbv_tryTarget_d -= val_change
+
+	def released_tryTarget_down(self):
+		self.bt_tryTarget_down.setStyleSheet("background-color: white;")
+		self.lbv_tryTarget_x.setText(str(round(self.valueLable.lbv_tryTarget_x, 3)))
+		self.lbv_tryTarget_y.setText(str(round(self.valueLable.lbv_tryTarget_y, 3)))
+		self.lbv_tryTarget_r.setText(str(round(self.valueLable.lbv_tryTarget_r, 3)))
+		self.lbv_tryTarget_d.setText(str(round(self.valueLable.lbv_tryTarget_d, 3)))
+
+	# --
+	def pressed_tryTarget_x(self):
+		self.bt_tryTarget_x.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_y.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_r.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_d.setStyleSheet("background-color: white;")
+		self.show_combox_unitMeter()
+		self.changeNow = 1
+
+	def pressed_tryTarget_y(self):
+		self.bt_tryTarget_x.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_y.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_r.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_d.setStyleSheet("background-color: white;")
+		self.show_combox_unitMeter()
+		self.changeNow = 2
+
+	def pressed_tryTarget_r(self):
+		self.bt_tryTarget_x.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_y.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_r.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_d.setStyleSheet("background-color: white;")
+		self.show_combox_unitDegree()
+		self.changeNow = 3
+
+	def pressed_tryTarget_d(self):
+		self.bt_tryTarget_x.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_y.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_r.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_d.setStyleSheet("background-color: blue;")
+		self.show_combox_unitMeter()
+		self.changeNow = 4
+
+	def show_combox_unitMeter(self):
+		self.cb_unit.clear()
+		self.lbv_unit.setText("m")
+		self.cb_unit.addItem("0.001")
+		self.cb_unit.addItem("0.002")
+		self.cb_unit.addItem("0.005")
+		self.cb_unit.addItem("0.01")
+		self.cb_unit.addItem("0.1")
+		self.cb_unit.addItem("1")
+		self.cb_unit.addItem("2")
+		self.cb_unit.addItem("5")
+
+	def show_combox_unitDegree(self):
+		self.cb_unit.clear()
+		self.lbv_unit.setText("Độ")
+		self.cb_unit.addItem("0.01")
+		self.cb_unit.addItem("0.1")
+		self.cb_unit.addItem("0.2")
+		self.cb_unit.addItem("0.5")
+		self.cb_unit.addItem("1")
+		self.cb_unit.addItem("2")
+		self.cb_unit.addItem("5")
 
 	def out(self):
 		QApplication.quit()
@@ -1101,18 +1244,18 @@ class WelcomeScreen(QDialog):
 		# - 
 		self.lbv_reflectorLoc.setText(self.valueLable.lbv_numbeReflector)
 		self.lbv_reflectorDetect.setText(self.valueLable.lbv_reflectorDetect)
+		self.lbv_reflectorDetect_1.setText(self.valueLable.lbv_reflectorDetect)
 		# self..setText(self.valueLable.)
+
 		
 	def controlShow_followMode(self):
+		self.statusButton.bt_tryTarget = self.isShow_tryTarget
 		print ("self.modeRuning: ", self.modeRuning)
 		if (self.valueLable.modeRuning == self.modeRun_launch):
 			self.modeRuning = self.modeRun_launch
 
 		elif (self.valueLable.modeRuning == self.modeRun_byhand):
 			self.modeRuning = self.modeRun_byhand
-
-		elif (self.valueLable.modeRuning == self.modeRun_byhand_tryTarget):
-			self.modeRuning = self.modeRun_byhand_tryTarget
 
 		elif (self.valueLable.modeRuning == self.modeRun_auto):
 			self.modeRuning = self.modeRun_auto
@@ -1136,18 +1279,32 @@ class WelcomeScreen(QDialog):
 				self.isShow_moveHand = 1
 
 			elif (self.modeRuning == self.modeRun_byhand):
+				# - Hiển thị cài đặt chung. 
 				if self.isShow_setting == 1:
 					self.fr_control.hide()
 					self.fr_setting.show()
 					self.fr_listTask.hide()
 					self.fr_nav350.hide()
 
+				# - Hiển thị kiểm tra gương.
 				elif self.isShow_reflectorCheck == 1:
 					self.fr_control.hide()
 					self.fr_setting.hide()
 					self.fr_listTask.hide()
 					self.fr_nav350.show()
 
+				# - Hiển thị thử nghiệm điểm.
+				elif (self.isShow_tryTarget == 1):
+					self.fr_control.show()
+					self.fr_setting.hide()
+					self.fr_listTask.hide()
+					self.fr_nav350.hide()
+
+					self.fr_handMode_move.hide()
+					self.fr_handMode_conveyor.hide()
+					self.fr_tryTarget.show()
+
+				# - Hiển thị chức năng điều khiển tay.
 				else:
 					self.fr_control.show()
 					self.fr_setting.hide()
@@ -1162,14 +1319,7 @@ class WelcomeScreen(QDialog):
 						self.fr_handMode_move.hide()
 						self.fr_tryTarget.hide()
 
-			elif (self.modeRuning == self.modeRun_byhand_tryTarget):
-				self.fr_control.show()
-				self.fr_setting.hide()
-				self.fr_listTask.hide()
-				self.fr_nav350.hide()
-				self.fr_handMode_move.hide()
-				self.fr_handMode_conveyor.hide()
-				self.fr_tryTarget.show()
+
 
 	def coorAverage_run(self):
 		if (self.bt_coorAverage_status == 1):
@@ -1245,3 +1395,5 @@ class WelcomeScreen(QDialog):
 			self.bt_pw_agree.setEnabled(True)
 		else:
 			self.bt_pw_agree.setEnabled(False)
+
+	# def control_tryTarget(self):

@@ -37,7 +37,7 @@ class Program(threading.Thread):
 		self.pre_timePing = time.time()
 		# --
 		rospy.init_node('app_ros', anonymous=False)
-		self.rate = rospy.Rate(40)
+		self.rate = rospy.Rate(20)
 
 		self.app = QApplication(sys.argv)
 		self.welcomeScreen = WelcomeScreen()
@@ -485,9 +485,6 @@ class Program(threading.Thread):
 		elif (self.NN_infoRespond.mode == 2): # -- md_auto
 			self.valueLable.modeRuning = self.modeRun_auto
 
-		elif (self.NN_infoRespond.mode == 3): # -- try_target
-			self.valueLable.modeRuning = self.modeRun_byhand_tryTarget
-
 		# -- Battery
 		if (self.main_info.charge_current > 0.1):
 			self.statusColor.lbc_battery = 4
@@ -526,12 +523,12 @@ class Program(threading.Thread):
 		self.valueLable.lbv_reflectorDetect = str(self.nav350_reflectors.num_reflector)
 
 		# -- Ping
-		deltaTime_ping = (time.time() - self.pre_timePing)%60
-		if (deltaTime_ping > 2.0):
-			self.pre_timePing = time.time()
-			self.valueLable.lbv_pingServer = self.ping_traffic(self.address_traffic)
-			# -
-			self.valueLable.lbv_qualityWifi = self.get_qualityWifi(self.name_card)
+		# deltaTime_ping = (time.time() - self.pre_timePing)%60
+		# if (deltaTime_ping > 2.0):
+		# 	self.pre_timePing = time.time()
+		# 	self.valueLable.lbv_pingServer = self.ping_traffic(self.address_traffic)
+		# 	# -
+		# 	self.valueLable.lbv_qualityWifi = self.get_qualityWifi(self.name_card)
 
 		# -- 
 		self.valueLable.lbv_coordinates_x = str(round(self.robotPose_nav.pose.position.x, 3))
@@ -637,6 +634,14 @@ class Program(threading.Thread):
 		self.kill_app()
 
 		print('Thread #%s stopped' % self.threadID)
+
+	# def check_wifi(self):
+	# 	while (not self.shutdown_flag.is_set()) and (not rospy.is_shutdown()) and (self.is_exist == 1):
+	# 		# -- Ping
+	# 		self.valueLable.lbv_pingServer = self.ping_traffic(self.address_traffic)
+	# 		# -
+	# 		self.valueLable.lbv_qualityWifi = self.get_qualityWifi(self.name_card)
+	# 		self.time.sleep(1.5)
 
 class ServiceExit(Exception):
 	"""

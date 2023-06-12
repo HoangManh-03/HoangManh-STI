@@ -4,9 +4,6 @@ bool bt_passAuto
 bool bt_clearError
 
 bool bt_tryTarget
-bool bt_tryTarget_hide
-
-bool bt_hide
 
 bool bt_spk_on
 bool bt_spk_off
@@ -25,3 +22,12 @@ bool bt_stop
 
 int16 vs_speed
 bool bt_resetFrameWork
+bool bt_free
+
+bool tryTarget_start
+bool tryTarget_stop
+bool tryTarget_reset
+bool tryTarget_x
+bool tryTarget_y
+bool tryTarget_r
+bool tryTarget_d

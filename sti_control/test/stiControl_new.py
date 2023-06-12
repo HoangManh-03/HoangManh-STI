@@ -4,9 +4,9 @@
 """
 Developer: Hoang van Quang
 Company: STI Viet Nam
-Date  : 17/11/2020
+Date  : 12/06/2023
 Update: 
->> 20/04/2023
+- Thêm chế độ thực nghiệm điểm thao tác.
 """
 import roslib
 
@@ -143,7 +143,7 @@ class ros_control():
 
 		rospy.Subscriber("/status_goal_control", Status_goal_control, self.callback_goalControl)
 		self.status_goalControl = Status_goal_control() # sub from move_base
-		self.timeStampe_statusGoalControl = 0
+		self.timeStampe_statusGoalControl = rospy.Time.now()
 
 		rospy.Subscriber("/driver1_respond", Driver_respond, self.callback_driver1)
 		self.driver1_respond = Driver_respond()
@@ -167,9 +167,10 @@ class ros_control():
 		self.FrequencePubBoard = 10.
 		self.pre_timeBoard = 0
 		# -- Mode operate
-		self.md_by_hand = 1
-		self.md_auto = 2
-		self.mode_operate = self.md_by_hand    # Lưu chế độ hoạt động.
+		self.mode_by_hand = 1
+		self.mode_auto = 2
+		self.mode_operate = self.mode_by_hand    # Lưu chế độ hoạt động.
+		self.flag_tryTarget = 0
 
 		# -- Target
 		self.target_x = 0.		 # lưu tọa độ điểm đích hiện tại.			
@@ -186,7 +187,6 @@ class ros_control():
 		self.completed_move = 0			 	 # Báo di chuyển đã hoàn thành.
 		self.completed_moveSimple = 0      # bao da den dich.
 		self.completed_moveSpecial = 0     # bao da den aruco.
-		self.completed_setpose = 1           # Báo di setpose đã hoàn thành.
 		self.completed_reset = 0             # hoan thanh reset.
 		self.completed_MissionSetpose = 0 	#
 		self.completed_checkLift = 0 	# kiem tra ke co hay ko sau khi nang. 
@@ -243,8 +243,8 @@ class ros_control():
 		self.led_stopBarrier = 6  	# 6
 		# -- Mission server
 		self.statusTask_liftError = 64 # trang thái nâng kệ nhueng ko có kệ.
-		self.serverMission_liftUp = 1 # 65
-		self.serverMission_liftDown = 2 # 66
+		self.serverMission_liftUp = 65 # 1 65
+		self.serverMission_liftDown = 66 # 2 66
 		self.serverMission_charger = 6 # 5
 		self.serverMission_unknown = 0
 		self.serverMission_liftDown_charger = 5 # 6
@@ -326,6 +326,9 @@ class ros_control():
 		self.flagError_overLoad = 0
 		# -- add 15/04/2022
 		self.flag_listPointEmpty = 0
+
+		# --
+		self.step_tryTarget = 0
 
 	def callback_imu(self, data):
 		self.imu_data = data
@@ -567,13 +570,15 @@ class ros_control():
 
 	def run_maunal(self):
 		cmd_vel = Twist()
-		sts = 0
+		val_linear = (self.app_button.vs_speed/100.)*0.35
+		val_rotate = (self.app_button.vs_speed/100.)*0.3
+
 		if (self.app_button.bt_forwards == True):
 			if (self.HC_info.zone_sick_ahead == 1):
 				cmd_vel.linear.x = 0.0
 				cmd_vel.angular.z = 0.0
 			else:
-				cmd_vel.linear.x = 0.25
+				cmd_vel.linear.x = val_linear
 				cmd_vel.angular.z = 0.0
 
 		if (self.app_button.bt_backwards == True):
@@ -581,7 +586,7 @@ class ros_control():
 				cmd_vel.linear.x = 0.0
 				cmd_vel.angular.z = 0.0
 			else:
-				cmd_vel.linear.x = -0.25
+				cmd_vel.linear.x = -val_linear
 				cmd_vel.angular.z = 0.0
 
 		if (self.app_button.bt_rotation_left == True):
@@ -590,7 +595,7 @@ class ros_control():
 				cmd_vel.angular.z = 0.0				
 			else:
 				cmd_vel.linear.x = 0.0
-				cmd_vel.angular.z = 0.2
+				cmd_vel.angular.z = val_rotate
 
 		if (self.app_button.bt_rotation_right == True):
 			if (self.HC_info.zone_sick_ahead == 1 or self.HC_info.zone_sick_behind == 2):
@@ -598,7 +603,7 @@ class ros_control():
 				cmd_vel.angular.z = 0.0				
 			else:
 				cmd_vel.linear.x = 0.0
-				cmd_vel.angular.z = -0.2
+				cmd_vel.angular.z = -val_rotate
 
 		if (self.app_button.bt_stop == True):
 			cmd_vel.linear.x = 0.0
@@ -637,7 +642,7 @@ class ros_control():
 
 	def detectLost_driver(self):
 		delta_t = rospy.Time.now() - self.timeStampe_driver
-		if (delta_t.to_sec() > 0.4):
+		if (delta_t.to_sec() > 0.8):
 			return 1
 		return 0
 
@@ -934,7 +939,7 @@ class ros_control():
 		if self.process == -1: # khi moi khoi dong len
 			# mode_operate = mode_hand
 			time.sleep(0.2)
-			self.mode_operate = self.md_by_hand
+			self.mode_operate = self.mode_by_hand
 			self.led = 0
 			self.speaker_requir = self.spk_warn
 			self.process = 0
@@ -1024,11 +1029,11 @@ class ros_control():
 				self.EMC_reset = self.EMC_resetOff
 
 				# -- Add new: 23/12: Khi mat ket Driver, EMG duoc keo len.
-				if (self.flag_error == 1):
-					if (self.find_element(251, self.listError) == 1 or self.find_element(261, self.listError) == 1):
-						self.EMC_write = self.EMC_writeOn
-					else:
-						self.EMC_write = self.EMC_writeOff
+				# if (self.flag_error == 1):
+				# 	if (self.find_element(251, self.listError) == 1 or self.find_element(261, self.listError) == 1):
+				# 		self.EMC_write = self.EMC_writeOn
+				# 	else:
+				# 		self.EMC_write = self.EMC_writeOff
 				
 
 			# if (self.error_device != 0 or self.error_perform != 0 or self.error_move != 0):
@@ -1038,19 +1043,16 @@ class ros_control():
 
 		elif self.process == 3: # read app
 			if self.app_button.bt_passHand == 1:
-				if self.mode_operate == self.md_auto: # keo co bao dang o tu dong -> chuyen sang bang tay.
-					self.flag_Auto_to_Byhand = 1				
-				self.mode_operate = self.md_by_hand
-				
-			if self.app_button.bt_passAuto == 1:
-				if self.completed_setpose == 1:
-					self.mode_operate = self.md_auto
-				else:
-					self.log_mess("info", "Make sure AGV Run in Map", 0)
+				if self.mode_operate == self.mode_auto: # keo co bao dang o tu dong -> chuyen sang bang tay.
+					self.flag_Auto_to_Byhand = 1
+				self.mode_operate = self.mode_by_hand
 
-			if self.mode_operate == self.md_by_hand:
+			if self.app_button.bt_passAuto == 1:
+				self.mode_operate = self.mode_auto
+
+			if self.mode_operate == self.mode_by_hand:
 				self.process = 30
-			elif self.mode_operate == self.md_auto:
+			elif self.mode_operate == self.mode_auto:
 				self.process = 40
 	# ------------------------------------------------------------------------------------
 	# -- BY HAND:
@@ -1061,47 +1063,72 @@ class ros_control():
 			if self.parking_status.status != 0:
 				self.enb_parking = 0
 
-			if self.flag_error == 0:
-			  # -- Send vel
-				if self.lift_status.status.data == 0 or self.lift_status.status.data >= 3:  # Đang thực hiện nhiệm vụ ở chế độ auto -> ko cho phép di chuyển.
-					# -- Move
-					self.velPs2 = self.run_maunal()
-					self.pub_cmdVel(self.velPs2, self.rate_cmdvel, rospy.get_time())
-				else:
+			self.flag_tryTarget = self.app_button.bt_tryTarget
+			if self.flag_tryTarget == 0:
+				# ------------------------------------------------------------
+				if self.flag_error == 0:
+				# -- Send vel
+					if self.lift_status.status.data == 0 or self.lift_status.status.data >= 3:  # Đang thực hiện nhiệm vụ ở chế độ auto -> ko cho phép di chuyển.
+						# -- Move
+						self.pub_cmdVel(self.run_maunal(), self.rate_cmdvel, rospy.get_time())
+					else:
+						self.pub_cmdVel(Twist(), self.rate_cmdvel, rospy.get_time())
+
+				else: # -- Has error
 					self.pub_cmdVel(Twist(), self.rate_cmdvel, rospy.get_time())
 
-			else: # -- Has error
-				# pass
-				self.pub_cmdVel(Twist(), self.rate_cmdvel, rospy.get_time())
+				# ------------------------------------------------------------
+				# -- Lift
+				if self.app_button.bt_lift_up == True:
+					self.liftTask_byHand = self.liftUp
+					self.flag_commandLift = 1
 
-			# ------------------------------------------------------------ HMI
-			# -- Lift
-			if self.app_button.bt_lift_up == True:
-				self.liftTask_byHand = self.liftUp
-				self.flag_commandLift = 1
+				elif self.app_button.bt_lift_down == True:
+					self.liftTask_byHand = self.liftDown
+					self.flag_commandLift = 1
 
-			elif self.app_button.bt_lift_down == True:
-				self.liftTask_byHand = self.liftDown
-				self.flag_commandLift = 1
+				if self.flag_commandLift == 1:
+					self.liftTask = self.liftTask_byHand
+					if self.lift_status.status.data >= 3: # Hoàn thành
+						self.flag_commandLift = 0
+				else:
+					self.liftTask = self.liftStop
 
-			if self.flag_commandLift == 1:
-				self.liftTask = self.liftTask_byHand
-				if self.lift_status.status.data >= 3: # Hoàn thành
-					self.flag_commandLift = 0
+				# -- Speaker
+				if self.app_button.bt_spk_on == True:
+					self.enb_spk = 1
+				elif self.app_button.bt_spk_off == True:
+					self.enb_spk = 0
+
+				# -- Charger
+				if self.app_button.bt_chg_on == True:
+					self.charger_requir = self.charger_on
+				elif self.app_button.bt_chg_off == True:
+					self.charger_requir = self.charger_off
+
+				# -- Keep shaft.
+				# if self.app_button.bt_free == True:
+				# 	pass
+				# else:
+				# 	pass
+
 			else:
+				self.charger_requir = self.charger_off
 				self.liftTask = self.liftStop
 
-			# -- Speaker
-			if self.app_button.bt_spk_on == True:
-				self.enb_spk = 1
-			elif self.app_button.bt_spk_off == True:
-				self.enb_spk = 0
+				if self.app_button.try_reset == 0:
+					self.step_tryTarget = 0
+				# - 
+				if self.step_tryTarget == 0:
+					if self.app_button.try_start == 1:
+						self.step_tryTarget = 1
 
-			# -- Charger
-			if self.app_button.bt_chg_on == True:
-				self.charger_requir = self.charger_on
-			elif self.app_button.bt_chg_off == True:
-				self.charger_requir = self.charger_off
+				elif self.step_tryTarget == 1:
+					pass
+				elif self.step_tryTarget == 2:
+					pass
+			# ------------------------------------------------------------
+			
 
 			self.process = 2
 
@@ -1213,14 +1240,14 @@ class ros_control():
 					if self.before_mission == self.serverMission_unknown:
 						self.flag_Auto_to_Byhand = 0
 							
-					elif self.before_mission == self.serverMission_liftDown: # Hạ
+					elif self.before_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
 						self.liftTask = self.liftDown	
 
 						if self.lift_status.status.data == 3:  # Hoàn thành
 							self.liftTask = self.liftStop
 							self.flag_Auto_to_Byhand = 0
 
-					elif self.before_mission == self.serverMission_liftUp: # Nâng
+					elif self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 						self.liftTask = self.liftUp				
 						if self.lift_status.status.data == 4:  # Hoàn thành
 							self.liftTask = self.liftStop
@@ -1231,13 +1258,13 @@ class ros_control():
 					if self.after_mission == self.serverMission_unknown:
 						self.flag_Auto_to_Byhand = 0
 							
-					elif self.after_mission == self.serverMission_liftDown: # Hạ
+					elif self.after_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
 						self.liftTask = self.liftDown				
 						if self.lift_status.status.data == 3:  # Hoàn thành
 							self.liftTask = self.liftStop
 							self.flag_Auto_to_Byhand = 0
 
-					elif self.after_mission == self.serverMission_liftUp: # Nâng
+					elif self.after_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 						self.liftTask = self.liftUp				
 						if self.lift_status.status.data == 4:  # Hoàn thành
 							self.liftTask = self.liftStop
@@ -1276,7 +1303,7 @@ class ros_control():
 					# -- add new
 					self.completed_checkLift = 1
 					
-				elif self.before_mission == self.serverMission_liftDown: # Hạ
+				elif self.before_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
 					self.charger_requir = self.charger_off
 					self.liftTask = self.liftDown
 					
@@ -1286,7 +1313,7 @@ class ros_control():
 						self.completed_before_mission = 1
 
 
-				elif self.before_mission == self.serverMission_liftUp: # Nâng
+				elif self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 					self.charger_requir = self.charger_off
 					self.liftTask = self.liftUp		
 					if self.lift_status.status.data == 4:  # Hoàn thành
@@ -1302,7 +1329,7 @@ class ros_control():
 		elif self.process == 44:	# Thuc hien kiểm tra kệ có trên bàn nâng ko.
 			if self.completed_checkLift == 0:
 				self.job_doing = 3
-				if self.before_mission == self.serverMission_liftUp: # Nâng
+				if self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 					if self.lift_status.sensorLift.data == 0:
 						self.lastTime_checkLift = time.time()
 
@@ -1375,13 +1402,13 @@ class ros_control():
 					self.move_req.list_y = self.NN_cmdRequest.list_y
 					self.move_req.list_speed = self.NN_cmdRequest.list_speed
 
-					if self.before_mission == self.serverMission_liftUp: # Nâng
+					if self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 						self.move_req.mission = 1
 					else:
 						self.move_req.mission = 0
 
 					# -- add 19/01/2022 : chuyen vung sick.
-					if self.before_mission == self.serverMission_liftUp: # Nâng
+					if self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 						self.enb_move = 1 # -- vung To
 					else:
 						self.enb_move = 3 # -- vung Nho
@@ -1462,14 +1489,14 @@ class ros_control():
 					self.log_mess("info", "Last mission Not have Suf: ", self.after_mission)
 					self.completed_after_mission = 1
 					
-				elif self.after_mission == self.serverMission_liftDown: # Hạ
+				elif self.after_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
 					self.liftTask = self.liftDown
 					if self.lift_status.status.data == 3: # Hoàn thành
 						self.log_mess("info", "Last mission completed: ", self.serverMission_liftDown)
 						self.liftTask = self.liftStop
 						self.completed_after_mission = 1
 
-				elif self.after_mission == self.serverMission_liftUp: # Nâng
+				elif self.after_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 					self.liftTask = self.liftUp				
 					if self.lift_status.status.data == 4: # Hoàn thành
 						self.log_mess("info", "Last mission completed: ", self.serverMission_liftUp)
@@ -1499,7 +1526,7 @@ class ros_control():
 			self.log_mess("warn", "Wating new Target ...", 0)
 			
 		# -- Tag + Offset:
-		if self.mode_operate == self.md_auto:
+		if self.mode_operate == self.mode_auto:
 			if self.completed_move == 1:
 				self.NN_infoRespond.tag = self.NN_cmdRequest.tag
 				self.NN_infoRespond.offset = self.NN_cmdRequest.offset
@@ -1527,10 +1554,10 @@ class ros_control():
 		
 		if self.flag_cancelMission == 0:
 			# -- mode respond server
-			if self.mode_operate == self.md_by_hand:         # Che do by Hand
+			if self.mode_operate == self.mode_by_hand:         # Che do by Hand
 				self.NN_infoRespond.mode = 1
 
-			elif self.mode_operate == self.md_auto:          # Che do Auto
+			elif self.mode_operate == self.mode_auto:          # Che do Auto
 				self.NN_infoRespond.mode = 2
 		else:
 			self.NN_infoRespond.mode = 5
@@ -1618,6 +1645,7 @@ class ros_control():
 			else:
 				self.speaker = self.spk_off
 
+			self.speaker = self.spk_off
 			self.Main_pub(self.charger_write, self.speaker, self.EMC_write, self.EMC_reset)  # MISSION
 
 			# -- Request HC:
