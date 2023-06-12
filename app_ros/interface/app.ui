@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>1022</width>
-    <height>692</height>
+    <height>543</height>
    </rect>
   </property>
   <property name="font">
@@ -1438,7 +1438,7 @@ SHIV12 Ver 2.0</string>
         <number>0</number>
        </property>
        <property name="text">
-        <string>123</string>
+        <string>0</string>
        </property>
        <property name="scaledContents">
         <bool>false</bool>
@@ -1522,7 +1522,7 @@ SHIV12 Ver 2.0</string>
         <number>0</number>
        </property>
        <property name="text">
-        <string>123</string>
+        <string>0</string>
        </property>
        <property name="scaledContents">
         <bool>false</bool>

@@ -24,10 +24,13 @@ int16 vs_speed
 bool bt_resetFrameWork
 bool bt_free
 
-bool tryTarget_start
-bool tryTarget_stop
-bool tryTarget_reset
-bool tryTarget_x
-bool tryTarget_y
-bool tryTarget_r
-bool tryTarget_d
+bool bt_tryTarget_start
+bool bt_tryTarget_stop
+bool bt_tryTarget_reset
+
+float64 tryTarget_x
+float64 tryTarget_y
+float64 tryTarget_r
+float64 tryTarget_d
+
+bool tryTarget_barrier

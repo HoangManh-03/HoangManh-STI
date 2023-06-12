@@ -581,7 +581,6 @@ class Program(threading.Thread):
 		self.app_button.bt_stop 		  = self.welcomeScreen.statusButton.bt_stop
 
 		self.app_button.bt_tryTarget 	  = self.welcomeScreen.statusButton.bt_tryTarget
-		self.app_button.bt_tryTarget_hide = self.welcomeScreen.statusButton.bt_tryTarget_hide
 		# --
 		self.app_button.bt_chg_on	= self.welcomeScreen.statusButton.bt_chg_on
 		self.app_button.bt_chg_off	= self.welcomeScreen.statusButton.bt_chg_off
@@ -597,6 +596,16 @@ class Program(threading.Thread):
 		# -
 		self.app_button.vs_speed = self.welcomeScreen.statusButton.vs_speed
 		self.app_button.bt_resetFrameWork = self.welcomeScreen.statusButton.bt_resetFrameWork
+
+		# -
+		self.app_button.bt_tryTarget_start = self.welcomeScreen.statusButton.bt_tryTarget_start
+		self.app_button.bt_tryTarget_stop = self.welcomeScreen.statusButton.bt_tryTarget_stop
+		self.app_button.bt_tryTarget_reset = self.welcomeScreen.statusButton.bt_tryTarget_reset
+		# -
+		self.app_button.tryTarget_x = self.welcomeScreen.valueLable.lbv_tryTarget_x
+		self.app_button.tryTarget_y = self.welcomeScreen.valueLable.lbv_tryTarget_y
+		self.app_button.tryTarget_r = self.welcomeScreen.valueLable.lbv_tryTarget_r
+		self.app_button.tryTarget_d = self.welcomeScreen.valueLable.lbv_tryTarget_d
 
 	def run(self):
 		# -- 
@@ -627,7 +636,6 @@ class Program(threading.Thread):
 			self.welcomeScreen.robotPoseNow = self.robotPose_nav.pose
 			# -
 			self.welcomeScreen.valueLable.arrReflector = self.arrReflector
-			# print ("arrReflector: ", len(self.arrReflector))
 			self.rate.sleep()
 
 		self.is_exist = 0

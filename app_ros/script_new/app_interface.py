@@ -80,9 +80,9 @@ class statusButton:
 		self.bt_resetFrameWork = 0
 		self.vs_speed = 50
 
-		self.try_start = 0
-		self.try_stop = 0
-		self.try_reset = 0
+		self.bt_tryTarget_start = 0
+		self.bt_tryTarget_stop = 0
+		self.bt_tryTarget_reset = 0
 
 
 class statusColor:
@@ -310,14 +310,14 @@ class WelcomeScreen(QDialog):
 		self.bt_tryTarget_down.pressed.connect(self.pressed_tryTarget_down)
 		self.bt_tryTarget_down.released.connect(self.released_tryTarget_down)
 		# # -
-		# self.bt_tryTarget_reset.pressed.connect(self.pressed_tryTarget_reset)
-		# self.bt_tryTarget_reset.released.connect(self.released_tryTarget_reset)
+		self.bt_tryTarget_reset.pressed.connect(self.pressed_tryTarget_reset)
+		self.bt_tryTarget_reset.released.connect(self.released_tryTarget_reset)
 		# # -
-		# self.bt_tryTarget_start.pressed.connect(self.pressed_tryTarget_start)
-		# self.bt_tryTarget_start.released.connect(self.released_tryTarget_start)
+		self.bt_tryTarget_start.pressed.connect(self.pressed_tryTarget_start)
+		self.bt_tryTarget_start.released.connect(self.released_tryTarget_start)
 		# # -
-		# self.bt_tryTarget_stop.pressed.connect(self.pressed_tryTarget_stop)
-		# self.bt_tryTarget_stop.released.connect(self.released_tryTarget_stop)
+		self.bt_tryTarget_stop.pressed.connect(self.pressed_tryTarget_stop)
+		self.bt_tryTarget_stop.released.connect(self.released_tryTarget_stop)
 		# -
 		self.bt_tryTarget_x.pressed.connect(self.pressed_tryTarget_x)
 		# -
@@ -865,7 +865,10 @@ class WelcomeScreen(QDialog):
 		self.pointB.x = self.robotPoseNow.position.x
 		self.pointB.y = self.robotPoseNow.position.y
 		delta_distance = self.calculate_distance(self.pointA, self.pointB)
-		self.lbv_deltaDistance.setText( str(round(delta_distance, 3)) )
+		self.lbv_deltaDistance.setText(str(round(delta_distance, 3)))
+		if self.ck_linkOffset.isChecked() == 1:
+			self.valueLable.lbv_tryTarget_d = delta_distance
+			self.lbv_tryTarget_d.setText(str(round(self.valueLable.lbv_tryTarget_d, 3)))
 
 	def pressed_resetFrameWork(self):
 		self.bt_resetFrameWork.setStyleSheet("background-color: blue;")
@@ -982,6 +985,33 @@ class WelcomeScreen(QDialog):
 		self.lbv_tryTarget_y.setText(str(round(self.valueLable.lbv_tryTarget_y, 3)))
 		self.lbv_tryTarget_r.setText(str(round(self.valueLable.lbv_tryTarget_r, 3)))
 		self.lbv_tryTarget_d.setText(str(round(self.valueLable.lbv_tryTarget_d, 3)))
+
+	# --
+	def pressed_tryTarget_reset(self):
+		self.bt_tryTarget_reset.setStyleSheet("background-color: blue;")
+		self.statusButton.bt_tryTarget_reset = 1
+
+	def released_tryTarget_reset(self):
+		self.bt_tryTarget_reset.setStyleSheet("background-color: white;")
+		self.statusButton.bt_tryTarget_reset = 0
+
+	# --
+	def pressed_tryTarget_start(self):
+		self.bt_tryTarget_start.setStyleSheet("background-color: blue;")
+		self.statusButton.bt_tryTarget_start = 1
+
+	def released_tryTarget_start(self):
+		self.bt_tryTarget_start.setStyleSheet("background-color: white;")
+		self.statusButton.bt_tryTarget_start = 0
+
+	# --
+	def pressed_tryTarget_stop(self):
+		self.bt_tryTarget_stop.setStyleSheet("background-color: blue;")
+		self.statusButton.bt_tryTarget_stop = 1
+
+	def released_tryTarget_stop(self):
+		self.bt_tryTarget_stop.setStyleSheet("background-color: white;")
+		self.statusButton.bt_tryTarget_stop = 0
 
 	# --
 	def pressed_tryTarget_x(self):
@@ -1250,7 +1280,7 @@ class WelcomeScreen(QDialog):
 		
 	def controlShow_followMode(self):
 		self.statusButton.bt_tryTarget = self.isShow_tryTarget
-		print ("self.modeRuning: ", self.modeRuning)
+		
 		if (self.valueLable.modeRuning == self.modeRun_launch):
 			self.modeRuning = self.modeRun_launch
 
@@ -1345,6 +1375,14 @@ class WelcomeScreen(QDialog):
 				self.lbv_coorAverage_x.setText(str(round(d_x, 3)))
 				self.lbv_coorAverage_y.setText(str(round(d_y, 3)))
 				self.lbv_coorAverage_r.setText(str(round(d_degree, 2)))
+
+				if self.ck_linkCoor.isChecked() == 1:
+					self.valueLable.lbv_tryTarget_x = d_x
+					self.valueLable.lbv_tryTarget_y = d_y
+					self.valueLable.lbv_tryTarget_r = d_degree
+					self.lbv_tryTarget_x.setText(str(round(self.valueLable.lbv_tryTarget_x, 3)))
+					self.lbv_tryTarget_y.setText(str(round(self.valueLable.lbv_tryTarget_y, 3)))
+					self.lbv_tryTarget_r.setText(str(round(self.valueLable.lbv_tryTarget_r, 3)))
 
 			self.countTime_coorAverage = 0
 			self.total_x = 0.0
