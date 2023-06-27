@@ -1,0 +1,5 @@
+<launch>
+	<node pkg="ros_canBus" type="debugOC12_1.py" name="debugOC12_1" output="screen"> </node>
+    <node pkg="ros_canBus" type="debugMain.py" name="debugMain" output="screen"> </node>
+    <node pkg="ros_canBus" type="debugHC.py" name="debugHC" output="screen"> </node>
+</launch>

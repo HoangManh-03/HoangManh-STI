@@ -838,11 +838,142 @@ class goalControl():
         return _a, _b, _c
 
 
+    # def findGoalValidVS3(self, list_x, list_y, list_id, x_robot, y_robot):
+    #     id = 0
+    #     listIDValid = []
+    #     idLineFollow = []
+    #     closeDistance = False
+
+    #     # tim list hop le
+    #     for i in range(len(list_id)):
+    #         if list_id[i] != 0:
+    #             listIDValid.append(list_id[i])
+    #         else:
+    #             break
+
+    #     for i in range(len(listIDValid)):
+    #         distanceRobotToPoint = self.fnCalcDistPoints(list_x[i], x_robot, list_y[i], y_robot)
+    #         if distanceRobotToPoint < 0.05:
+    #             closeDistance = True
+    #             id_ = i + 1 if i < (len(listIDValid) - 1) else  i
+    #             id = listIDValid[id_]
+    #             break
+
+    #     if not closeDistance :
+    #         id = listIDValid[0]
+    #         numId = len(listIDValid)
+    #         if numId > 1:
+    #             if numId > 2:
+    #                 coefficientDistance = 1.
+    #                 coefficientAngle = 10.
+    #                 coefficientHC = 0.
+    #                 minTotal = float('inf')
+    #                 for i in range(numId-1):
+    #                     distanceRobotToPoint1 = self.fnCalcDistPoints(list_x[i], x_robot, list_y[i], y_robot)
+    #                     distanceRobotToPoint2 = self.fnCalcDistPoints(list_x[i+1], x_robot, list_y[i+1], y_robot)
+
+    #                     angleReferencePoint = self.calAngleThreePoint(list_x[i], list_y[i], \
+    #                                                             x_robot, y_robot, \
+    #                                                             list_x[i+1], list_y[i+1])
+                        
+    #                     if angleReferencePoint > 90.*PI/180.:
+    #                         angleReferencePoint = PI  - angleReferencePoint
+                        
+    #                     a,b,c = self.funcalptduongthang(list_x[i], list_y[i], list_x[i+1], list_y[i+1])
+    #                     disH =  fabs(a*x_robot + b*y_robot + c)/sqrt(a*a + b*b)
+
+    #                     total = coefficientDistance*(distanceRobotToPoint1 + distanceRobotToPoint2) + coefficientAngle*angleReferencePoint + coefficientHC*disH
+    #                     if total <= minTotal:
+    #                         minTotal = total
+    #                         idLineFollow = list(listIDValid[i:i+2])
+
+    #             else:
+    #                 idLineFollow = list(listIDValid)
+
+    #             print(idLineFollow)
+    #             id = idLineFollow[1]
+    #             angleReferencePoint = self.calAngleThreePoint(x_robot, y_robot, \
+    #                                                         list_x[list_id.index(idLineFollow[0])], list_y[list_id.index(idLineFollow[0])], \
+    #                                                         list_x[list_id.index(idLineFollow[1])], list_y[list_id.index(idLineFollow[1])])
+                
+    #             if angleReferencePoint >= 90.*PI/180.:
+    #                 id = idLineFollow[0]
+
+    #     return id , True if list_id.index(id) == (len(listIDValid) - 1) else False
+    
+
+    # def findGoalValidVS4(self, list_x, list_y, list_id, x_robot, y_robot):
+    #     id = 0
+    #     listIDValid = []
+    #     idLineFollow = []
+    #     closeDistance = False
+
+    #     # tim list hop le
+    #     for i in range(len(list_id)):
+    #         if list_id[i] != 0:
+    #             listIDValid.append(list_id[i])
+    #         else:
+    #             break
+
+    #     for i in range(len(listIDValid)):
+    #         distanceRobotToPoint = self.fnCalcDistPoints(list_x[i], x_robot, list_y[i], y_robot)
+    #         if distanceRobotToPoint < 0.05:
+    #             closeDistance = True
+    #             id_ = i + 1 if i < (len(listIDValid) - 1) else  i
+    #             id = listIDValid[id_]
+    #             print("select mode Close Distance")
+    #             break
+
+    #     if not closeDistance :
+    #         id = listIDValid[0]
+    #         numId = len(listIDValid)
+    #         if numId > 1:
+    #             if numId > 2:
+    #                 coefficientDistance = 1.5
+    #                 coefficientAngle = 2.
+    #                 coefficientHC = 0.5
+    #                 minTotal = float('inf')
+    #                 for i in range(numId-1):
+    #                     distanceRobotToPoint1 = self.fnCalcDistPoints(list_x[i], x_robot, list_y[i], y_robot)
+    #                     distanceRobotToPoint2 = self.fnCalcDistPoints(list_x[i+1], x_robot, list_y[i+1], y_robot)
+
+    #                     angleReferencePoint = self.calAngleThreePoint(x_robot, y_robot, \
+    #                                                                 list_x[i], list_y[i], \
+    #                                                                 list_x[i+1], list_y[i+1])
+                        
+    #                     # if angleReferencePoint > 90.*PI/180.:
+    #                     angleReferencePoint = PI  - angleReferencePoint
+                        
+    #                     a,b,c = self.funcalptduongthang(list_x[i], list_y[i], list_x[i+1], list_y[i+1])
+    #                     disH =  fabs(a*x_robot + b*y_robot + c)/sqrt(a*a + b*b)
+
+    #                     total = coefficientDistance*(distanceRobotToPoint1 + distanceRobotToPoint2) + coefficientAngle*angleReferencePoint + coefficientHC*disH
+    #                     if total <= minTotal:
+    #                         minTotal = total
+    #                         idLineFollow = list(listIDValid[i:i+2])
+
+    #                     print("Distan 2 edge: " + str(distanceRobotToPoint1+distanceRobotToPoint2) + " | Angle: " + str(angleReferencePoint) + " | Hinh chieu: " + str(disH))
+    #                     print("TOTAL: " + str(total))
+
+    #             else:
+    #                 idLineFollow = list(listIDValid)
+
+    #             print(idLineFollow)
+    #             id = idLineFollow[1]
+    #             angleReferencePoint = self.calAngleThreePoint(x_robot, y_robot, \
+    #                                                         list_x[list_id.index(idLineFollow[0])], list_y[list_id.index(idLineFollow[0])], \
+    #                                                         list_x[list_id.index(idLineFollow[1])], list_y[list_id.index(idLineFollow[1])])
+                
+    #             if angleReferencePoint >= 90.*PI/180.:
+    #                 id = idLineFollow[0]
+
+    #     return id , True if list_id.index(id) == (len(listIDValid) - 1) else False
+    
+
     def findGoalValidVS3(self, list_x, list_y, list_id, x_robot, y_robot):
         id = 0
         listIDValid = []
         idLineFollow = []
-        closeDistance = False
 
         # tim list hop le
         for i in range(len(list_id)):
@@ -850,124 +981,58 @@ class goalControl():
                 listIDValid.append(list_id[i])
             else:
                 break
+        
+        id = listIDValid[0]
+        #
+        minTotal = float('inf')
+        numId = len(listIDValid)
+        if numId > 1:
+            if numId > 2:
+                coefficientDistance = 1.5
+                coefficientAngle = 2.
+                coefficientHC = 0.5
+                for i in range(numId-1):
+                    print("Point: " + str(i))
+                    distanceRobotToPoint1 = self.fnCalcDistPoints(list_x[i], x_robot, list_y[i], y_robot)
+                    distanceRobotToPoint2 = self.fnCalcDistPoints(list_x[i+1], x_robot, list_y[i+1], y_robot)
+                    distancePoint1ToPoint2 = self.fnCalcDistPoints(list_x[i], list_x[i+1], list_y[i], list_y[i+1])
+                    angleReferencePoint = self.calAngleThreePoint(x_robot, y_robot, \
+                                                            list_x[i], list_y[i], \
+                                                            list_x[i+1], list_y[i+1])
+                    
+                    print("Truoc: " + str(angleReferencePoint))
+                    
+                    # if angleReferencePoint > 90.*PI/180.:
+                    #     print("aaaa")
+                    angleReferencePoint = PI  - angleReferencePoint
+                    
+                    print("Sau: " + str(angleReferencePoint))
+                    
+                    a,b,c = self.funcalptduongthang(list_x[i], list_y[i], list_x[i+1], list_y[i+1])
+                    disH =  fabs(a*x_robot + b*y_robot + c)/sqrt(a*a + b*b)
 
-        for i in range(len(listIDValid)):
-            distanceRobotToPoint = self.fnCalcDistPoints(list_x[i], x_robot, list_y[i], y_robot)
-            if distanceRobotToPoint < 0.05:
-                closeDistance = True
-                id_ = i + 1 if i < (len(listIDValid) - 1) else  i
-                id = listIDValid[id_]
-                break
+                    total = coefficientDistance*(distanceRobotToPoint1 + distanceRobotToPoint2 - distancePoint1ToPoint2) + coefficientAngle*angleReferencePoint + coefficientHC*disH
+                    print("Total: " + str(total))
+                    if total <= minTotal:
+                        minTotal = total
+                        idLineFollow = list(listIDValid[i:i+2])
 
-        if not closeDistance :
-            id = listIDValid[0]
-            numId = len(listIDValid)
-            if numId > 1:
-                if numId > 2:
-                    coefficientDistance = 1.
-                    coefficientAngle = 10.
-                    coefficientHC = 0.
-                    minTotal = float('inf')
-                    for i in range(numId-1):
-                        distanceRobotToPoint1 = self.fnCalcDistPoints(list_x[i], x_robot, list_y[i], y_robot)
-                        distanceRobotToPoint2 = self.fnCalcDistPoints(list_x[i+1], x_robot, list_y[i+1], y_robot)
-
-                        angleReferencePoint = self.calAngleThreePoint(list_x[i], list_y[i], \
-                                                                x_robot, y_robot, \
-                                                                list_x[i+1], list_y[i+1])
-                        
-                        if angleReferencePoint > 90.*PI/180.:
-                            angleReferencePoint = PI  - angleReferencePoint
-                        
-                        a,b,c = self.funcalptduongthang(list_x[i], list_y[i], list_x[i+1], list_y[i+1])
-                        disH =  fabs(a*x_robot + b*y_robot + c)/sqrt(a*a + b*b)
-
-                        total = coefficientDistance*(distanceRobotToPoint1 + distanceRobotToPoint2) + coefficientAngle*angleReferencePoint + coefficientHC*disH
-                        if total <= minTotal:
-                            minTotal = total
-                            idLineFollow = list(listIDValid[i:i+2])
-
-                else:
-                    idLineFollow = list(listIDValid)
-
-                print(idLineFollow)
-                id = idLineFollow[1]
-                angleReferencePoint = self.calAngleThreePoint(x_robot, y_robot, \
-                                                            list_x[list_id.index(idLineFollow[0])], list_y[list_id.index(idLineFollow[0])], \
-                                                            list_x[list_id.index(idLineFollow[1])], list_y[list_id.index(idLineFollow[1])])
-                
-                if angleReferencePoint >= 90.*PI/180.:
-                    id = idLineFollow[0]
-
-        return id , True if list_id.index(id) == (len(listIDValid) - 1) else False
-    
-
-    def findGoalValidVS4(self, list_x, list_y, list_id, x_robot, y_robot):
-        id = 0
-        listIDValid = []
-        idLineFollow = []
-        closeDistance = False
-
-        # tim list hop le
-        for i in range(len(list_id)):
-            if list_id[i] != 0:
-                listIDValid.append(list_id[i])
             else:
-                break
+                idLineFollow = list(listIDValid)
 
-        for i in range(len(listIDValid)):
-            distanceRobotToPoint = self.fnCalcDistPoints(list_x[i], x_robot, list_y[i], y_robot)
-            if distanceRobotToPoint < 0.05:
-                closeDistance = True
-                id_ = i + 1 if i < (len(listIDValid) - 1) else  i
-                id = listIDValid[id_]
-                print("select mode Close Distance")
-                break
+            print(idLineFollow)
+            
+            id = idLineFollow[1]
+            angleReferencePoint = self.calAngleThreePoint(x_robot, y_robot, \
+                                                        list_x[list_id.index(idLineFollow[0])], list_y[list_id.index(idLineFollow[0])], \
+                                                        list_x[list_id.index(idLineFollow[1])], list_y[list_id.index(idLineFollow[1])])
+            
+            if angleReferencePoint >= 90.*PI/180.:
+                id = idLineFollow[0]
 
-        if not closeDistance :
-            id = listIDValid[0]
-            numId = len(listIDValid)
-            if numId > 1:
-                if numId > 2:
-                    coefficientDistance = 1.5
-                    coefficientAngle = 2.
-                    coefficientHC = 0.5
-                    minTotal = float('inf')
-                    for i in range(numId-1):
-                        distanceRobotToPoint1 = self.fnCalcDistPoints(list_x[i], x_robot, list_y[i], y_robot)
-                        distanceRobotToPoint2 = self.fnCalcDistPoints(list_x[i+1], x_robot, list_y[i+1], y_robot)
+        return id, True if list_id.index(id) == (len(listIDValid) - 1) else False
 
-                        angleReferencePoint = self.calAngleThreePoint(x_robot, y_robot, \
-                                                                    list_x[i], list_y[i], \
-                                                                    list_x[i+1], list_y[i+1])
-                        
-                        # if angleReferencePoint > 90.*PI/180.:
-                        angleReferencePoint = PI  - angleReferencePoint
-                        
-                        a,b,c = self.funcalptduongthang(list_x[i], list_y[i], list_x[i+1], list_y[i+1])
-                        disH =  fabs(a*x_robot + b*y_robot + c)/sqrt(a*a + b*b)
 
-                        total = coefficientDistance*(distanceRobotToPoint1 + distanceRobotToPoint2) + coefficientAngle*angleReferencePoint + coefficientHC*disH
-                        if total <= minTotal:
-                            minTotal = total
-                            idLineFollow = list(listIDValid[i:i+2])
-
-                        print("Distan 2 edge: " + str(distanceRobotToPoint1+distanceRobotToPoint2) + " | Angle: " + str(angleReferencePoint) + " | Hinh chieu: " + str(disH))
-                        print("TOTAL: " + str(total))
-
-                else:
-                    idLineFollow = list(listIDValid)
-
-                print(idLineFollow)
-                id = idLineFollow[1]
-                angleReferencePoint = self.calAngleThreePoint(x_robot, y_robot, \
-                                                            list_x[list_id.index(idLineFollow[0])], list_y[list_id.index(idLineFollow[0])], \
-                                                            list_x[list_id.index(idLineFollow[1])], list_y[list_id.index(idLineFollow[1])])
-                
-                if angleReferencePoint >= 90.*PI/180.:
-                    id = idLineFollow[0]
-
-        return id , True if list_id.index(id) == (len(listIDValid) - 1) else False
 
     def run(self):
         # khoi tao vung an toan nho
@@ -1122,7 +1187,7 @@ class goalControl():
                             rospy.logwarn('kiem tra bat dau')
                             if self.id_fl != 0.0:   
                                 # --- Them vao ngay 12/4/2023 fix loi quay dau
-                                idFollowValid, isIDEndList = self.findGoalValidVS4(self.list_x, self.list_y, self.list_id, self.poseRbMa.position.x, self.poseRbMa.position.y)
+                                idFollowValid, isIDEndList = self.findGoalValidVS3(self.list_x, self.list_y, self.list_id, self.poseRbMa.position.x, self.poseRbMa.position.y)
                                 print("ID follow is " + str(idFollowValid) + " | is ID END: " + str(isIDEndList))
                                 indexOfId = self.list_id.index(idFollowValid)
 

@@ -129,6 +129,8 @@ class valueLable:
 		self.lbv_route_point4 = ''
 		self.lbv_route_job1 = ''
 		self.lbv_route_job2 = ''
+		self.lbv_route_job1_mean = ''
+		self.lbv_route_job2_mean = ''
 		self.lbv_route_message = ''
 
 		self.lbv_conveyorA = ''
@@ -1048,7 +1050,8 @@ class WelcomeScreen(QDialog):
 		self.lbv_route_point4.setText(self.valueLable.lbv_route_point4)
 		self.lbv_route_job1.setText(self.valueLable.lbv_route_job1)
 		self.lbv_route_job2.setText(self.valueLable.lbv_route_job2)
-		
+		self.lbv_route_job1_mean.setText(self.valueLable.lbv_route_job1_mean)
+		self.lbv_route_job2_mean.setText(self.valueLable.lbv_route_job2_mean)
 		self.lbv_route_message.setText(self.valueLable.lbv_route_message)
 
 		# self.lbv_coorAverage_x.setText(self.valueLable.lbv_coorAverage_x)
@@ -1273,6 +1276,10 @@ class Program(threading.Thread):
 		rospy.Subscriber("/server_cmdRequest", Server_cmdRequest, self.callback_server_cmdRequest)
 		self.server_cmdRequest = Server_cmdRequest()
 
+		# -- Traffic cmd
+		rospy.Subscriber("/NN_cmdRequest", NN_cmdRequest, self.NN_cmdRequest_callback) 
+		self.NN_cmdRequest = NN_cmdRequest()
+
 		# -- Pose robot
 		rospy.Subscriber("/NN_infoRequest", NN_infoRequest, self.callback_NN_infoRequest) 
 		self.NN_infoRequest = NN_infoRequest()
@@ -1280,6 +1287,10 @@ class Program(threading.Thread):
 		# -- info AGV
 		rospy.Subscriber("/NN_infoRespond", NN_infoRespond, self.infoAGV_callback) 
 		self.NN_infoRespond = NN_infoRespond()
+
+		# -- info move
+		rospy.Subscriber("/status_goal_control", Status_goal_control, self.goalControl_callback)
+		self.status_goalControl = Status_goal_control() # sub from move_base
 
 		# -- Launch
 		rospy.Subscriber("/status_launch", Status_launch, self.callback_statusLaunch)
@@ -1395,6 +1406,9 @@ class Program(threading.Thread):
 	def callback_statusPort(self, data):
 		self.status_port = data
 
+	def goalControl_callback(self, data):
+		self.status_goalControl = data
+
 	def callBack_cancelMission(self, data):
 		self.cancelMission_status = data
 
@@ -1409,6 +1423,9 @@ class Program(threading.Thread):
 
 	def callback_server_cmdRequest(self, data):
 		self.server_cmdRequest = data
+
+	def NN_cmdRequest_callback(self, data):
+		self.NN_cmdRequest = data	
 
 	def callback_NN_infoRequest(self, data):
 		self.NN_infoRequest = data
@@ -1711,22 +1728,22 @@ class Program(threading.Thread):
 			angle_robot = angle
 		self.valueLable.lbv_coordinates_r = str( round( degrees(angle_robot), 3) )
 		# --
-		# self.valueLable.lbv_route_target = str(self.server_cmdRequest.target_id) + "\n" + str(self.server_cmdRequest.target_x) + "\n" + str(self.server_cmdRequest.target_y) + "\n" + str(round(degrees(self.server_cmdRequest.target_z), 2)) + "\n" + str(self.server_cmdRequest.offset)
+		self.valueLable.lbv_route_target = str(self.NN_cmdRequest.target_id) + "\n" + str(self.NN_cmdRequest.target_x) + "\n" + str(self.NN_cmdRequest.target_y) + "\n" + str(round(degrees(self.NN_cmdRequest.target_z), 2)) + "\n" + str(self.NN_cmdRequest.offset)
 		# # -
-		# if len(self.server_cmdRequest.list_id) >= 5:
-		# 	self.valueLable.lbv_route_point0 = str(self.server_cmdRequest.list_id[0]) + "\n" + str(self.server_cmdRequest.list_x[0]) + "\n" + str(self.server_cmdRequest.list_y[0]) + "\n" + str(self.server_cmdRequest.list_speed[0]) + "\n" + str(self.server_cmdRequest.list_directionTravel[0]) + "\n" + str(self.server_cmdRequest.list_angleLine[0])
-		# 	self.valueLable.lbv_route_point1 = str(self.server_cmdRequest.list_id[1]) + "\n" + str(self.server_cmdRequest.list_x[1]) + "\n" + str(self.server_cmdRequest.list_y[1]) + "\n" + str(self.server_cmdRequest.list_speed[1]) + "\n" + str(self.server_cmdRequest.list_directionTravel[1]) + "\n" + str(self.server_cmdRequest.list_angleLine[1])
-		# 	self.valueLable.lbv_route_point2 = str(self.server_cmdRequest.list_id[2]) + "\n" + str(self.server_cmdRequest.list_x[2]) + "\n" + str(self.server_cmdRequest.list_y[2]) + "\n" + str(self.server_cmdRequest.list_speed[2]) + "\n" + str(self.server_cmdRequest.list_directionTravel[2]) + "\n" + str(self.server_cmdRequest.list_angleLine[2])
-		# 	self.valueLable.lbv_route_point3 = str(self.server_cmdRequest.list_id[3]) + "\n" + str(self.server_cmdRequest.list_x[3]) + "\n" + str(self.server_cmdRequest.list_y[3]) + "\n" + str(self.server_cmdRequest.list_speed[3]) + "\n" + str(self.server_cmdRequest.list_directionTravel[3]) + "\n" + str(self.server_cmdRequest.list_angleLine[3])
-		# 	self.valueLable.lbv_route_point4 = str(self.server_cmdRequest.list_id[4]) + "\n" + str(self.server_cmdRequest.list_x[4]) + "\n" + str(self.server_cmdRequest.list_y[4]) + "\n" + str(self.server_cmdRequest.list_speed[4]) + "\n" + str(self.server_cmdRequest.list_directionTravel[4]) + "\n" + str(self.server_cmdRequest.list_angleLine[4])
+		if len(self.NN_cmdRequest.list_id) >= 5:
+			self.valueLable.lbv_route_point0 = str(self.NN_cmdRequest.list_id[0]) + "\n" + str(self.NN_cmdRequest.list_x[0]) + "\n" + str(self.NN_cmdRequest.list_y[0]) + "\n" + str(self.NN_cmdRequest.list_speed[0])
+			self.valueLable.lbv_route_point1 = str(self.NN_cmdRequest.list_id[1]) + "\n" + str(self.NN_cmdRequest.list_x[1]) + "\n" + str(self.NN_cmdRequest.list_y[1]) + "\n" + str(self.NN_cmdRequest.list_speed[1])
+			self.valueLable.lbv_route_point2 = str(self.NN_cmdRequest.list_id[2]) + "\n" + str(self.NN_cmdRequest.list_x[2]) + "\n" + str(self.NN_cmdRequest.list_y[2]) + "\n" + str(self.NN_cmdRequest.list_speed[2])
+			self.valueLable.lbv_route_point3 = str(self.NN_cmdRequest.list_id[3]) + "\n" + str(self.NN_cmdRequest.list_x[3]) + "\n" + str(self.NN_cmdRequest.list_y[3]) + "\n" + str(self.NN_cmdRequest.list_speed[3])
+			self.valueLable.lbv_route_point4 = str(self.NN_cmdRequest.list_id[4]) + "\n" + str(self.NN_cmdRequest.list_x[4]) + "\n" + str(self.NN_cmdRequest.list_y[4]) + "\n" + str(self.NN_cmdRequest.list_speed[4])
 		
-		# self.valueLable.lbv_route_job1 = str(self.server_cmdRequest.before_mission)
-		# self.valueLable.lbv_route_job2 = str(self.server_cmdRequest.after_mission)
-		# self.valueLable.lbv_route_message = self.server_cmdRequest.command
-		# self.valueLable.lbv_jobRuning = self.show_job(self.NN_infoRespond.process)
+		self.valueLable.lbv_route_job1 = str(self.NN_cmdRequest.before_mission)
+		self.valueLable.lbv_route_job2 = str(self.NN_cmdRequest.after_mission)
+		self.valueLable.lbv_route_message = self.NN_cmdRequest.command
+		self.valueLable.lbv_jobRuning = self.show_job(self.NN_infoRespond.process)
 		# -- 
-		# self.valueLable.lbv_goalFollow_id = str(self.navigation_respond.id_goalFollow)
-				# lbv_coorAverage_x
+		self.valueLable.lbv_goalFollow_id = str(self.status_goalControl.ID_follow)
+
 		# -- Launch
 		self.valueLable.percentLaunch = self.status_launch.persent
 		self.valueLable.lbv_launhing = self.status_launch.notification

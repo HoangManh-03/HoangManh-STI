@@ -22,15 +22,14 @@ bool bt_stop
 
 int16 vs_speed
 bool bt_resetFrameWork
-bool bt_free
+bool bt_disableBrake
 
 bool bt_tryTarget_start
 bool bt_tryTarget_stop
 bool bt_tryTarget_reset
+bool ck_tryTarget_safety
 
 float64 tryTarget_x
 float64 tryTarget_y
 float64 tryTarget_r
 float64 tryTarget_d
-
-bool tryTarget_barrier

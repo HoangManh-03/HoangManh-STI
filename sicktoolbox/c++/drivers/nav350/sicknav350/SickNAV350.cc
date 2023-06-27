@@ -1676,7 +1676,7 @@ namespace SickToolbox {
 			//  std::cout<<"Landmark filter "<<std::endl;
 			int refcount = stoi(arg[count++], 0, 16);
 			ReflectorData_.num_reflector = refcount;
-		  	std::cout<<"reflector count: "<< refcount <<std::endl;
+		  	// std::cout<<"reflector count: "<< refcount <<std::endl;
 			for (int i = 0; i < refcount; i++)
 			{
 				if (arg[count++] == "0")
@@ -1865,7 +1865,7 @@ namespace SickToolbox {
 			//  std::cout<<"Landmark filter "<<std::endl;
 			int refcount = atoi(arg[count++].c_str());
 			ReflectorData_.num_reflector=refcount;
-			//		  std::cout<<"reflector count: "<<refcount<<std::endl;
+			// std::cout<<"reflector count: "<<refcount<<std::endl;
 			for (int i = 0; i < refcount; i++)
 			{
 				if (arg[count++] == "0")

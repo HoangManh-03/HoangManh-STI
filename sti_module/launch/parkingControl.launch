@@ -1,6 +1,8 @@
 <launch>
 
-      <arg name="node_namespace" default="parking_nav_v1" />
+      <!-- <arg name="node_namespace" default="parking_nav_v1" /> -->
+      <arg name="node_namespace" default="makePathParkingV2" />
+      <arg name="node_namespace2" default="parkingAGV" />
       
       <!-- <rosparam command="load" 
                 file="$(find sti_module)/config/param_parking.yaml" 
@@ -9,5 +11,10 @@
             name="$(arg node_namespace)" 
             type="$(arg node_namespace).py" />
             <!-- output="screen"/> -->
+
+      <node pkg="sti_module" 
+            name="$(arg node_namespace2)" 
+            type="$(arg node_namespace2).py"
+            output="screen"/>
 
 </launch>

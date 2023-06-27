@@ -72,7 +72,7 @@ class driver():
 	def __init__(self):
 		# status = 1 (all right) | != 1 error.
 
-		self.PORT =  rospy.get_param("port", "/dev/stibase_motor")
+		self.PORT =  rospy.get_param("port", "/dev/ttyUSB0")
 		self.BAUDRATE = rospy.get_param("baudrate", 57600) # 57600 115200
 		self.maxRPM = rospy.get_param("maxRPM", 3800)
 		self.minRPM = self.maxRPM*(-1)
@@ -94,12 +94,12 @@ class driver():
 		self.perimeter = 0.47
 		self.transmission_ratio = 30
 
-		self.accelerationRate = 600 # [1 to 1,000,000] ms
-		self.decelerationRate = 300 # [1 to 1,000,000] ms
-		self.torqueLimiting = 200    # 0 to 10,000 (1=0.1%)
+		self.accelerationRate = 1000 # [1 to 1,000,000] ms
+		self.decelerationRate = 200 # [1 to 1,000,000] ms
+		self.torqueLimiting = 200 # 200    # 0 to 10,000 (1=0.1%)
 		# -- 
 		self.reg_communicationTimeout = 5003 # P222
-		self.reg_CommunicationErrorDetection = 5005 #
+		self.reg_CommunicationErrorDetection = 5005 # 
 		# -- Registers
 		self.reg_operationData = 89 # (0059h) - [0 to 255] P66
 		self.reg_operationType = 91 #
@@ -277,7 +277,7 @@ class driver():
 		self.status_run = 1
 		self.status_stop = 0
 		# -- 
-		self.timeWait = 0.008 # 0.004
+		self.timeWait = 0.004
 		# -- 
 		self.frequence_pubStatus = 25.
 		self.cycle_pubStatus = 1/self.frequence_pubStatus
@@ -828,7 +828,7 @@ class driver():
 		rev_1 = self.controlDriver_1.REVERT
 		rev_2 = self.controlDriver_2.REVERT
 		# ---------------------------  Driver 1 --------------------------- #
-		if (spd_1 == 0):
+		if (spd_1 == 0):				
 			# pass
 			if (self.disable_brake.data == 0):
 				# -- S-ON
@@ -842,28 +842,19 @@ class driver():
 			else:
 				try:
 					time.sleep(self.timeWait)
-					rawData = self.MODBUS.execute(self.controlDriver_1.ID, cst.WRITE_SINGLE_REGISTER, self.reg_inputCommandLower, output_value = 65)
+					rawData = self.MODBUS.execute(self.controlDriver_1.ID, cst.WRITE_SINGLE_REGISTER, self.reg_inputCommandLower, output_value = 65) # 65
 					# print ("rawData1: ", rawData)
 				except modbus_tk.modbus.ModbusError as exc:
 					print ("Read reg_inputCommandLower Error")
 					self.countErr_reqSpeed += 1
-			# try:
-			# 	time.sleep(self.timeWait)
-			# 	rawData = self.MODBUS.execute(self.controlDriver_1.ID, cst.WRITE_SINGLE_REGISTER, self.reg_inputCommandUpper, output_value = 0)
-			# 	# print ("rawData1: ", rawData)
-			# 	# print ("here")
-			# except modbus_tk.modbus.ModbusError as exc:
-			# 	print ("Read reg_inputCommandLower Error")
-			# 	self.countErr_reqSpeed += 1
 
-			# -- OFF S-ON
-			# try:
-			# 	time.sleep(self.timeWait)
-			# 	rawData = self.MODBUS.execute(self.controlDriver_1.ID, cst.WRITE_SINGLE_REGISTER, self.reg_inputCommandLower, output_value = 0)
-			# 	# print ("rawData1: ", rawData)
-			# except modbus_tk.modbus.ModbusError as exc:
-			# 	print ("Read reg_inputCommandLower Error")
-			# 	self.countErr_reqSpeed += 1
+			try:
+				time.sleep(self.timeWait)
+				rawData = self.MODBUS.execute(self.controlDriver_1.ID, cst.WRITE_SINGLE_REGISTER, self.reg_inputCommandUpper, output_value = 0) # 
+				# print ("reg 8: ", rawData)
+			except modbus_tk.modbus.ModbusError as exc:
+				print ("reg_inputCommandUpper Error")
+				self.countErr_reqSpeed += 1
 
 		else:
 			# ----- Setup ----- #
@@ -947,13 +938,20 @@ class driver():
 			else:
 				try:
 					time.sleep(self.timeWait)
-					rawData = self.MODBUS.execute(self.controlDriver_2.ID, cst.WRITE_SINGLE_REGISTER, self.reg_inputCommandLower, output_value = 65)
+					rawData = self.MODBUS.execute(self.controlDriver_2.ID, cst.WRITE_SINGLE_REGISTER, self.reg_inputCommandLower, output_value = 65) # 65
 					# print ("rawData1: ", rawData)
 				except modbus_tk.modbus.ModbusError as exc:
 					print ("Read reg_inputCommandLower Error")
 					self.countErr_reqSpeed += 1
 
-
+			try:
+				time.sleep(self.timeWait)
+				rawData = self.MODBUS.execute(self.controlDriver_2.ID, cst.WRITE_SINGLE_REGISTER, self.reg_inputCommandUpper, output_value = 0) # 
+				# print ("reg 8: ", rawData)
+			except modbus_tk.modbus.ModbusError as exc:
+				print ("reg_inputCommandUpper Error")
+				self.countErr_reqSpeed += 1
+				
 		else:
 			# ----- Setup ----- #
 			# -- Turn on S-ON

@@ -28,7 +28,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Int16, Int8
+from std_msgs.msg import Int16, Int8, Bool
 from message_pkg.msg import *
 from sensor_msgs.msg import Imu
 from math import sin , cos , pi , atan2, radians, sqrt, pow, degrees
@@ -159,6 +159,10 @@ class ros_control():
 		self.taskDriver_resetRead = 1
 		self.taskDriver_Read = 2
 		self.task_driver.data = self.taskDriver_Read
+
+		# -
+		self.pub_disableBrake = rospy.Publisher("/disable_brake", Bool, queue_size= 20)
+		self.disable_brake = Bool()
 
 		# debug
 		# self.pub_debug = rospy.Publisher("/debug_control", Debug_control, queue_size=100)
@@ -1052,8 +1056,10 @@ class ros_control():
 
 			if self.mode_operate == self.mode_by_hand:
 				self.process = 30
+
 			elif self.mode_operate == self.mode_auto:
 				self.process = 40
+				self.disable_brake.data = 0
 	# ------------------------------------------------------------------------------------
 	# -- BY HAND:
 		elif self.process == 30:
@@ -1087,6 +1093,11 @@ class ros_control():
 					self.liftTask_byHand = self.liftDown
 					self.flag_commandLift = 1
 
+				if self.app_button.bt_lift_up == False and self.app_button.bt_lift_down == False:
+					self.liftTask_byHand = self.liftStop
+					self.flag_commandLift = 0
+					self.liftTask = self.liftTask_byHand
+
 				if self.flag_commandLift == 1:
 					self.liftTask = self.liftTask_byHand
 					if self.lift_status.status.data >= 3: # Hoàn thành
@@ -1107,26 +1118,23 @@ class ros_control():
 					self.charger_requir = self.charger_off
 
 				# -- Keep shaft.
-				# if self.app_button.bt_free == True:
-				# 	pass
-				# else:
-				# 	pass
+				self.disable_brake.data = self.app_button.bt_disableBrake
 
 			else:
 				self.charger_requir = self.charger_off
 				self.liftTask = self.liftStop
 
-				if self.app_button.try_reset == 0:
-					self.step_tryTarget = 0
-				# - 
-				if self.step_tryTarget == 0:
-					if self.app_button.try_start == 1:
-						self.step_tryTarget = 1
+				# if self.app_button.try_reset == 0:
+				# 	self.step_tryTarget = 0
+				# # - 
+				# if self.step_tryTarget == 0:
+				# 	if self.app_button.try_start == 1:
+				# 		self.step_tryTarget = 1
 
-				elif self.step_tryTarget == 1:
-					pass
-				elif self.step_tryTarget == 2:
-					pass
+				# elif self.step_tryTarget == 1:
+				# 	pass
+				# elif self.step_tryTarget == 2:
+				# 	pass
 			# ------------------------------------------------------------
 			
 
@@ -1135,6 +1143,7 @@ class ros_control():
 	# -- RUN AUTO:
 		elif self.process == 40: # -- kiem tra loi
 			if self.flag_error == 1: # thay doi != 0
+				self.job_doing = 30
 				self.enb_move = 0
 				self.enb_mission = 0
 				self.process = 2
@@ -1145,25 +1154,27 @@ class ros_control():
 		elif self.process == 41:    # kiem tra muc tieu thay doi
 			if ( self.target_x != self.NN_cmdRequest.target_x ) or ( self.target_y != self.NN_cmdRequest.target_y) or ( self.target_z != self.NN_cmdRequest.target_z) or ( self.target_tag != self.NN_cmdRequest.tag):
 				if (self.NN_cmdRequest.target_x < 500) and (self.NN_cmdRequest.target_y < 500):
-					# self.move_req = Move_request()
-
-					# Khong che phep doi len khi dang:
-					# - 1, Nang hoac Ha.
-					# - 2, Dang di vao ke.
-					# - 3, Dang di ra khoi ke.
+					""" Không cho phép đổi lệnh khi đang thao tác:
+						1, Nâng/Hạ.
+						2, Đang đi vào/ra điểm thao tác.
+						3, Đang đi vào/ra khỏi sạc.
+					"""
 					a1 = 0
 					a2 = 0
-					if self.lift_status.status == -1 or self.lift_status.status == 1 or self.lift_status.status == 2:  # Ban nang: Dung hoac Hoan thanh.
+					# - Đang thao tác Nâng/Hạ. OK
+					if self.lift_status.status == -1 or self.lift_status.status == 1 or self.lift_status.status == 2:
 						a1 = 1
-					else:
-						a1 = 0
 
-					if self.parking_status.status > 8 and self.parking_status.status <= 11: # Dang di vao trong ke -> ko cho doi lenh.
-						a2 = 1 # thay doi
-					else:
-						a2 = 0
+					# - Đang đi vào điểm thao tác.
+					if self.parking_status.status == 41 or self.parking_status.status == 51:
+						a2 = 1
 
+					# - Đang đi ra khỏi điểm thao tác.
+					if self.status_goalControl.misson == 2 and self.parking_status.status_now == 2:
+						a2 = 1
+					# --
 					if a1 == 1 or a2 == 1:
+						self.job_doing = 9
 						self.log_mess("warn", "Have new target but must Waiting perform done ....", 0)
 						self.process = 42
 					else:
@@ -1204,11 +1215,9 @@ class ros_control():
 							self.resetAll_variable()
 							self.completed_backward = 1
 				else:
-					# -- add 23/12/2021: Xu ly loi Dang Parking thi bi chuyen che do -> AGV cu parking.
+					# -- add 23/12/2021: Xu ly loi Dang Parking thi bi chuyen che do -> AGV van parking.
 					if self.completed_before_mission == 1 and self.completed_moveSimple == 1 and self.completed_moveSpecial == 0:
 						delta_distance = self.calculate_distance(self.robotPose_nav.pose.position, self.pose_parkingRuning.position)
-						# -- phien ban 1: 
-						# delta_angle = self.calculate_angle(self.robotPose_nav.pose.orientation, self.pose_parkingRuning.orientation)
 						# -- phien ban 2: Xac dinh do lech giua goc cua AGV voi goc cua diem vao Tag
 						delta_angle = self.calculate_angle(self.robotPose_nav.pose.orientation, self.parking_poseTarget.orientation)
 						# print ("--------------------")
@@ -1368,7 +1377,6 @@ class ros_control():
 						else:
 							# -- edit: 26/02/2022
 							self.enb_move = 2
-							# self.enb_move = 1
 					else:
 						self.completed_backward = 1	
 						self.enb_move = 0
@@ -1430,11 +1438,11 @@ class ros_control():
 				self.completed_move = 1
 				self.process = 34
 			else:
-				self.job_doing = 6
 				self.process = 48 # kiem tra diem vao ke
 
 		elif self.process == 48:   # Parking
 			if self.completed_moveSpecial == 0: # chua hoan thanh di chuyen
+				self.job_doing = 6
 				# sau sẽ thêm phần khi đổi mã tag thì tự động reset paking.
 				if self.parking_status.status == 1: # Free
 					self.process = 50
@@ -1661,6 +1669,9 @@ class ros_control():
 			# -- Request task Driver:
 			self.pub_taskDriver.publish(self.task_driver)
 
+			# ---------------- Brake ---------------- #
+			self.pub_disableBrake.publish(self.disable_brake)
+			
 	  	# -- cancel mission
 		if self.cancelMission_control.data == 1:
 			self.flag_cancelMission = 1

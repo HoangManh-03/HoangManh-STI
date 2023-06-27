@@ -94,9 +94,11 @@ class data_synthesis():
 		# -- info AGV
 		rospy.Subscriber("/NN_infoRespond", NN_infoRespond, self.infoAGV_callback) 
 		self.infoAGV = NN_infoRespond()
+
 		# -- info move
 		rospy.Subscriber("/status_goal_control", Status_goal_control, self.goalControl_callback)
 		self.status_goalControl = Status_goal_control() # sub from move_base
+		
 		# -- parking
 		rospy.Subscriber("/parking_respond", Parking_respond, self.parking_callback)
 		self.parking_status = Parking_respond()

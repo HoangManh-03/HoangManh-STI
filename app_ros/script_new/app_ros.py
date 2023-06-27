@@ -101,6 +101,10 @@ class Program(threading.Thread):
 		rospy.Subscriber("/server_cmdRequest", Server_cmdRequest, self.callback_server_cmdRequest)
 		self.server_cmdRequest = Server_cmdRequest()
 
+		# -- Traffic cmd
+		rospy.Subscriber("/NN_cmdRequest", NN_cmdRequest, self.NN_cmdRequest_callback) 
+		self.NN_cmdRequest = NN_cmdRequest()
+
 		# -- Pose robot
 		rospy.Subscriber("/NN_infoRequest", NN_infoRequest, self.callback_NN_infoRequest) 
 		self.NN_infoRequest = NN_infoRequest()
@@ -108,6 +112,10 @@ class Program(threading.Thread):
 		# -- info AGV
 		rospy.Subscriber("/NN_infoRespond", NN_infoRespond, self.infoAGV_callback) 
 		self.NN_infoRespond = NN_infoRespond()
+
+		# -- info move
+		rospy.Subscriber("/status_goal_control", Status_goal_control, self.goalControl_callback)
+		self.status_goalControl = Status_goal_control() # sub from move_base
 
 		# -- Launch
 		rospy.Subscriber("/status_launch", Status_launch, self.callback_statusLaunch)
@@ -225,6 +233,9 @@ class Program(threading.Thread):
 	def callback_statusPort(self, data):
 		self.status_port = data
 
+	def goalControl_callback(self, data):
+		self.status_goalControl = data
+		
 	def callBack_cancelMission(self, data):
 		self.cancelMission_status = data
 
@@ -239,6 +250,9 @@ class Program(threading.Thread):
 
 	def callback_server_cmdRequest(self, data):
 		self.server_cmdRequest = data
+
+	def NN_cmdRequest_callback(self, data):
+		self.NN_cmdRequest = data	
 
 	def callback_NN_infoRequest(self, data):
 		self.NN_infoRequest = data
@@ -422,34 +436,34 @@ class Program(threading.Thread):
 		return switcher.get(val, 'UNK')
 
 	def show_job(self, val):
-		job_now = ''
+		job_now = 'Không\nXác Định'
 		switcher={
-			0:'...', # 
-			1:'Kiểm Tra Trạng Thái', # kiem tra trang thai ban nang sau khi Sang che do tu dong
-			2:'Di Chuyển Ra Khởi Vị Trí', # 
-			3:'Di Chuyển Giữa Các Điểm', #
-			4:'Di Chuyển Vào Vị Trí Thao Tác', # 
-			5:'Kiểm Tra Vị Trí Trả Hàng', # 
-			6:'Thực Hiện Nhiệm Vụ Sau', # 
-			7:'Đợi Lệnh Mới', # 
-			8:'Đợi Hoàn Thành Lệnh Cũ', # 
-			20:'Chế Độ Bằng Tay' # 
+			0:'...', #
+			1:'Kiểm Tra Lại Nhiệm Vụ', # 
+			2:'Thực Hiện Nhiệm Vụ Trước', # 
+			3:'Kiểm Tra Trạng Thái Kệ',
+			4:'Di Chuyển Ra Khởi Vị Trí', # 
+			5:'Di Chuyển Giữa Các Điểm', #
+			6:'Di Chuyển Vào Vị Trí Thao Tác', # 
+			7:'Thực Hiện Nhiệm Vụ Sau', # 
+			8:'Đợi Lệnh Mới', # 
+			9:'Đợi Hoàn Thành Lệnh Cũ', # 
+			20:'Chế Độ Bằng Tay', # 
+			30:'Chế Độ Tự Động', # 
+			50:'Kiểm Tra Vị Trí Trả Hàng', # 
 		}
 		return switcher.get(val, job_now)
 
 	def show_misson(self, val):
-		job_now = ''
+		job_now = 'Không\nXác Định'
 		switcher={
-			0:'...', # 
-			1:'Kiem Tra Tu Dong', # kiem tra trang thai ban nang sau khi Sang che do tu dong
-			2:'Nhiem Vu Truoc', # thuc hien nhiem vu truoc
-			3:'Kiem Tra Ke', # kiem tra ke 
-			4:'Di Ra', # 
-			5:'Di Chuyen', #
-			6:'Di Vao Ke', # 
-			7:'Nhiem Vu Sau', # 
-			10:'Sac\nPin', # 
-			20:'Bang Tay' # 
+			0:'...', #
+			65:'Nâng Kệ', # 
+			1:'Nâng Kệ', # 
+			66:'Hạ Kệ', #
+			2:'Hạ Kệ', #
+			6:'Sạc Pin', # 
+			10:'Hạ Kệ\nSạc Pin' # 
 		}
 		return switcher.get(val, job_now)
 
@@ -541,22 +555,26 @@ class Program(threading.Thread):
 			angle_robot = angle
 		self.valueLable.lbv_coordinates_r = str( round( degrees(angle_robot), 3) )
 		# --
-		# self.valueLable.lbv_route_target = str(self.server_cmdRequest.target_id) + "\n" + str(self.server_cmdRequest.target_x) + "\n" + str(self.server_cmdRequest.target_y) + "\n" + str(round(degrees(self.server_cmdRequest.target_z), 2)) + "\n" + str(self.server_cmdRequest.offset)
+		self.valueLable.lbv_route_target = str(self.NN_cmdRequest.target_id) + "\n" + str(self.NN_cmdRequest.target_x) + "\n" + str(self.NN_cmdRequest.target_y) + "\n" + str(round(degrees(self.NN_cmdRequest.target_z), 2)) + "\n" + str(self.NN_cmdRequest.offset)
 		# # -
-		# if len(self.server_cmdRequest.list_id) >= 5:
-		# 	self.valueLable.lbv_route_point0 = str(self.server_cmdRequest.list_id[0]) + "\n" + str(self.server_cmdRequest.list_x[0]) + "\n" + str(self.server_cmdRequest.list_y[0]) + "\n" + str(self.server_cmdRequest.list_speed[0]) + "\n" + str(self.server_cmdRequest.list_directionTravel[0]) + "\n" + str(self.server_cmdRequest.list_angleLine[0])
-		# 	self.valueLable.lbv_route_point1 = str(self.server_cmdRequest.list_id[1]) + "\n" + str(self.server_cmdRequest.list_x[1]) + "\n" + str(self.server_cmdRequest.list_y[1]) + "\n" + str(self.server_cmdRequest.list_speed[1]) + "\n" + str(self.server_cmdRequest.list_directionTravel[1]) + "\n" + str(self.server_cmdRequest.list_angleLine[1])
-		# 	self.valueLable.lbv_route_point2 = str(self.server_cmdRequest.list_id[2]) + "\n" + str(self.server_cmdRequest.list_x[2]) + "\n" + str(self.server_cmdRequest.list_y[2]) + "\n" + str(self.server_cmdRequest.list_speed[2]) + "\n" + str(self.server_cmdRequest.list_directionTravel[2]) + "\n" + str(self.server_cmdRequest.list_angleLine[2])
-		# 	self.valueLable.lbv_route_point3 = str(self.server_cmdRequest.list_id[3]) + "\n" + str(self.server_cmdRequest.list_x[3]) + "\n" + str(self.server_cmdRequest.list_y[3]) + "\n" + str(self.server_cmdRequest.list_speed[3]) + "\n" + str(self.server_cmdRequest.list_directionTravel[3]) + "\n" + str(self.server_cmdRequest.list_angleLine[3])
-		# 	self.valueLable.lbv_route_point4 = str(self.server_cmdRequest.list_id[4]) + "\n" + str(self.server_cmdRequest.list_x[4]) + "\n" + str(self.server_cmdRequest.list_y[4]) + "\n" + str(self.server_cmdRequest.list_speed[4]) + "\n" + str(self.server_cmdRequest.list_directionTravel[4]) + "\n" + str(self.server_cmdRequest.list_angleLine[4])
+		if len(self.NN_cmdRequest.list_id) >= 5:
+			self.valueLable.lbv_route_point0 = str(self.NN_cmdRequest.list_id[0]) + "\n" + str(self.NN_cmdRequest.list_x[0]) + "\n" + str(self.NN_cmdRequest.list_y[0]) + "\n" + str(self.NN_cmdRequest.list_speed[0])
+			self.valueLable.lbv_route_point1 = str(self.NN_cmdRequest.list_id[1]) + "\n" + str(self.NN_cmdRequest.list_x[1]) + "\n" + str(self.NN_cmdRequest.list_y[1]) + "\n" + str(self.NN_cmdRequest.list_speed[1])
+			self.valueLable.lbv_route_point2 = str(self.NN_cmdRequest.list_id[2]) + "\n" + str(self.NN_cmdRequest.list_x[2]) + "\n" + str(self.NN_cmdRequest.list_y[2]) + "\n" + str(self.NN_cmdRequest.list_speed[2])
+			self.valueLable.lbv_route_point3 = str(self.NN_cmdRequest.list_id[3]) + "\n" + str(self.NN_cmdRequest.list_x[3]) + "\n" + str(self.NN_cmdRequest.list_y[3]) + "\n" + str(self.NN_cmdRequest.list_speed[3])
+			self.valueLable.lbv_route_point4 = str(self.NN_cmdRequest.list_id[4]) + "\n" + str(self.NN_cmdRequest.list_x[4]) + "\n" + str(self.NN_cmdRequest.list_y[4]) + "\n" + str(self.NN_cmdRequest.list_speed[4])
 		
-		# self.valueLable.lbv_route_job1 = str(self.server_cmdRequest.before_mission)
-		# self.valueLable.lbv_route_job2 = str(self.server_cmdRequest.after_mission)
-		# self.valueLable.lbv_route_message = self.server_cmdRequest.command
-		# self.valueLable.lbv_jobRuning = self.show_job(self.NN_infoRespond.process)
+		self.valueLable.lbv_route_job1 = str(self.NN_cmdRequest.before_mission)
+		self.valueLable.lbv_route_job2 = str(self.NN_cmdRequest.after_mission)
+
+		self.valueLable.lbv_route_job1_mean = self.show_misson(self.NN_cmdRequest.before_mission)
+		self.valueLable.lbv_route_job2_mean = self.show_misson(self.NN_cmdRequest.after_mission)
+
+		self.valueLable.lbv_route_message = self.NN_cmdRequest.command
+		self.valueLable.lbv_jobRuning = self.show_job(self.NN_infoRespond.process)
 		# -- 
-		# self.valueLable.lbv_goalFollow_id = str(self.navigation_respond.id_goalFollow)
-				# lbv_coorAverage_x
+		self.valueLable.lbv_goalFollow_id = str(self.status_goalControl.ID_follow)
+
 		# -- Launch
 		self.valueLable.percentLaunch = self.status_launch.persent
 		self.valueLable.lbv_launhing = self.status_launch.notification
@@ -588,7 +606,7 @@ class Program(threading.Thread):
 		self.app_button.bt_spk_on  = self.welcomeScreen.statusButton.bt_spk_on
 		self.app_button.bt_spk_off  = self.welcomeScreen.statusButton.bt_spk_off
 
-		# self.app_button.bt_brake	= self.welcomeScreen.statusButton.bt_brake
+		self.app_button.bt_disableBrake	= self.welcomeScreen.statusButton.bt_disableBrake
 
 		# -- 
 		self.app_button.bt_lift_up	 = self.welcomeScreen.statusButton.bt_lift_up
@@ -601,11 +619,13 @@ class Program(threading.Thread):
 		self.app_button.bt_tryTarget_start = self.welcomeScreen.statusButton.bt_tryTarget_start
 		self.app_button.bt_tryTarget_stop = self.welcomeScreen.statusButton.bt_tryTarget_stop
 		self.app_button.bt_tryTarget_reset = self.welcomeScreen.statusButton.bt_tryTarget_reset
+		self.app_button.ck_tryTarget_safety = self.welcomeScreen.statusButton.ck_tryTarget_safety
 		# -
 		self.app_button.tryTarget_x = self.welcomeScreen.valueLable.lbv_tryTarget_x
 		self.app_button.tryTarget_y = self.welcomeScreen.valueLable.lbv_tryTarget_y
 		self.app_button.tryTarget_r = self.welcomeScreen.valueLable.lbv_tryTarget_r
 		self.app_button.tryTarget_d = self.welcomeScreen.valueLable.lbv_tryTarget_d
+		
 
 	def run(self):
 		# -- 

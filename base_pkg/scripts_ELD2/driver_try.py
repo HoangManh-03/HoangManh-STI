@@ -72,7 +72,7 @@ class driver():
 	def __init__(self):
 		# status = 1 (all right) | != 1 error.
 
-		self.PORT =  rospy.get_param("port", "/dev/ttyUSB0")
+		self.PORT =  rospy.get_param("port", "/dev/stibase_motor")
 		self.BAUDRATE = rospy.get_param("baudrate", 57600) # 57600 115200
 		self.maxRPM = rospy.get_param("maxRPM", 3800)
 		self.minRPM = self.maxRPM*(-1)
@@ -94,12 +94,12 @@ class driver():
 		self.perimeter = 0.47
 		self.transmission_ratio = 30
 
-		self.accelerationRate = 2000 # [1 to 1,000,000] ms
-		self.decelerationRate = 600 # [1 to 1,000,000] ms
+		self.accelerationRate = 600 # [1 to 1,000,000] ms
+		self.decelerationRate = 300 # [1 to 1,000,000] ms
 		self.torqueLimiting = 200    # 0 to 10,000 (1=0.1%)
 		# -- 
 		self.reg_communicationTimeout = 5003 # P222
-		self.reg_CommunicationErrorDetection = 5005 # 
+		self.reg_CommunicationErrorDetection = 5005 #
 		# -- Registers
 		self.reg_operationData = 89 # (0059h) - [0 to 255] P66
 		self.reg_operationType = 91 #
@@ -277,7 +277,7 @@ class driver():
 		self.status_run = 1
 		self.status_stop = 0
 		# -- 
-		self.timeWait = 0.004
+		self.timeWait = 0.008 # 0.004
 		# -- 
 		self.frequence_pubStatus = 25.
 		self.cycle_pubStatus = 1/self.frequence_pubStatus
@@ -425,34 +425,34 @@ class driver():
 		if (t > self.time_readStatus or type_ == 1):
 			self.lastTime_readStatus = time.time()
 			# --- reg_driverOutputCommand --- #
-			try:
-				time.sleep(self.timeWait)
-				rawData = self.MODBUS.execute(self.controlDriver_1.ID, cst.READ_HOLDING_REGISTERS, self.reg_driverOutputCommand_lower, 1)
-				arrData = bin(rawData[0])
-				l = len(arrData) - 2
-				for i in range(16 - l):
-					allData += '0'
-				for i in range(l):
-					allData += arrData[i + 2]
+			# try:
+			# 	time.sleep(self.timeWait)
+			# 	rawData = self.MODBUS.execute(self.controlDriver_1.ID, cst.READ_HOLDING_REGISTERS, self.reg_driverOutputCommand_lower, 1)
+			# 	arrData = bin(rawData[0])
+			# 	l = len(arrData) - 2
+			# 	for i in range(16 - l):
+			# 		allData += '0'
+			# 	for i in range(l):
+			# 		allData += arrData[i + 2]
 			
-				# self.statusDriver_1.FWD = int(allData[12])
-				# self.statusDriver_1.REV = int(allData[11])
+			# 	# self.statusDriver_1.FWD = int(allData[12])
+			# 	# self.statusDriver_1.REV = int(allData[11])
 
-				self.statusDriver_1.STOP_MODE = int(allData[10]) # - 5
-				# self.statusDriver_1.WNG = int(allData[9])
+			# 	self.statusDriver_1.STOP_MODE = int(allData[10]) # - 5
+			# 	# self.statusDriver_1.WNG = int(allData[9])
 
-				self.statusDriver_1.ALARM_OUT1 = int(allData[8]) # - 7 [ALM-A]
-				self.statusDriver_1.S_BSY = int(allData[7]) # - 8
+			# 	self.statusDriver_1.ALARM_OUT1 = int(allData[8]) # - 7 [ALM-A]
+			# 	self.statusDriver_1.S_BSY = int(allData[7]) # - 8
 
-				# self.statusDriver_1.ALARM_OUT2 = int(allData[3])
+			# 	# self.statusDriver_1.ALARM_OUT2 = int(allData[3])
 
-				self.statusDriver_1.MOVE = int(allData[2]) # - 13
-				self.statusDriver_1.VA = int(allData[1]) # - 14
-				self.statusDriver_1.TLC = int(allData[0]) # - 15
+			# 	self.statusDriver_1.MOVE = int(allData[2]) # - 13
+			# 	self.statusDriver_1.VA = int(allData[1]) # - 14
+			# 	self.statusDriver_1.TLC = int(allData[0]) # - 15
 
-			except modbus_tk.modbus.ModbusError as exc:
-				print ("Read reg_driverOutputCommand_lower ID1 Error")
-				self.countErr_reqSpeed += 1
+			# except modbus_tk.modbus.ModbusError as exc:
+			# 	print ("Read reg_driverOutputCommand_lower ID1 Error")
+			# 	self.countErr_reqSpeed += 1
 
 			# --- PRESENT_ALARM --- #
 			time.sleep(self.timeWait)
@@ -478,34 +478,34 @@ class driver():
 				
 		# ----------------- Driver 2 ----------------- #
 			# --- reg_driverOutputCommand --- #
-			try:
-				time.sleep(self.timeWait)
-				rawData = self.MODBUS.execute(self.controlDriver_2.ID, cst.READ_HOLDING_REGISTERS, self.reg_driverOutputCommand_lower, 1)
-				arrData = bin(rawData[0])
-				l = len(arrData) - 2
-				for i in range(16 - l):
-					allData += '0'
-				for i in range(l):
-					allData += arrData[i + 2]
+			# try:
+			# 	time.sleep(self.timeWait)
+			# 	rawData = self.MODBUS.execute(self.controlDriver_2.ID, cst.READ_HOLDING_REGISTERS, self.reg_driverOutputCommand_lower, 1)
+			# 	arrData = bin(rawData[0])
+			# 	l = len(arrData) - 2
+			# 	for i in range(16 - l):
+			# 		allData += '0'
+			# 	for i in range(l):
+			# 		allData += arrData[i + 2]
 			
-				# self.statusDriver_2.FWD = int(allData[12])
-				# self.statusDriver_2.REV = int(allData[11])
+			# 	# self.statusDriver_2.FWD = int(allData[12])
+			# 	# self.statusDriver_2.REV = int(allData[11])
 
-				self.statusDriver_2.STOP_MODE = int(allData[10]) # - 5
-				# self.statusDriver_2.WNG = int(allData[9])
+			# 	self.statusDriver_2.STOP_MODE = int(allData[10]) # - 5
+			# 	# self.statusDriver_2.WNG = int(allData[9])
 
-				self.statusDriver_2.ALARM_OUT1 = int(allData[8]) # - 7 [ALM-A]
-				self.statusDriver_2.S_BSY = int(allData[7]) # - 8
+			# 	self.statusDriver_2.ALARM_OUT1 = int(allData[8]) # - 7 [ALM-A]
+			# 	self.statusDriver_2.S_BSY = int(allData[7]) # - 8
 
-				# self.statusDriver_2.ALARM_OUT2 = int(allData[3])
+			# 	# self.statusDriver_2.ALARM_OUT2 = int(allData[3])
 
-				self.statusDriver_2.MOVE = int(allData[2]) # - 13
-				self.statusDriver_2.VA = int(allData[1]) # - 14
-				self.statusDriver_2.TLC = int(allData[0]) # - 15
+			# 	self.statusDriver_2.MOVE = int(allData[2]) # - 13
+			# 	self.statusDriver_2.VA = int(allData[1]) # - 14
+			# 	self.statusDriver_2.TLC = int(allData[0]) # - 15
 
-			except modbus_tk.modbus.ModbusError as exc:
-				print ("Read reg_driverOutputCommand_lower ID2 Error")	
-				self.countErr_reqSpeed += 1
+			# except modbus_tk.modbus.ModbusError as exc:
+			# 	print ("Read reg_driverOutputCommand_lower ID2 Error")	
+			# 	self.countErr_reqSpeed += 1
 
 			# --- PRESENT_ALARM --- #
 			try:

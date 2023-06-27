@@ -102,7 +102,7 @@ class GoalControl(threading.Thread):
         self.listVel = [0.012, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.9, 1.0, 1.1]
         self.numTable = len(self.listVel)
         # self.listLookAhead = [0.12, 0.22, 0.3, 0.4, 0.55, 0.65, 0.7, 0.75, 0.8, 0.9, 1.05, 1.28, 1.34, 1.39, 1.44, 1.49]
-        self.listLookAhead = [0.12, 0.22, 0.3, 0.4, 0.55, 0.65, 0.7, 0.8, 0.9, 1., 1.2, 1.35, 1.45, 1.50, 1.65, 1.75, 1.85, 1.95, 2.05]
+        self.listLookAhead = [0.12, 0.22, 0.3, 0.4, 0.55, 0.65, 0.7, 0.8, 0.9, 1.05, 1.2, 1.35, 1.45, 1.50, 1.6, 1.7, 1.8, 1.9, 2.05]
 
         self.infoPathFollow = InfoPathFollowing()
         self.velFollowOutOfRange = 0.22

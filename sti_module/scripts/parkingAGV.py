@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Author : PhucHoang 13/06/2023
+# Update new version
+# Detail; follow by path
+
 
 import roslib
 import sys
@@ -11,7 +15,7 @@ from geometry_msgs.msg import PoseStamped, Pose, Twist
 from sti_msgs.msg import APathParking, PointOfPath, HC_info
 from message_pkg.msg import Parking_request, Parking_respond
 import numpy as np
-from math import sqrt, pow, atan, fabs, cos, sin
+from math import sqrt, pow, atan, fabs, cos, sin, radians, degrees
 from math import pi as PI
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from visualization_msgs.msg import Marker
@@ -36,10 +40,10 @@ class ParkingAGV():
         self.max_angularVelocity = rospy.get_param('~min_angularVelocity', 1.)
 
         self.max_linearVelocity = rospy.get_param('~max_linearVelocity', 0.8)
-        self.min_linearVelocity = rospy.get_param('~min_linearVelocity', 0.012)
+        self.min_linearVelocity = rospy.get_param('~min_linearVelocity', 0.02)
 
-        self.max_lookahead = rospy.get_param('~min_lookahead', 0.3)
-        self.min_lookahead = rospy.get_param('~min_lookahead', 0.05)
+        self.max_lookahead = rospy.get_param('~min_lookahead', 1.49)
+        self.min_lookahead = rospy.get_param('~min_lookahead', 0.45)
         self.lookahead_ratio = rospy.get_param('~lookahead_ratio', 8.0)
 
         rospy.Subscriber('/robotPose_nav', PoseStamped, self.callback_poseRobot, queue_size = 20)
@@ -69,6 +73,11 @@ class ParkingAGV():
         self.is_check_zone = False	
 
         # Pub topic
+        self.pub_ParkingRespond = rospy.Publisher('/parking_respond', Parking_respond, queue_size=20)
+        # self.data_PubRespond = Parking_respond()
+        self.timePubRespond = rospy.get_time()
+        self.rate_pubRespond = 30
+
         self.pub_cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=20)
         self.time_tr = rospy.get_time()
         self.rate_pubVel = 15
@@ -98,15 +107,20 @@ class ParkingAGV():
 
         self.flagFollowPointFinish = False
 
-        self.listVel = [0.012, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8]
+        self.listVel = [0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8]
         self.numTable = len(self.listVel)
-        self.listLookAhead = [0.12, 0.22, 0.3, 0.4, 0.55, 0.65, 0.7, 0.75, 0.8, 0.9, 1.05, 1.28, 1.34, 1.39, 1.44, 1.49]
+        # self.listLookAhead = [0.15, 0.22, 0.3, 0.4, 0.55, 0.65, 0.7, 0.75, 0.8, 0.9, 1.05, 1.28, 1.34, 1.39, 1.44, 1.49]
+        self.listLookAhead = [0.45, 0.48, 0.51, 0.54, 0.55, 0.65, 0.7, 0.75, 0.8, 0.9, 1.05, 1.28, 1.34, 1.39, 1.44, 1.49]
 
         self.infoPathFollow = InfoPathFollowing()
         self.saveTimeVel = rospy.get_time()
         self.statusVel = 0
         self.velSt = 0.
         self.warn_agv = 0
+
+        self.ss_x = 0.0
+        self.ss_y = 0.0
+        self.ss_a = 0.0
 
     # function callback
     def callback_poseRobot(self, data):
@@ -128,11 +142,14 @@ class ParkingAGV():
     def poseParking_callback(self, data):
         self.poseParkingStamped = data
         self.poseParking = data.pose
+        self.ss_x = self.poseParking.position.x
+        self.ss_y = self.poseParking.position.y
         quata = ( self.poseParking.orientation.x,\
                 self.poseParking.orientation.y,\
                 self.poseParking.orientation.z,\
                 self.poseParking.orientation.w )
         euler = euler_from_quaternion(quata)
+        self.ss_a = euler[2]
         self.theta_robotParking = euler[2]
         self.is_poseParking = True
 
@@ -179,7 +196,7 @@ class ParkingAGV():
         marker.action = Marker.ADD
         marker.pose.position.x = x
         marker.pose.position.y = y
-        marker.pose.position.z = -1.
+        marker.pose.position.z = 0.
         marker.pose.orientation.w = 1.
         marker.color.r = 1.0
         marker.color.g = 0.
@@ -213,9 +230,10 @@ class ParkingAGV():
         mess_step = {
             0: 'Step: Wait All data',
             1: 'Step: Select Mode',
-            2: 'Find Goal Nearest',
-            3: 'Parking vao ke',
-            5: 'Doi reset',
+            40: 'Find Goal Nearest',
+            41: 'Parking vao ke',
+            51: 'Doi reset',
+            52: 'ERROER'
         }
         mess_warn = {
             0: 'AGV di chuyen binh thuong :)',
@@ -291,7 +309,7 @@ class ParkingAGV():
             if _statusVel == 0:
                 return self.infoPathFollow.velocity
             elif _statusVel == 1:
-                return self.funcDecelerationByAcc(self.saveTimeVel, self.velSt, self.infoPathFollow.velocity, 0.12)
+                return self.funcDecelerationByAcc(self.saveTimeVel, self.velSt, self.infoPathFollow.velocity, 0.2)
             elif _statusVel == 2:
                 return self.funcDecelerationByAcc(self.saveTimeVel, self.velSt, self.infoPathFollow.velocity, -0.4)
             else:
@@ -476,6 +494,122 @@ class ParkingAGV():
                 self.pub_Stop()
 
         return 0
+    
+    def follow_targetVS2(self):
+        twist = Twist()
+        poseX = self.poseParking.position.x
+        poseY = self.poseParking.position.y
+        angleAGV = self.theta_robotParking
+        dis = sqrt(poseX*poseX + poseY*poseY)
+        print(poseX, poseY, dis)
+
+        if self.dataPath.modeRun == 1 or self.dataPath.modeRun == 2:
+            if poseX <= 0.:
+                self.pub_Stop()
+                return 1
+            
+            else:
+                if self.zone_lidar.zone_sick_behind == 1 and self.req_parking.modeRun == 1:
+                    # print("co vat can")
+                    self.pub_Stop()
+                    self.statusVel = 0
+                    self.warn_agv = 1
+                    
+                else:
+                    self.warn_agv = 0
+                    distance_decel = self.findLookAheadByVel(self.infoPathFollow.velocity)
+                    distance_decel = 0.35
+                    if (fabs(poseY) <= 0.01 and fabs(angleAGV) <= radians(1.)) or fabs(poseX) <= 0.6: # tinh van toc goc
+                        vel_x = 0.
+                        if dis <= distance_decel: # tinh van toc dai theo khoang cach
+                            vel_x = self.infoPathFollow.velocity*(dis/distance_decel)
+                            if vel_x >= self.infoPathFollow.velocity:
+                                vel_x = self.infoPathFollow.velocity
+                            if vel_x <= self.min_linearVelocity:
+                                vel_x = self.min_linearVelocity
+
+                        else:
+                            vel_x = self.infoPathFollow.velocity
+
+                        kg = 0.35   # 0.7
+                        dentaAngle = -angleAGV
+                        velAng = kg*fabs(dentaAngle)
+                        if velAng >= 0.15:
+                            velAng = 0.15
+                        
+                        if dentaAngle > 0:
+                            velAng = velAng
+                        else:
+                            velAng = -velAng
+                        
+                        twist.linear.x = -vel_x
+                        twist.angular.z = velAng
+                        self.pub_cmdVel(twist, self.rate_pubVel)
+
+                    else:
+                        if self.flagFollowPointFinish:
+                            self.curr_velocity = self.velSt*(dis/self.distDeceleration)
+                            self.curr_velocity = self.constrain(self.curr_velocity, self.min_linearVelocity, self.velSt)
+                            print(self.curr_velocity, self.infoPathFollow.velocity, "follow Finish Target")
+                            velX = -self.curr_velocity
+                            if self.getWaitPoint(poseX, poseY, self.curr_velocity):
+                                velX = -self.curr_velocity
+                                xCVFollow , yCVFollow = self.convert_relative_coordinates(self.infoPathFollow.X, self.infoPathFollow.Y)
+                                velAng = self.control_navigation(xCVFollow, yCVFollow, velX)
+                                twist.linear.x = velX
+                                twist.angular.z = velAng
+
+                                self.pub_cmdVel(twist, self.rate_pubVel)
+                            
+                            else:
+                                self.pub_Stop()
+                                self.warn_agv = 2
+                                return -1
+
+                        else:
+                            # kiem tra dang follow point cuoi chua
+                            # them phuong trinh giam toc
+                            if self.curr_velocity < self.infoPathFollow.velocity and self.statusVel != 1:
+                                self.statusVel = 1
+                                self.velSt = self.curr_velocity
+                                self.saveTimeVel = rospy.get_time()
+
+                            elif self.curr_velocity > self.infoPathFollow.velocity and self.statusVel != 2:
+                                self.statusVel = 2
+                                self.velSt = self.curr_velocity
+                                self.saveTimeVel = rospy.get_time()
+
+                            elif self.curr_velocity == self.infoPathFollow.velocity:
+                                self.statusVel = 0
+
+                            self.curr_velocity = self.getVeloctity(0, self.statusVel)
+                            print(self.curr_velocity, self.statusVel, self.infoPathFollow.velocity, "follow Normal Target")
+
+                            if self.curr_velocity != 0. :
+                                if self.getWaitPoint(poseX, poseY, self.curr_velocity):
+                                    velX = -self.curr_velocity
+                                    xCVFollow , yCVFollow = self.convert_relative_coordinates(self.infoPathFollow.X, self.infoPathFollow.Y)
+                                    velAng = self.control_navigation(xCVFollow, yCVFollow, velX)
+                                    twist.linear.x = velX
+                                    twist.angular.z = velAng
+
+                                    self.pub_cmdVel(twist, self.rate_pubVel)
+                
+                                else:
+                                    self.pub_Stop()
+                                    self.warn_agv = 2
+                                    return -1
+                            
+        else:
+            if self.req_parking.modeRun == 3:
+                # print("Recieve data Stop!")
+                self.pub_cmdVel(Twist(), self.rate_pubVel)
+            elif self.req_parking.modeRun == 0:
+                # print("Recieve data Reset!")
+                self.resetAll()
+                self.pub_Stop()
+
+        return 0
                 
     def resetAll(self):
         self.process = 1
@@ -532,7 +666,6 @@ class ParkingAGV():
         return vel_th
 
     def run(self):
-        self.process = 1
         while not rospy.is_shutdown():    
             if self.process == 0:
                 ck = 0
@@ -542,7 +675,7 @@ class ParkingAGV():
                     ck += 1
                 if ck == 2:
                     self.process = 1
-                    rospy.loginfo("Done receive all need data <(^-^)> ")
+                    print("Done receive all need data <(^-^)> ")
 
             elif self.process == 1:
                 if self.is_request_parking == True and (self.dataPath.modeRun == 1 or self.dataPath.modeRun == 2):
@@ -551,32 +684,34 @@ class ParkingAGV():
                         print("recieve data transfrom pose target")
                         if self.is_path:
                             print("recieve data local goal")
-                            self.process = 2
+                            self.process = 40
 
-            elif self.process == 2: # tim goal gan nhat
+            elif self.process == 40: # tim goal gan nhat
                 if self.checkPathOutOfRange():
                     print("Done find Goal Nearest")
-                    self.process = 3
+                    self.process = 41
 
-            elif self.process == 3: # follow vao ke
-                stt = self.follow_target()
+            elif self.process == 41: # follow vao ke
+                stt = self.follow_targetVS2()
                 if stt == 1:
                     print("Arrived at the Target location")
                     time.sleep(0.5)
-                    self.process = 5
+                    self.process = 51
 
                 elif stt == -1:
                     self.pub_Stop()
                     print("Something went wrong (T-T)")
-                    self.process = 4
+                    self.process = 52
 
-            elif self.process == 5: # Reset
+            elif self.process == 51: # Reset
                 if self.req_parking.modeRun == 0: #Reset
                     self.resetAll()
+                    print("RESET")
 
-            elif self.process == 4:
+            elif self.process == 52:
                 if self.req_parking.modeRun == 0: # loi - doi reset
                     self.resetAll()
+                    print("RESET - ERROR")
 
             mess_pub = self.Meaning(self.process, self.warn_agv)
             self.pub_Status(self.process, self.dataPath.modeRun, self.req_parking.poseTarget, self.req_parking.offset, self.ss_x, self.ss_y, self.ss_a, mess_pub, self.warn_agv)

@@ -1649,11 +1649,53 @@ SHIV12 Ver 2.0</string>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
+     <widget class="QLabel" name="lb_route_r1">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>170</y>
+        <width>91</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="lineWidth">
+       <number>1</number>
+      </property>
+      <property name="midLineWidth">
+       <number>0</number>
+      </property>
+      <property name="text">
+       <string>R_L</string>
+      </property>
+      <property name="scaledContents">
+       <bool>false</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="wordWrap">
+       <bool>false</bool>
+      </property>
+      <property name="openExternalLinks">
+       <bool>false</bool>
+      </property>
+     </widget>
      <widget class="QLabel" name="lb_route_point0">
       <property name="geometry">
        <rect>
         <x>90</x>
-        <y>50</y>
+        <y>40</y>
         <width>81</width>
         <height>31</height>
        </rect>
@@ -1697,7 +1739,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>330</x>
-        <y>50</y>
+        <y>40</y>
         <width>81</width>
         <height>31</height>
        </rect>
@@ -1740,9 +1782,9 @@ SHIV12 Ver 2.0</string>
      <widget class="QLabel" name="lbv_route_job2">
       <property name="geometry">
        <rect>
-        <x>70</x>
-        <y>190</y>
-        <width>71</width>
+        <x>60</x>
+        <y>220</y>
+        <width>61</width>
         <height>31</height>
        </rect>
       </property>
@@ -1783,9 +1825,9 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>410</x>
-        <y>80</y>
+        <y>70</y>
         <width>81</width>
-        <height>81</height>
+        <height>121</height>
        </rect>
       </property>
       <property name="font">
@@ -1823,11 +1865,53 @@ SHIV12 Ver 2.0</string>
        <bool>false</bool>
       </property>
      </widget>
+     <widget class="QLabel" name="lb_route_dir">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>150</y>
+        <width>91</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="lineWidth">
+       <number>1</number>
+      </property>
+      <property name="midLineWidth">
+       <number>0</number>
+      </property>
+      <property name="text">
+       <string>Dir</string>
+      </property>
+      <property name="scaledContents">
+       <bool>false</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="wordWrap">
+       <bool>false</bool>
+      </property>
+      <property name="openExternalLinks">
+       <bool>false</bool>
+      </property>
+     </widget>
      <widget class="QLabel" name="lb_route_r">
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>140</y>
+        <y>130</y>
         <width>91</width>
         <height>21</height>
        </rect>
@@ -1869,7 +1953,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>520</x>
-        <y>280</y>
+        <y>320</y>
         <width>51</width>
         <height>31</height>
        </rect>
@@ -1911,7 +1995,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>100</y>
+        <y>90</y>
         <width>91</width>
         <height>21</height>
        </rect>
@@ -1953,7 +2037,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>80</y>
+        <y>70</y>
         <width>91</width>
         <height>21</height>
        </rect>
@@ -1995,8 +2079,8 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>190</y>
-        <width>71</width>
+        <y>220</y>
+        <width>61</width>
         <height>31</height>
        </rect>
       </property>
@@ -2037,7 +2121,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>170</x>
-        <y>50</y>
+        <y>40</y>
         <width>81</width>
         <height>31</height>
        </rect>
@@ -2081,7 +2165,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>120</y>
+        <y>110</y>
         <width>91</width>
         <height>21</height>
        </rect>
@@ -2123,7 +2207,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>50</y>
+        <y>40</y>
         <width>91</width>
         <height>31</height>
        </rect>
@@ -2167,9 +2251,9 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>90</x>
-        <y>80</y>
+        <y>70</y>
         <width>81</width>
-        <height>81</height>
+        <height>121</height>
        </rect>
       </property>
       <property name="font">
@@ -2212,8 +2296,8 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>160</y>
-        <width>141</width>
+        <y>190</y>
+        <width>121</width>
         <height>31</height>
        </rect>
       </property>
@@ -2255,10 +2339,10 @@ SHIV12 Ver 2.0</string>
      <widget class="QLabel" name="lbv_route_message">
       <property name="geometry">
        <rect>
-        <x>140</x>
-        <y>160</y>
-        <width>431</width>
-        <height>121</height>
+        <x>120</x>
+        <y>190</y>
+        <width>451</width>
+        <height>131</height>
        </rect>
       </property>
       <property name="font">
@@ -2295,7 +2379,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>250</x>
-        <y>50</y>
+        <y>40</y>
         <width>81</width>
         <height>31</height>
        </rect>
@@ -2339,9 +2423,9 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>170</x>
-        <y>80</y>
+        <y>70</y>
         <width>81</width>
-        <height>81</height>
+        <height>121</height>
        </rect>
       </property>
       <property name="font">
@@ -2383,9 +2467,9 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>250</x>
-        <y>80</y>
+        <y>70</y>
         <width>81</width>
-        <height>81</height>
+        <height>121</height>
        </rect>
       </property>
       <property name="font">
@@ -2427,7 +2511,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>410</x>
-        <y>280</y>
+        <y>320</y>
         <width>111</width>
         <height>31</height>
        </rect>
@@ -2471,7 +2555,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>410</x>
-        <y>50</y>
+        <y>40</y>
         <width>81</width>
         <height>31</height>
        </rect>
@@ -2515,9 +2599,9 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>330</x>
-        <y>80</y>
+        <y>70</y>
         <width>81</width>
-        <height>81</height>
+        <height>121</height>
        </rect>
       </property>
       <property name="font">
@@ -2559,7 +2643,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>150</x>
-        <y>10</y>
+        <y>4</y>
         <width>241</width>
         <height>31</height>
        </rect>
@@ -2602,9 +2686,9 @@ SHIV12 Ver 2.0</string>
      <widget class="QLabel" name="lbv_jobRuning">
       <property name="geometry">
        <rect>
-        <x>140</x>
-        <y>280</y>
-        <width>271</width>
+        <x>120</x>
+        <y>320</y>
+        <width>291</width>
         <height>31</height>
        </rect>
       </property>
@@ -2642,8 +2726,8 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>280</y>
-        <width>141</width>
+        <y>320</y>
+        <width>121</width>
         <height>31</height>
        </rect>
       </property>
@@ -2686,7 +2770,7 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>490</x>
-        <y>50</y>
+        <y>40</y>
         <width>81</width>
         <height>31</height>
        </rect>
@@ -2730,9 +2814,9 @@ SHIV12 Ver 2.0</string>
       <property name="geometry">
        <rect>
         <x>490</x>
-        <y>80</y>
+        <y>70</y>
         <width>81</width>
-        <height>81</height>
+        <height>121</height>
        </rect>
       </property>
       <property name="font">
@@ -2762,90 +2846,6 @@ SHIV12 Ver 2.0</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignHCenter|Qt::AlignTop</set>
-      </property>
-      <property name="wordWrap">
-       <bool>false</bool>
-      </property>
-      <property name="openExternalLinks">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lbv_route_job1_mean">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>220</y>
-        <width>71</width>
-        <height>61</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="autoFillBackground">
-       <bool>false</bool>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="lineWidth">
-       <number>1</number>
-      </property>
-      <property name="midLineWidth">
-       <number>0</number>
-      </property>
-      <property name="text">
-       <string>Nâng Kệ</string>
-      </property>
-      <property name="scaledContents">
-       <bool>false</bool>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-      <property name="wordWrap">
-       <bool>false</bool>
-      </property>
-      <property name="openExternalLinks">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="lbv_route_job2_mean">
-      <property name="geometry">
-       <rect>
-        <x>70</x>
-        <y>220</y>
-        <width>71</width>
-        <height>61</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="autoFillBackground">
-       <bool>false</bool>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="lineWidth">
-       <number>1</number>
-      </property>
-      <property name="midLineWidth">
-       <number>0</number>
-      </property>
-      <property name="text">
-       <string>Hạ Kệ</string>
-      </property>
-      <property name="scaledContents">
-       <bool>false</bool>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
       </property>
       <property name="wordWrap">
        <bool>false</bool>
@@ -3437,7 +3437,7 @@ nhận</string>
        </font>
       </property>
       <property name="text">
-       <string>Tắt</string>
+       <string>Bật</string>
       </property>
      </widget>
      <widget class="QLabel" name="lb_charger">
@@ -3560,7 +3560,7 @@ nhận</string>
        <number>0</number>
       </property>
       <property name="text">
-       <string>Nhả trục</string>
+       <string>Giữ trục</string>
       </property>
       <property name="scaledContents">
        <bool>false</bool>
@@ -3676,7 +3676,7 @@ nhận</string>
        </font>
       </property>
       <property name="text">
-       <string>Bật</string>
+       <string>Tắt</string>
       </property>
      </widget>
      <widget class="QPushButton" name="bt_charger_off">
@@ -5164,7 +5164,7 @@ cách lùi</string>
        <string>Ẩn</string>
       </property>
      </widget>
-     <widget class="QCheckBox" name="ck_tryTarget_safety">
+     <widget class="QCheckBox" name="ck_safety">
       <property name="geometry">
        <rect>
         <x>20</x>
@@ -5183,10 +5183,10 @@ cách lùi</string>
       </property>
      </widget>
     </widget>
+    <zorder>fr_tryTarget</zorder>
     <zorder>fr_handMode_move</zorder>
     <zorder>fr_listTask</zorder>
     <zorder>fr_handMode_conveyor</zorder>
-    <zorder>fr_tryTarget</zorder>
     <zorder>fr_password</zorder>
     <zorder>fr_agv</zorder>
    </widget>
@@ -7640,9 +7640,9 @@ phát hiện</string>
      </property>
     </widget>
    </widget>
-   <zorder>fr_setting</zorder>
    <zorder>fr_nav350</zorder>
    <zorder>fr_control</zorder>
+   <zorder>fr_setting</zorder>
    <zorder>bt_passHand</zorder>
    <zorder>lb_version</zorder>
    <zorder>bt_passAuto</zorder>

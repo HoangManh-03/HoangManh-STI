@@ -91,7 +91,6 @@ class data_synthesis():
 		# -- parking
 		rospy.Subscriber("/parking_respond", Parking_respond, self.parking_callback)
 		self.parking_status = Parking_respond()
-		# -- 
 		# --
 		rospy.Subscriber("/POWER_info", POWER_info, self.callback_main) 
 		self.main_info = POWER_info()

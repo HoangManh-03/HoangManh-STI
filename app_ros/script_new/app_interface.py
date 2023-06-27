@@ -69,7 +69,7 @@ class statusButton:
 		self.bt_spk_on = 0
 		self.bt_spk_off = 0
 
-		self.bt_brake = 0
+		self.bt_disableBrake = 0
 
 		self.bt_lift_up = 0
 		self.bt_lift_down = 0
@@ -83,7 +83,7 @@ class statusButton:
 		self.bt_tryTarget_start = 0
 		self.bt_tryTarget_stop = 0
 		self.bt_tryTarget_reset = 0
-
+		self.ck_tryTarget_safety = 0
 
 class statusColor:
 	def __init__(self):
@@ -140,6 +140,8 @@ class valueLable:
 		self.lbv_route_point4 = ''
 		self.lbv_route_job1 = ''
 		self.lbv_route_job2 = ''
+		self.lbv_route_job1_mean = ''
+		self.lbv_route_job2_mean = ''
 		self.lbv_route_message = ''
 
 		self.lbv_conveyorA = ''
@@ -180,7 +182,7 @@ class valueLable:
 		# -
 		self.arrReflector = []
 		self.angleCompare = 0
-		# self. = ''
+		
 		self.lbv_tryTarget_x = 0
 		self.lbv_tryTarget_y = 0
 		self.lbv_tryTarget_r = 0
@@ -412,8 +414,8 @@ class WelcomeScreen(QDialog):
 		self.set_labelColor()
 		# # --
 		self.controlShow_followMode()
-		# # --
-		# self.update_setting()
+		# --
+		self.statusButton.ck_tryTarget_safety = self.ck_tryTarget_safety.isChecked()
 
 		# -- show check devices
 		if (self.setting_status == 1):
@@ -439,33 +441,11 @@ class WelcomeScreen(QDialog):
 		# --
 		self.show_password()
 		# --
-		# --
-		# if (self.statusButton.bt_stop == 1):
-		# 	if (self.data_color.lbc_status_break == 1):
-		# 		self.bt_stop.setStyleSheet("background-color: orange;")
-		# 	elif (self.data_color.lbc_status_break == 2):
-		# 		self.bt_stop.setStyleSheet("background-color: red;")
-		# 	else:
-		# 		self.bt_stop.setStyleSheet("background-color: blue;")
-		# else:
-		# 	self.bt_stop.setStyleSheet("background-color: white;")
 
 		if self.flag_updateShowReflector == 1:
 			self.flag_updateShowReflector = 0
 			length = len(self.valueLable.arrReflector)
 			# print ("length: ", length)
-
-			# for i in range(length):
-			# 	# pass
-			# 	label1 = QLabel(self)
-			# 	# label1.setText(str(self.valueLable.arrReflector[i].localID))
-			# 	label1.setParent(self.fr_showReflector)
-			# 	# label1.move(self.valueLable.arrReflector[i].x, self.valueLable.arrReflector[i].y)
-			# 	label1.resize(25, 25)
-			# 	label1.setStyleSheet("border: 1px solid red; border-radius: 10px")
-			# 	label1.setAlignment(Qt.AlignCenter)
-			# 	label1.setFont(QFont('Arial', 8))
-			# print ("abc")
 
 			self.show_reflector()
 	# -
@@ -643,7 +623,7 @@ class WelcomeScreen(QDialog):
 		self.statusButton.bt_passAuto = 1
 		self.clicked_stop()
 		# --
-		self.statusButton.bt_brake = 0
+		self.statusButton.bt_disableBrake = 0
 		self.bt_disableBrake_off.setStyleSheet("background-color: blue;")
 		self.bt_disableBrake_on.setStyleSheet("background-color: white;")
 
@@ -693,13 +673,13 @@ class WelcomeScreen(QDialog):
 
 	# -- OK --
 	def clicked_brakeOn(self):
-		self.statusButton.bt_brake = 1
+		self.statusButton.bt_disableBrake = 1
 		self.bt_disableBrake_on.setStyleSheet("background-color: blue;")
 		self.bt_disableBrake_off.setStyleSheet("background-color: white;")
 		self.clicked_stop()
 
 	def clicked_brakeOff(self):
-		self.statusButton.bt_brake = 0
+		self.statusButton.bt_disableBrake = 0
 		self.bt_disableBrake_off.setStyleSheet("background-color: blue;")
 		self.bt_disableBrake_on.setStyleSheet("background-color: white;")
 		self.clicked_stop()
@@ -891,18 +871,21 @@ class WelcomeScreen(QDialog):
 	def pressed_liftUp(self):
 		self.bt_lift_up.setStyleSheet("background-color: blue;")
 		self.bt_lift_down.setStyleSheet("background-color: white;")
+		self.bt_lift_reset.setStyleSheet("background-color: white;")
 		self.statusButton.bt_lift_up = 1
 		self.statusButton.bt_lift_down = 0
 
 	def pressed_liftDown(self):
 		self.bt_lift_up.setStyleSheet("background-color: white;")
 		self.bt_lift_down.setStyleSheet("background-color: blue;")
+		self.bt_lift_reset.setStyleSheet("background-color: white;")
 		self.statusButton.bt_lift_up = 0
 		self.statusButton.bt_lift_down = 1
 
 	def pressed_liftReset(self):
 		self.bt_lift_up.setStyleSheet("background-color: white;")
 		self.bt_lift_down.setStyleSheet("background-color: white;")
+		self.bt_lift_reset.setStyleSheet("background-color: blue;")
 		self.statusButton.bt_lift_up = 0
 		self.statusButton.bt_lift_down = 0
 
@@ -940,19 +923,20 @@ class WelcomeScreen(QDialog):
 	# --
 	def pressed_tryTarget_up(self):
 		self.bt_tryTarget_up.setStyleSheet("background-color: blue;")
-		val_change = float(self.cb_unit.currentText())
-		# - X
-		if self.changeNow == 1:
-			self.valueLable.lbv_tryTarget_x += val_change
-		# - Y
-		if self.changeNow == 2:
-			self.valueLable.lbv_tryTarget_y += val_change
-		# - R
-		if self.changeNow == 3:
-			self.valueLable.lbv_tryTarget_r += val_change
-		# - D
-		if self.changeNow == 4:
-			self.valueLable.lbv_tryTarget_d += val_change
+		if self.cb_unit.currentText() != '':
+			val_change = float(self.cb_unit.currentText())
+			# - X
+			if self.changeNow == 1:
+				self.valueLable.lbv_tryTarget_x += val_change
+			# - Y
+			if self.changeNow == 2:
+				self.valueLable.lbv_tryTarget_y += val_change
+			# - R
+			if self.changeNow == 3:
+				self.valueLable.lbv_tryTarget_r += val_change
+			# - D
+			if self.changeNow == 4:
+				self.valueLable.lbv_tryTarget_d += val_change
 			
 
 	def released_tryTarget_up(self):
@@ -1257,7 +1241,9 @@ class WelcomeScreen(QDialog):
 		self.lbv_route_point4.setText(self.valueLable.lbv_route_point4)
 		self.lbv_route_job1.setText(self.valueLable.lbv_route_job1)
 		self.lbv_route_job2.setText(self.valueLable.lbv_route_job2)
-		
+		self.lbv_route_job1_mean.setText(self.valueLable.lbv_route_job1_mean)
+		self.lbv_route_job2_mean.setText(self.valueLable.lbv_route_job2_mean)
+
 		self.lbv_route_message.setText(self.valueLable.lbv_route_message)
 
 		# self.lbv_coorAverage_x.setText(self.valueLable.lbv_coorAverage_x)

@@ -144,7 +144,7 @@ def talker():
     path1.pointSecond = Pose()
     path1.pointSecond.position.x = 9.989
     path1.pointSecond.position.y = 4.778
-    path1.velocity = 1.
+    path1.velocity = 1.1
     msg.pathInfo.append(path1)
 
 
@@ -175,7 +175,7 @@ def talker():
     path2.pointSecond = Pose()
     path2.pointSecond.position.x = 8.989
     path2.pointSecond.position.y = 5.778
-    path2.velocity = 0.2
+    path2.velocity = 0.35
     path2.numberPts = 150
     path2.pointMid = Pose()
     path2.pointMid.position.x = 9.989
@@ -192,7 +192,7 @@ def talker():
     path3.pointSecond = Pose()
     path3.pointSecond.position.x = 8.489
     path3.pointSecond.position.y = 5.778
-    path3.velocity = 0.2
+    path3.velocity = 0.35
     msg.pathInfo.append(path3)
 
     # path 4 Benze 
@@ -205,7 +205,7 @@ def talker():
     path4.pointSecond = Pose()
     path4.pointSecond.position.x = 7.57
     path4.pointSecond.position.y = 4.778
-    path4.velocity = 0.2
+    path4.velocity = 0.35
     path4.numberPts = 150
     path4.pointMid = Pose()
     path4.pointMid.position.x = 7.57
@@ -239,7 +239,7 @@ def talker():
     path5.pointSecond = Pose()
     path5.pointSecond.position.x = 7.57
     path5.pointSecond.position.y = -1.201
-    path5.velocity = 1.
+    path5.velocity = 1.1
     msg.pathInfo.append(path5)
 
     # path 6
@@ -269,7 +269,7 @@ def talker():
     path6.pointSecond = Pose()
     path6.pointSecond.position.x = 8.57
     path6.pointSecond.position.y = -2.201
-    path6.velocity = 0.2
+    path6.velocity = 0.35
     path6.radius = 1.
     path6.pointCenter = Pose()
     path6.pointCenter.position.x = 8.57
@@ -299,7 +299,7 @@ def talker():
     path7.pointSecond = Pose()
     path7.pointSecond.position.x = 9.989
     path7.pointSecond.position.y = -1.201
-    path7.velocity = 0.2
+    path7.velocity = 0.35
     path7.numberPts = 150
     path7.pointMid = Pose()
     path7.pointMid.position.x = 9.989
