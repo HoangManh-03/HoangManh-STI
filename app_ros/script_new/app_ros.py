@@ -597,8 +597,6 @@ class Program(threading.Thread):
 		self.app_button.bt_rotation_left  = self.welcomeScreen.statusButton.bt_rotation_left
 		self.app_button.bt_rotation_right = self.welcomeScreen.statusButton.bt_rotation_right
 		self.app_button.bt_stop 		  = self.welcomeScreen.statusButton.bt_stop
-
-		self.app_button.bt_tryTarget 	  = self.welcomeScreen.statusButton.bt_tryTarget
 		# --
 		self.app_button.bt_chg_on	= self.welcomeScreen.statusButton.bt_chg_on
 		self.app_button.bt_chg_off	= self.welcomeScreen.statusButton.bt_chg_off

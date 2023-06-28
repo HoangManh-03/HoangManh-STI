@@ -3,8 +3,6 @@ bool bt_passHand
 bool bt_passAuto	
 bool bt_clearError
 
-bool bt_tryTarget
-
 bool bt_spk_on
 bool bt_spk_off
 

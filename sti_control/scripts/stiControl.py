@@ -1167,7 +1167,12 @@ class ros_control():
 				self.charger_requir = self.charger_off
 				self.liftTask = self.liftStop
 
+			# --
 			self.tryTarget_run()
+
+			# --
+			if self.app_button.bt_resetFrameWork == 1:
+				self.resetAll_variable()
 			# ------------------------------------------------------------
 			
 

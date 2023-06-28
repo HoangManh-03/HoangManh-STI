@@ -48,7 +48,6 @@ class statusButton:
 		self.bt_passAuto = 0
 		self.bt_passHand = 0
 		self.bt_cancelMission = 0
-		self.bt_tryTarget = 0
 		self.bt_tryTarget_hide = 0
 		self.bt_setting = 0
 		self.bt_clearError = 0
@@ -203,16 +202,6 @@ class WelcomeScreen(QDialog):
 		self.statusButton = statusButton()
 		self.statusColor  = statusColor()
 		self.valueLable   = valueLable()
-		# --
-		# self.statusButton.bt_speaker = 1
-		# self.setWindowTitle("my name")
-		# --
-		# self.fr_run.show()
-		# self.fr_agv.show()
-
-		# self.fr_password.hide()
-		# self.fr_setting.hide()
-		# self.fr_controlHand.hide()
 		# -
 		self.bt_controlConveyor_show.released.connect(self.released_controlConveyor_show)
 		self.bt_controlConveyor_hide.released.connect(self.released_controlConveyor_hide)
@@ -1267,9 +1256,7 @@ class WelcomeScreen(QDialog):
 		# self..setText(self.valueLable.)
 
 		
-	def controlShow_followMode(self):
-		self.statusButton.bt_tryTarget = self.isShow_tryTarget
-		
+	def controlShow_followMode(self):		
 		if (self.valueLable.modeRuning == self.modeRun_launch):
 			self.modeRuning = self.modeRun_launch
 
