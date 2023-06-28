@@ -174,7 +174,6 @@ class ros_control():
 		self.mode_by_hand = 1
 		self.mode_auto = 2
 		self.mode_operate = self.mode_by_hand    # Lưu chế độ hoạt động.
-		self.flag_tryTarget = 0
 
 		# -- Target
 		self.target_x = 0.		 # lưu tọa độ điểm đích hiện tại.			
@@ -896,6 +895,72 @@ class ros_control():
 		y = p2.y - p1.y
 		return sqrt(x*x + y*y)
 
+	def tryTarget_run(self):
+		if self.app_button.bt_tryTarget_start == 1:
+			if self.step_tryTarget == 0:
+				self.step_tryTarget = 1
+				# -
+				self.move_req.target_x = self.app_button.tryTarget_x
+				self.move_req.target_y = self.app_button.tryTarget_y
+				self.move_req.target_z = radians(self.app_button.tryTarget_r)
+				self.move_req.offset   = self.app_button.tryTarget_d
+				self.move_req.list_id  = [1000, 0, 0, 0, 0]
+				self.move_req.list_x   = [self.app_button.tryTarget_x, 0, 0, 0, 0]
+				self.move_req.list_y   = [self.app_button.tryTarget_y, 0, 0, 0, 0]
+				self.move_req.list_speed = [0, 0, 0, 0, 0]
+
+		if self.app_button.bt_tryTarget_reset == 1:
+			self.step_tryTarget = 0
+			self.enb_move = 0
+			self.enb_parking = 0
+
+		if self.app_button.bt_tryTarget_stop == 1:
+			self.enb_move = 0
+			self.enb_parking = 0
+		
+		if self.step_tryTarget == 0:
+			self.enb_move = 0
+			self.enb_parking = 0
+
+		elif self.step_tryTarget == 1: # - Di chuyển đến vị trí.
+			self.move_req.mission = 0
+			if self.app_button.bt_tryTarget_stop == 1:
+				self.enb_move = 0 # -
+			else:
+				self.enb_move = 3 # -
+
+			if self.status_goalControl.complete_misson == 1:  # Hoan thanh di chuyen.
+				self.step_tryTarget = 2
+				self.enb_move = 0
+
+		elif self.step_tryTarget == 2: # - Đi vào điểm thao tác
+			if self.app_button.bt_tryTarget_stop == 1:
+				self.enb_parking = 0
+			else:
+				if self.app_button.ck_tryTarget_safety == 1:
+					self.enb_parking = 1
+				else:
+					self.enb_parking = 2
+
+			self.parking_offset = self.move_req.offset
+			# -
+			self.parking_poseBefore.position.x = self.move_req.target_x
+			self.parking_poseBefore.position.y = self.move_req.target_y
+			self.parking_poseBefore.orientation = self.euler_to_quaternion(self.move_req.target_z)
+			self.parking_poseTarget = self.getPose_from_offset(self.parking_poseBefore, self.move_req.offset)
+
+			if self.parking_status.status == 51:
+				self.enb_parking = 0
+				self.step_tryTarget = 3
+
+			if self.move_req.offset <= 0:
+				self.enb_parking = 0
+				self.step_tryTarget = 3
+
+		elif self.step_tryTarget == 3:
+			self.enb_parking = 0
+			self.enb_move = 0
+
 	def resetAll_variable(self):
 		self.enb_move = 0
 
@@ -1069,8 +1134,7 @@ class ros_control():
 			if self.parking_status.status != 0:
 				self.enb_parking = 0
 
-			self.flag_tryTarget = self.app_button.bt_tryTarget
-			if self.flag_tryTarget == 0:
+			if self.step_tryTarget == 0:
 				# ------------------------------------------------------------
 				if self.flag_error == 0:
 				# -- Send vel
@@ -1124,17 +1188,7 @@ class ros_control():
 				self.charger_requir = self.charger_off
 				self.liftTask = self.liftStop
 
-				# if self.app_button.try_reset == 0:
-				# 	self.step_tryTarget = 0
-				# # - 
-				# if self.step_tryTarget == 0:
-				# 	if self.app_button.try_start == 1:
-				# 		self.step_tryTarget = 1
-
-				# elif self.step_tryTarget == 1:
-				# 	pass
-				# elif self.step_tryTarget == 2:
-				# 	pass
+			self.tryTarget_run()
 			# ------------------------------------------------------------
 			
 
@@ -1186,13 +1240,7 @@ class ros_control():
 					self.process = 2
 				self.NN_infoRespond.offset = 0 # --
 			else:
-				# Sử dụng trong trường hợp Lỗi vẫn hành: đã thực hiện xong nhiệm vụ di chuyển -> lái tay sang vị trí khác -> AGV đứng im (lẽ ra phải di chuyển đến đích)
-				# if self.completed_move == 1:
-				# 	if self.target_x < 500 and self.target_y < 500:
-				# 		if self.point_same_point(self.target_x, self.target_y, self.target_z, self.NN_infoRespond.x, self.NN_infoRespond.y, self.NN_infoRespond.z) == 1:
-				# 			self.completed_move = 0
-
-				# Nếu target ko đổi mà nhiện vụ muốn thay đổi (lấy hoặc trả hàng luôn tại đó).
+				# - Nếu target ko đổi mà nhiện vụ muốn thay đổi (lấy hoặc trả hàng luôn tại đó).
 				if self.completed_after_mission == 1:
 					if self.after_mission != self.NN_cmdRequest.after_mission:
 						self.completed_after_mission = 0
@@ -1207,10 +1255,6 @@ class ros_control():
 				if self.completed_after_mission == 1:
 					if self.after_mission == self.serverMission_liftDown_charger or self.after_mission == self.serverMission_charger: #
 						delta_distance = self.calculate_distance(self.robotPose_nav.pose.position, self.poseWait.position)
-						# print ("poseWait: " + str(self.poseWait.position.x) + " | " + str(self.poseWait.position.y))
-						# print ("robotPose_nav: " + str(self.robotPose_nav.pose.position.x) + " | " + str(self.robotPose_nav.pose.position.y))
-						# print ("delta_distance: ", delta_distance)
-
 						if (delta_distance > self.distance_resetMission):
 							self.resetAll_variable()
 							self.completed_backward = 1
@@ -1220,9 +1264,6 @@ class ros_control():
 						delta_distance = self.calculate_distance(self.robotPose_nav.pose.position, self.pose_parkingRuning.position)
 						# -- phien ban 2: Xac dinh do lech giua goc cua AGV voi goc cua diem vao Tag
 						delta_angle = self.calculate_angle(self.robotPose_nav.pose.orientation, self.parking_poseTarget.orientation)
-						# print ("--------------------")
-						# print ("delta_distance: ", delta_distance)
-						# print ("delta_angle: ", degrees(delta_angle) )
 
 						if (delta_distance > 0.2 or abs(delta_angle) > radians(20)):
 							self.completed_moveSimple = 0

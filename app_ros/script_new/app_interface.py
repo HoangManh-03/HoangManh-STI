@@ -3,7 +3,7 @@
 """
 Developer: Hoang van Quang
 Company: STI Viet Nam
-date: 09/03/2023
+Date: 28/06/2023
 """
 
 import sys
@@ -82,7 +82,7 @@ class statusButton:
 
 		self.bt_tryTarget_start = 0
 		self.bt_tryTarget_stop = 0
-		self.bt_tryTarget_reset = 0
+		self.bt_tryTarget_reset = 1
 		self.ck_tryTarget_safety = 0
 
 class statusColor:
@@ -314,6 +314,7 @@ class WelcomeScreen(QDialog):
 		# # -
 		self.bt_tryTarget_reset.pressed.connect(self.pressed_tryTarget_reset)
 		self.bt_tryTarget_reset.released.connect(self.released_tryTarget_reset)
+		self.bt_tryTarget_reset.setStyleSheet("background-color: blue;")
 		# # -
 		self.bt_tryTarget_start.pressed.connect(self.pressed_tryTarget_start)
 		self.bt_tryTarget_start.released.connect(self.released_tryTarget_start)
@@ -571,16 +572,6 @@ class WelcomeScreen(QDialog):
 				self.lb_rf_11.setStyleSheet("border: 1px solid red; border-radius: 10px")
 			else:
 				self.lb_rf_11.setStyleSheet("border: 1px solid green; border-radius: 10px")
-
-		# for i in range(4):
-		# 	label1 = QLabel(self)
-		# 	label1.setText(str(i + 8))
-		# 	label1.move(100 + 50*i, 150 + 50*i)
-		# 	label1.resize(22, 22)
-		# 	label1.setStyleSheet("border: 1px solid red; border-radius: 10px")
-		# 	label1.setAlignment(Qt.AlignCenter)
-		# 	label1.setFont(QFont('Arial', 8))
-		# 	lable_NAV.setParent(self.fr_showReflector)
 
 	# -
 	def released_controlConveyor_show(self):
@@ -919,6 +910,12 @@ class WelcomeScreen(QDialog):
 		self.bt_tryTarget_show.setStyleSheet("background-color: white;")
 		self.isShow_tryTarget = 0
 		self.clicked_stop()
+		self.statusButton.bt_tryTarget_start = 0
+		self.statusButton.bt_tryTarget_stop = 0
+		self.statusButton.bt_tryTarget_reset = 1
+		self.bt_tryTarget_reset.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_stop.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_start.setStyleSheet("background-color: white;")
 
 	# --
 	def pressed_tryTarget_up(self):
@@ -976,8 +973,10 @@ class WelcomeScreen(QDialog):
 		self.statusButton.bt_tryTarget_reset = 1
 
 	def released_tryTarget_reset(self):
-		self.bt_tryTarget_reset.setStyleSheet("background-color: white;")
-		self.statusButton.bt_tryTarget_reset = 0
+		self.bt_tryTarget_start.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_stop.setStyleSheet("background-color: white;")
+		self.statusButton.bt_tryTarget_start = 0
+		self.statusButton.bt_tryTarget_stop = 0
 
 	# --
 	def pressed_tryTarget_start(self):
@@ -985,8 +984,10 @@ class WelcomeScreen(QDialog):
 		self.statusButton.bt_tryTarget_start = 1
 
 	def released_tryTarget_start(self):
-		self.bt_tryTarget_start.setStyleSheet("background-color: white;")
-		self.statusButton.bt_tryTarget_start = 0
+		self.bt_tryTarget_reset.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_stop.setStyleSheet("background-color: white;")
+		self.statusButton.bt_tryTarget_reset = 0
+		self.statusButton.bt_tryTarget_stop = 0
 
 	# --
 	def pressed_tryTarget_stop(self):
@@ -994,8 +995,10 @@ class WelcomeScreen(QDialog):
 		self.statusButton.bt_tryTarget_stop = 1
 
 	def released_tryTarget_stop(self):
-		self.bt_tryTarget_stop.setStyleSheet("background-color: white;")
-		self.statusButton.bt_tryTarget_stop = 0
+		self.bt_tryTarget_reset.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_start.setStyleSheet("background-color: white;")
+		self.statusButton.bt_tryTarget_reset = 0
+		self.statusButton.bt_tryTarget_start = 0
 
 	# --
 	def pressed_tryTarget_x(self):
@@ -1292,6 +1295,7 @@ class WelcomeScreen(QDialog):
 				self.fr_handMode_conveyor.hide()
 				self.fr_handMode_move.hide()
 				self.fr_listTask.show()
+				self.fr_tryTarget.hide()
 				self.isShow_moveHand = 1
 
 			elif (self.modeRuning == self.modeRun_byhand):
@@ -1343,7 +1347,7 @@ class WelcomeScreen(QDialog):
 			self.total_x += self.robotPoseNow.position.x
 			self.total_y += self.robotPoseNow.position.y
 			euler = self.quaternion_to_euler(self.robotPoseNow.orientation)
-			self.total_angle += degrees(euler)
+			self.total_angle += euler
 
 		else:
 			self.timeSave_coorAverage = rospy.Time.now()
@@ -1351,11 +1355,7 @@ class WelcomeScreen(QDialog):
 				d_x = self.total_x/self.countTime_coorAverage
 				d_y = self.total_y/self.countTime_coorAverage
 				d_a = self.total_angle/self.countTime_coorAverage
-				d_degree = 0
-				if d_a < 0:
-					d_degree = 360 + d_a
-				else:
-					d_degree = d_a
+				d_degree = degrees(d_a)
 
 				self.lbv_coorAverage_times.setText(str(self.countTime_coorAverage))
 				self.lbv_coorAverage_x.setText(str(round(d_x, 3)))

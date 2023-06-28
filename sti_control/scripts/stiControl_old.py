@@ -12,9 +12,7 @@ Update:
 - Check error lost server.
 - chú ý: cập nhật báo lỗi ở app_ros
 >> 15/04/2022
-- Loi tranh nhau. Dung cho khi danh sach ID diem trong.
->> 19/04/2022.
-- Thay doi phuong phap Lay Diem Ke. 
+- Loi tranh nhau. Dung cho khi danh sach ID diem trong. 
 >> 
 """
 import roslib
@@ -101,12 +99,7 @@ class ros_control():
 		# -------------- Cac node thuat toan dieu khien.
 
 		self.pub_moveReq = rospy.Publisher("/request_move", Move_request, queue_size=100)
-		# -- add 19/04/2022
-		self.move_req = Move_request()
-		self.request_move_change = Move_request()
-		self.pointTarget_change = Point()
-		self.x_target_change = 0
-		self.y_target_change = 0
+		self.request_move = Move_request()
 
 		# -- Communicate with Server
 		rospy.Subscriber("/NN_cmdRequest", NN_cmdRequest, self.callback_cmdRequest)
@@ -157,7 +150,7 @@ class ros_control():
 
 		rospy.Subscriber("/status_goal_control", Status_goal_control, self.callback_goalControl)
 		self.status_goalControl = Status_goal_control() # sub from move_base
-		self.timeStampe_statusGoalControl = 0
+		self.timeStampe_statusGoalControl = rospy.Time.now()
 
 		rospy.Subscriber("/driver1_respond", Driver_respond, self.callback_driver1)
 		self.driver1_respond = Driver_respond()
@@ -212,6 +205,7 @@ class ros_control():
 		self.flag_read_client = 0
 		self.flag_error = 0
 		self.flag_warning = 0
+		self.move_req = Move_request()
 		self.pre_mess = ""               # lưu tin nhắn hiện tại.
 
 		# -- Check:
@@ -256,8 +250,8 @@ class ros_control():
 		self.led_stopBarrier = 6  	# 6
 		# -- Mission server
 		self.statusTask_liftError = 64 # trang thái nâng kệ nhueng ko có kệ.
-		self.serverMission_liftUp = 1 # 65
-		self.serverMission_liftDown = 2 # 66
+		self.serverMission_liftUp = 65 # 1 65
+		self.serverMission_liftDown = 66 # 2 66
 		self.serverMission_charger = 6 # 5
 		self.serverMission_unknown = 0
 		self.serverMission_liftDown_charger = 5 # 6
@@ -331,13 +325,14 @@ class ros_control():
 		self.flag_listPoint_ok = 0
 		
 		# -- add 19/01/2022 : Check error lost server.
-		self.name_card = "wlp0s20f3"
+		self.name_card = "wlo2"
 		self.address = "192.168.1.40" # "172.21.15.224"
 		self.saveTime_checkServer = rospy.Time.now()
 		self.saveStatus_server = 0
+		# -- add 30/03/2022 : co bao loi qua tai dong co.
+		self.flagError_overLoad = 0
 		# -- add 15/04/2022
 		self.flag_listPointEmpty = 0
-
 
 	def callback_imu(self, data):
 		self.imu_data = data
@@ -577,58 +572,6 @@ class ros_control():
 					else:
 						self.valueVoltage = int(bat)
 
-	# -- add 19/04/2022
-	def change_NN_cmdRequest(self):
-		# print ("run change cmdRequest")
-		point_in = Point()
-		point_in.x = self.move_req.target_x
-		point_in.y = self.move_req.target_y
-
-		point_out = self.getPoint_from_offset(point_in, self.move_req.target_z, self.move_req.offset)
-		# -- 
-		self.request_move_change.enable = self.move_req.enable
-		self.request_move_change.target_x = self.move_req.target_x
-		self.request_move_change.target_y = self.move_req.target_y
-		self.request_move_change.target_z = self.move_req.target_z
-		self.request_move_change.tag = self.move_req.tag
-		self.request_move_change.offset = self.move_req.offset
-		self.request_move_change.list_id = self.move_req.list_id
-		
-		self.request_move_change.list_x = list(self.move_req.list_x)
-		self.request_move_change.list_y = list(self.move_req.list_y)
-
-		print ("Len lilst X: ", list(self.request_move_change.list_x))
-		# print ("Len lilst Y: ", self.request_move_change.list_y)
-
-		self.request_move_change.list_speed = self.move_req.list_speed
-		self.request_move_change.mission = self.move_req.mission
-		# --
-		self.request_move_change.target_x = round(point_out.x, 3)
-		self.request_move_change.target_y = round(point_out.y, 3)
-		
-		leng = len(self.move_req.list_id)
-		for i in range(leng):
-			if (self.move_req.list_id[i] != 0):
-				print ("DK 1: ", self.move_req.list_x[i], self.move_req.target_x, self.move_req.list_y[i], self.move_req.target_y)
-				if (self.move_req.list_x[i] == self.move_req.target_x and self.move_req.list_y[i] == self.move_req.target_y):
-					# print ("DK 2", round(point_out.x, 3), round(point_out.y, 3))
-					self.request_move_change.list_x[i] = round(point_out.x, 3)
-					self.request_move_change.list_y[i] = round(point_out.y, 3)
-
-	def getPoint_from_offset(self, point_in, angle_in, offset):
-
-		point_out = Point()
-		angle = angle_in - pi
-		if (angle >= 0):
-			angle_target = angle - pi
-		else:
-			angle_target = pi + angle
-
-		point_out.x = point_in.x + cos(angle_target)*offset
-		point_out.y = point_in.y + sin(angle_target)*offset
-
-		return point_out
-
 	def run_maunal(self):
 		cmd_vel = Twist()
 		sts = 0
@@ -701,7 +644,7 @@ class ros_control():
 
 	def detectLost_driver(self):
 		delta_t = rospy.Time.now() - self.timeStampe_driver
-		if (delta_t.to_sec() > 0.4):
+		if (delta_t.to_sec() > 0.8):
 			return 1
 		return 0
 
@@ -935,7 +878,7 @@ class ros_control():
 			listError_now.append(412)
 
 		# -- AGV dung do da di het danh sach diem.
-		if self.status_goalControl.misson == 1 or self.status_goalControl.misson == 3: 
+		if self.status_goalControl.misson == 1 or self.status_goalControl.misson == 3:
 			if self.status_goalControl.complete_misson == 2:
 				listError_now.append(441)
 				# -- add 18/01/2022
@@ -989,6 +932,8 @@ class ros_control():
 		# -- add 12/11/2021
 		self.flag_resetFramework = 0
 		self.flag_Auto_to_Byhand = 0
+		# -- add 30/03/2022 : co bao loi qua tai dong co.
+		# self.flagError_overLoad = 0
 		# -- add 15/04/2022
 		self.flag_listPointEmpty = 0
 
@@ -1031,8 +976,9 @@ class ros_control():
 					count_error += 1
 				else:
 					count_warning += 1
-
-			if count_error == 0 and count_warning == 0:
+					
+			# -- add 30/03/2022 : co bao loi qua tai dong co.
+			if count_error == 0 and count_warning == 0: # and self.flagError_overLoad == 0:
 				self.flag_error = 0
 				self.flag_warning = 0
 
@@ -1071,7 +1017,10 @@ class ros_control():
 
 				self.flag_checkLiftError = 0
 				self.task_driver.data = self.taskDriver_resetRead
-				
+
+				# -- add 30/03/2022 : co bao loi qua tai dong co.
+				self.flagError_overLoad = 0
+
 				# -- xoa loi ban nang.
 				if (self.lift_status.status.data == -1):
 					self.liftReset = self.liftResetOn
@@ -1082,11 +1031,11 @@ class ros_control():
 				self.EMC_reset = self.EMC_resetOff
 
 				# -- Add new: 23/12: Khi mat ket Driver, EMG duoc keo len.
-				if (self.flag_error == 1):
-					if (self.find_element(251, self.listError) == 1 or self.find_element(261, self.listError) == 1):
-						self.EMC_write = self.EMC_writeOn
-					else:
-						self.EMC_write = self.EMC_writeOff
+				# if (self.flag_error == 1):
+				# 	if (self.find_element(251, self.listError) == 1 or self.find_element(261, self.listError) == 1):
+				# 		self.EMC_write = self.EMC_writeOn
+				# 	else:
+				# 		self.EMC_write = self.EMC_writeOff
 				
 
 			# if (self.error_device != 0 or self.error_perform != 0 or self.error_move != 0):
@@ -1176,6 +1125,8 @@ class ros_control():
 		elif self.process == 41:    # kiem tra muc tieu thay doi
 			if ( self.target_x != self.NN_cmdRequest.target_x ) or ( self.target_y != self.NN_cmdRequest.target_y) or ( self.target_z != self.NN_cmdRequest.target_z) or ( self.target_tag != self.NN_cmdRequest.tag):
 				if (self.NN_cmdRequest.target_x < 500) and (self.NN_cmdRequest.target_y < 500):
+					# self.move_req = Move_request()
+
 					# Khong che phep doi len khi dang:
 					# - 1, Nang hoac Ha.
 					# - 2, Dang di vao ke.
@@ -1269,14 +1220,14 @@ class ros_control():
 					if self.before_mission == self.serverMission_unknown:
 						self.flag_Auto_to_Byhand = 0
 							
-					elif self.before_mission == self.serverMission_liftDown: # Hạ
+					elif self.before_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
 						self.liftTask = self.liftDown	
 
 						if self.lift_status.status.data == 3:  # Hoàn thành
 							self.liftTask = self.liftStop
 							self.flag_Auto_to_Byhand = 0
 
-					elif self.before_mission == self.serverMission_liftUp: # Nâng
+					elif self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 						self.liftTask = self.liftUp				
 						if self.lift_status.status.data == 4:  # Hoàn thành
 							self.liftTask = self.liftStop
@@ -1287,13 +1238,13 @@ class ros_control():
 					if self.after_mission == self.serverMission_unknown:
 						self.flag_Auto_to_Byhand = 0
 							
-					elif self.after_mission == self.serverMission_liftDown: # Hạ
+					elif self.after_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
 						self.liftTask = self.liftDown				
 						if self.lift_status.status.data == 3:  # Hoàn thành
 							self.liftTask = self.liftStop
 							self.flag_Auto_to_Byhand = 0
 
-					elif self.after_mission == self.serverMission_liftUp: # Nâng
+					elif self.after_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 						self.liftTask = self.liftUp				
 						if self.lift_status.status.data == 4:  # Hoàn thành
 							self.liftTask = self.liftStop
@@ -1332,7 +1283,7 @@ class ros_control():
 					# -- add new
 					self.completed_checkLift = 1
 					
-				elif self.before_mission == self.serverMission_liftDown: # Hạ
+				elif self.before_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
 					self.charger_requir = self.charger_off
 					self.liftTask = self.liftDown
 					
@@ -1342,7 +1293,7 @@ class ros_control():
 						self.completed_before_mission = 1
 
 
-				elif self.before_mission == self.serverMission_liftUp: # Nâng
+				elif self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 					self.charger_requir = self.charger_off
 					self.liftTask = self.liftUp		
 					if self.lift_status.status.data == 4:  # Hoàn thành
@@ -1358,7 +1309,7 @@ class ros_control():
 		elif self.process == 44:	# Thuc hien kiểm tra kệ có trên bàn nâng ko.
 			if self.completed_checkLift == 0:
 				self.job_doing = 3
-				if self.before_mission == self.serverMission_liftUp: # Nâng
+				if self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 					if self.lift_status.sensorLift.data == 0:
 						self.lastTime_checkLift = time.time()
 
@@ -1383,16 +1334,21 @@ class ros_control():
 				self.job_doing = 4
 				# -- add 15/04/2022
 				if self.check_listPoints(self.NN_cmdRequest.list_id) == 1:
+						
 					if self.flag_requirBackward == 1:
 						self.move_req.target_x = self.backward_x
 						self.move_req.target_y = self.backward_y
 						self.move_req.target_z = self.backward_z
+						# -- edit: 26/02/2022
 						if self.status_goalControl.misson == 2 and self.status_goalControl.complete_misson == 1:  # Hoan thanh di chuyen lui.
+						# if self.status_goalControl.misson == 1 and self.status_goalControl.complete_misson == 1:  # Hoan thanh di chuyen lui.
 							self.flag_requirBackward = 0
 							self.enb_move = 0
-							self.completed_backward = 1	
+							self.completed_backward = 1
 						else:
+							# -- edit: 26/02/2022
 							self.enb_move = 2
+							# self.enb_move = 1
 					else:
 						self.completed_backward = 1	
 						self.enb_move = 0
@@ -1426,22 +1382,16 @@ class ros_control():
 					self.move_req.list_y = self.NN_cmdRequest.list_y
 					self.move_req.list_speed = self.NN_cmdRequest.list_speed
 
-					if self.before_mission == self.serverMission_liftUp: # Nâng
+					if self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 						self.move_req.mission = 1
 					else:
 						self.move_req.mission = 0
 
 					# -- add 19/01/2022 : chuyen vung sick.
-					# if self.before_mission == self.serverMission_liftUp: # Nâng
-					# 	self.enb_move = 1 # -- vung To
-					# else:
-					# 	self.enb_move = 3 # -- vung Nho
-					
-					self.enb_move = 1 # -- vung To
-
-					# -- add 19/04/2022
-					self.change_NN_cmdRequest()
-
+					if self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
+						self.enb_move = 1 # -- vung To
+					else:
+						self.enb_move = 3 # -- vung Nho
 				else:
 					self.log_mess("warn", "ERROR: Target of List point wrong !!!", 0)
 
@@ -1503,31 +1453,11 @@ class ros_control():
 				self.enb_parking = 1
 
 			self.parking_offset = self.NN_cmdRequest.offset
-			# -- add 19/04/2022
-			# self.parking_poseBefore.position.x = self.NN_cmdRequest.target_x
-			# self.parking_poseBefore.position.y = self.NN_cmdRequest.target_y
-			# self.parking_poseBefore.orientation = self.euler_to_quaternion(self.NN_cmdRequest.target_z)
-			# self.parking_poseTarget = self.getPose_from_offset(self.parking_poseBefore, self.parking_offset)
-			# -- 
-			self.parking_poseTarget.position.x = self.NN_cmdRequest.target_x
-			self.parking_poseTarget.position.y = self.NN_cmdRequest.target_y
-			if (self.NN_cmdRequest.target_z >= 0):
-				ang = self.NN_cmdRequest.target_z - pi
-			else:
-				ang = self.NN_cmdRequest.target_z + pi
-
-			self.parking_poseTarget.orientation = self.euler_to_quaternion(ang)
-			# -- 
-			point_in = Point()
-			point_in.x = self.NN_cmdRequest.target_x
-			point_in.y = self.NN_cmdRequest.target_y
-
-			point_out = self.getPoint_from_offset(point_in, self.NN_cmdRequest.target_z, self.NN_cmdRequest.offset)
-			
-			self.parking_poseBefore.position.x = point_out.x
-			self.parking_poseBefore.position.y = point_out.y
+			# -
+			self.parking_poseBefore.position.x = self.NN_cmdRequest.target_x
+			self.parking_poseBefore.position.y = self.NN_cmdRequest.target_y
 			self.parking_poseBefore.orientation = self.euler_to_quaternion(self.NN_cmdRequest.target_z)
-			# --
+			self.parking_poseTarget = self.getPose_from_offset(self.parking_poseBefore, self.parking_offset)
 
 			self.log_mess("info", "Tag offset requir: ", self.parking_offset)
 			self.process = 2
@@ -1539,14 +1469,14 @@ class ros_control():
 					self.log_mess("info", "Last mission Not have Suf: ", self.after_mission)
 					self.completed_after_mission = 1
 					
-				elif self.after_mission == self.serverMission_liftDown: # Hạ
+				elif self.after_mission == self.serverMission_liftDown or self.before_mission == 2: # Hạ
 					self.liftTask = self.liftDown
 					if self.lift_status.status.data == 3: # Hoàn thành
 						self.log_mess("info", "Last mission completed: ", self.serverMission_liftDown)
 						self.liftTask = self.liftStop
 						self.completed_after_mission = 1
 
-				elif self.after_mission == self.serverMission_liftUp: # Nâng
+				elif self.after_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
 					self.liftTask = self.liftUp				
 					if self.lift_status.status.data == 4: # Hoàn thành
 						self.log_mess("info", "Last mission completed: ", self.serverMission_liftUp)
@@ -1616,9 +1546,7 @@ class ros_control():
 		self.pub_infoRespond.publish(self.NN_infoRespond)    # Pub Client
 
 		# -- Request Navigation
-		# -- add 19/04/2022
-		# self.pub_move_req(self.enb_move, self.move_req)  # Pub Navigation
-		self.pub_move_req(self.enb_move, self.request_move_change)  # Pub Navigation
+		self.pub_move_req(self.enb_move, self.move_req)  # Pub Navigation
 
 		# -- Speaker
 		if self.flag_error == 1 and self.flag_warning == 1:
