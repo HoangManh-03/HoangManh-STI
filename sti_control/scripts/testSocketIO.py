@@ -50,7 +50,7 @@ def connect():
 def connect_error(data):
     print("The connection failed!")
 
-@sio.event
+@sio.event 
 def disconnect():
     print("I'm disconnected!")
 

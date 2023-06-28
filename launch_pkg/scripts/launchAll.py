@@ -333,10 +333,13 @@ class scanMap():
             # -- data APP
             elif (self.step == 4):
                 self.notification = 'launch_dataApp'
-                sts = self.launch_dataApp.start_and_wait(3.)
-                if (sts == 1):
+                try:
+                    sts = self.launch_dataApp.start_and_wait(2.)
+                    if (sts == 1):
+                        self.step += 1
+                        time.sleep(self.timeWait)
+                except:
                     self.step += 1
-                    time.sleep(self.timeWait)
 
             # -- main
             elif (self.step == 5):

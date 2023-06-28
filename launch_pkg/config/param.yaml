@@ -44,7 +44,7 @@ path_control      : /home/stivietnam/catkin_ws/src/sti_control/launch/stiControl
 path_goalControl:    /home/stivietnam/catkin_ws/src/sti_module/launch/goalControl.launch
 path_parkingControl: /home/stivietnam/catkin_ws/src/sti_module/launch/parkingControl.launch
 # --
-path_dataApp      : /home/stivietnam/catkin_ws/src/app_ros/launch/data_synthesis.launch
+path_dataApp      : /home/stivietnam/catkin_ws/src/app_ros/launch/app_ros.launch # data_synthesis.launch
 # --
 path_posePublisher: /home/stivietnam/catkin_ws/src/pose_publisher/launch/robot_pose.launch
   

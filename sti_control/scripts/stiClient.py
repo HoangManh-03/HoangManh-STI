@@ -192,12 +192,6 @@ class read_and_respond_UDP():
 		self.before_mission = 0  # nhiem vu can thuc hien truoc khi di chuyen
 		self.after_mission = 0  # nhiem vu can thuc hien sau khi di chuyen den dich
 
-
-
-		# self.HOST_receive = re.search(re.compile(r'(?<=inet )(.*)(?=\/)', re.M), os.popen('ip addr show wlp3s0').read()).groups()[0]
-		# self.HOST_receive = '192.168.1.69'
-		# self.HOST_receive = '192.168.1.41'
-
 		self.HOST_receive = '172.21.84.213'
 		# -- add 22/01/2022
 		self.HOST_receive = self.get_ipAuto(self.name_card)
