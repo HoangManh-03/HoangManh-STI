@@ -3193,7 +3193,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>250</x>
-        <y>210</y>
+        <y>340</y>
         <width>121</width>
         <height>31</height>
        </rect>
@@ -3235,7 +3235,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>130</x>
-        <y>210</y>
+        <y>340</y>
         <width>121</width>
         <height>31</height>
        </rect>
@@ -3277,7 +3277,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>210</y>
+        <y>340</y>
         <width>121</width>
         <height>31</height>
        </rect>
@@ -3319,7 +3319,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>160</y>
+        <y>290</y>
         <width>121</width>
         <height>51</height>
        </rect>
@@ -3339,7 +3339,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>130</x>
-        <y>160</y>
+        <y>290</y>
         <width>121</width>
         <height>51</height>
        </rect>
@@ -3359,7 +3359,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>120</y>
+        <y>250</y>
         <width>361</width>
         <height>41</height>
        </rect>
@@ -3404,7 +3404,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>250</x>
-        <y>160</y>
+        <y>290</y>
         <width>121</width>
         <height>51</height>
        </rect>
@@ -3424,7 +3424,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>470</x>
-        <y>160</y>
+        <y>290</y>
         <width>81</width>
         <height>81</height>
        </rect>
@@ -3444,7 +3444,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>290</y>
+        <y>80</y>
         <width>161</width>
         <height>41</height>
        </rect>
@@ -3489,7 +3489,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>210</x>
-        <y>290</y>
+        <y>80</y>
         <width>161</width>
         <height>41</height>
        </rect>
@@ -3534,7 +3534,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>390</x>
-        <y>120</y>
+        <y>250</y>
         <width>161</width>
         <height>41</height>
        </rect>
@@ -3579,7 +3579,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>330</y>
+        <y>120</y>
         <width>81</width>
         <height>81</height>
        </rect>
@@ -3623,7 +3623,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>210</x>
-        <y>330</y>
+        <y>120</y>
         <width>81</width>
         <height>81</height>
        </rect>
@@ -3643,7 +3643,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>290</x>
-        <y>330</y>
+        <y>120</y>
         <width>81</width>
         <height>81</height>
        </rect>
@@ -3663,7 +3663,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>390</x>
-        <y>160</y>
+        <y>290</y>
         <width>81</width>
         <height>81</height>
        </rect>
@@ -3683,7 +3683,7 @@ nhận</string>
       <property name="geometry">
        <rect>
         <x>90</x>
-        <y>330</y>
+        <y>120</y>
         <width>81</width>
         <height>81</height>
        </rect>
@@ -5183,10 +5183,10 @@ cách lùi</string>
       </property>
      </widget>
     </widget>
+    <zorder>fr_tryTarget</zorder>
     <zorder>fr_handMode_move</zorder>
     <zorder>fr_listTask</zorder>
     <zorder>fr_handMode_conveyor</zorder>
-    <zorder>fr_tryTarget</zorder>
     <zorder>fr_password</zorder>
     <zorder>fr_agv</zorder>
    </widget>

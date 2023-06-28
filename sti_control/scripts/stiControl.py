@@ -479,12 +479,6 @@ class ros_control():
 		
 		self.pub_requestMain.publish(mai)
 
-# 	def do_cancelMisssion(self):
-# 		if self.flag_cancelMission == 0:
-# 			self.status_cancel = 0
-# 		else:
-# 			self.status_cancel = 1
-
 	def point_same_point(self, x1, y1, z1, x2, y2, z2):
 		# tọa độ
 		x = x2 - x1
@@ -795,10 +789,6 @@ class ros_control():
 		if (self.lift_status.status.data == -2):
 			listError_now.append(343)
 
-		# -- OC-USB
-		# if (self.status_port.oc == False):
-		# 	listError_now.append(342)
-
 		# -- MAIN: CAN ket noi 
 		if (self.main_info.CAN_status == 0):
 			listError_now.append(323)
@@ -806,14 +796,6 @@ class ros_control():
 		# -- lost Main
 		if (self.detectLost_main() == 1):
 			listError_now.append(321)
-
-		# -- lost Imu
-		# if (self.detectLost_Imu() == 1):
-		# 	listError_now.append(231)
-
-		# -- IMU - USB
-		# if (self.status_port.imu == False):
-		# 	listError_now.append(232)
 
 		# -- lost Nav
 		if (self.detectLost_nav() == 1):
@@ -890,10 +872,6 @@ class ros_control():
 			listError_now.append(442)
 
 		return listError_now
-
-		x = p2.x - p1.x
-		y = p2.y - p1.y
-		return sqrt(x*x + y*y)
 
 	def tryTarget_run(self):
 		if self.app_button.bt_tryTarget_start == 1:
@@ -1172,6 +1150,7 @@ class ros_control():
 				# -- Speaker
 				if self.app_button.bt_spk_on == True:
 					self.enb_spk = 1
+
 				elif self.app_button.bt_spk_off == True:
 					self.enb_spk = 0
 
@@ -1688,13 +1667,12 @@ class ros_control():
 			if self.enb_spk == 1:
 				# tat Loa khi sac thanh cong!
 				if self.charger_write == self.charger_on and self.main_info.charge_current >= self.charger_valueOrigin and self.flag_error == 0:
-					self.speaker = 	self.spk_off
+					self.speaker = self.spk_off
 				else:
 					self.speaker = self.speaker_requir
 			else:
 				self.speaker = self.spk_off
 
-			self.speaker = self.spk_off
 			self.Main_pub(self.charger_write, self.speaker, self.EMC_write, self.EMC_reset)  # MISSION
 
 			# -- Request HC:
