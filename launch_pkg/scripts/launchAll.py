@@ -333,13 +333,14 @@ class scanMap():
             # -- data APP
             elif (self.step == 4):
                 self.notification = 'launch_dataApp'
-                try:
-                    sts = self.launch_dataApp.start_and_wait(2.)
-                    if (sts == 1):
-                        self.step += 1
-                        time.sleep(self.timeWait)
-                except:
-                    self.step += 1
+                self.step += 1
+                # try:
+                #     sts = self.launch_dataApp.start_and_wait(2.)
+                #     if (sts == 1):
+                #         self.step += 1
+                #         time.sleep(self.timeWait)
+                # except:
+                #     self.step += 1
 
             # -- main
             elif (self.step == 5):
@@ -400,14 +401,25 @@ class scanMap():
                     time.sleep(self.timeWait)
 
             # -- imuFilter
-            elif (self.step == 10):
-                self.notification = 'launch_imuFilter'
-                self.step = 11
+            # elif (self.step == 10):
+            #     self.notification = 'launch_imuFilter'
+            #     self.step = 11
                 # self.launch_imuFilter.start()
                 # if (self.is_imuFilter == 1):
                 #     self.step += 1
                 #     time.sleep(self.timeWait)
 
+            # -- data APP
+            elif (self.step == 10):
+                self.notification = 'launch_dataApp'
+                try:
+                    sts = self.launch_dataApp.start_and_wait(2.)
+                    if (sts == 1):
+                        self.step += 1
+                        time.sleep(self.timeWait)
+                except:
+                    self.step += 1
+                    
             # -- kinematic
             elif (self.step == 11):
                 self.notification = 'launch_kinematic'

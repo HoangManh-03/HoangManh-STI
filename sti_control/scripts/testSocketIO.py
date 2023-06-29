@@ -63,11 +63,10 @@ def callback(data):
     y = round(data.pose.position.y, 3)
     z = round(euler[2], 3)
     data = {"id": 1, "name": "lagv", "enable": 0, "status": "diem1", "x": x, "y": y, "r": z}
-    json_object = json.dumps(data, indent = 4) 
+    json_object = json.dumps(data, indent = 4)
     sio.emit("AGV-respond-Server", json_object)
     
 def listener():
-
     global sio
     sio.connect('http://192.168.1.99:3000')
     # In ROS, nodes are uniquely named. If two nodes with the same

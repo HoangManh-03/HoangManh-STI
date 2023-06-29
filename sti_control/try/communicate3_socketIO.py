@@ -41,7 +41,7 @@ from geometry_msgs.msg import Point
 
 class Communicate_socketIO():
 	def __init__(self):
-		rospy.init_node('Communicate_socketIO', anonymous=False)
+		rospy.init_node('Communicate3_socketIO', anonymous=False)
 		self.rate = rospy.Rate(10)
 		# -- 
 		self.name_card = rospy.get_param("name_card", "wlp0s20f3")
@@ -51,7 +51,7 @@ class Communicate_socketIO():
 
 		self.AGV_IP = '192.168.1.100'
 		self.AGV_port = 6000
-		self.AGV_mac = "0c:9a:3c:07:bb:60"
+		self.AGV_mac = "0c:9a:3c:07:bb:63"
 
 		# -
 		rospy.Subscriber("/NN_infoRespond", NN_infoRespond, self.AGVInfor_callback)	
@@ -65,6 +65,7 @@ class Communicate_socketIO():
 		self.server_requestInfor = NN_infoRequest()
 		# ---------
 		self.saveTime_received = rospy.Time.now()
+		# ---
 
 	def AGVInfor_callback(self, data):
 		self.AGV_information = data
@@ -93,23 +94,15 @@ def main():
 	@my_socketIO.on('Server-request-info')
 	def on_message(data):
 		# print('I received a message!')
+		# print(type(json.loads(data)))
 		data_json = json.loads(data)
 		# print (data_json['mac'])
 		if data_json['mac'] == myObject.AGV_mac:
 			# print ("Server request info to Me!")
 			myObject.measureFreq_event()
-
-			x = round(myObject.AGV_information.x, 3)
-			y = round(myObject.AGV_information.y, 3)
-			r = round(myObject.AGV_information.z, 3)
-			status = myObject.AGV_information.status
-			battery = myObject.AGV_information.battery
-			mode = myObject.AGV_information.mode
-			listErrors = myObject.AGV_information.listError
-
-			data_send = {"id": data_json['id'], "name": data_json['name'], "mac": data_json['mac'], "mode": mode, "status": 1, "x": x, "y": y, "r": r, "status": status, "battery": battery, "listErrors": listErrors}
+			data_send = {"id": data_json['id'], "name": data_json['name'], "mac": data_json['mac'], "mode": 0, "status": 1, "x": 2, "y": 3, "r": 0}
 			my_socketIO.emit("AGV-respond-info", json.dumps(data_send, indent = 4))
-
+			
 	@my_socketIO.event
 	def connect():
 		print("I'm connected!")
