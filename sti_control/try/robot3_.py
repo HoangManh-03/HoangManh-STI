@@ -7,6 +7,7 @@ Company: STI Viet Nam
 Date: 28/06/2023
 """
 
+import random
 import socketio
 import json 
 
@@ -38,21 +39,31 @@ from sti_msgs.msg import FL_cmdRequest
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Point
 
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from sti_msgs.msg import *
+from geometry_msgs.msg import Twist, Pose, Point, Quaternion
+from math import sin , cos , pi , atan2, radians, sqrt, pow, degrees
+
 
 class Communicate_socketIO():
 	def __init__(self):
-		rospy.init_node('Communicate_socketIO', anonymous=False)
-		self.rate = rospy.Rate(10)
+		rospy.init_node('sim_robot3', anonymous=False)
+		self.rate = rospy.Rate(8)
 		# -- 
 		self.name_card = rospy.get_param("name_card", "wlp0s20f3")
 		self.name_card = "wlo2" # "wlp0s20f3"
 		self.server_IP = '192.168.1.99'
-		self.server_port = 4001
+		# self.server_IP = '127.0.0.1'
+		self.server_port = 4003
 
 		self.AGV_IP = '192.168.1.100'
 		self.AGV_port = 6000
-		self.AGV_mac = "0c:9a:3c:07:bb:6f"
-
+		self.AGV_mac = "0c:9a:3c:07:bb:63"
+		# -
+		self.robot_x = 0.0
+		self.robot_y = 0.0
+		self.robot_r = 0.0
+		self.timeD = 1./8.
 		# -
 		rospy.Subscriber("/NN_infoRespond", NN_infoRespond, self.AGVInfor_callback)	
 		self.AGV_information = NN_infoRespond()
@@ -73,9 +84,45 @@ class Communicate_socketIO():
 	def measureFreq_event(self):
 		delta_t = rospy.Time.now() - self.saveTime_received
 		self.saveTime_received = rospy.Time.now()
-		print ("Freq: ", 1.0/delta_t.to_sec())
+		# print ("Freq: ", 1.0/delta_t.to_sec())
+
+	def quaternion_to_euler(self, qua):
+		quat = (qua.x, qua.y, qua.z, qua.w )
+		a, b, euler = euler_from_quaternion(quat)
+		return euler
+
+	def limitAngle(self, angle_in): # - rad
+		qua_in = self.euler_to_quaternion(angle_in)
+		angle_out = self.quaternion_to_euler(qua_in)
+		return angle_out
+
+	def euler_to_quaternion(self, euler):
+		quat = Quaternion()
+		odom_quat = quaternion_from_euler(0, 0, euler)
+		quat.x = odom_quat[0]
+		quat.y = odom_quat[1]
+		quat.z = odom_quat[2]
+		quat.w = odom_quat[3]
+		return quat
+
+	def calculate_distance(self, p1, p2): # p1, p2 | geometry_msgs/Point
+		x = p2.x - p1.x
+		y = p2.y - p1.y
+		return sqrt(x*x + y*y)
+	
+	def move(self, vel_x, vel_r):
+		delta_r = vel_r*self.timeD
+		delta_x = vel_x*cos(self.robot_r)*self.timeD
+		delta_y = vel_x*sin(self.robot_r)*self.timeD
+
+		# -----------
+		self.robot_x += delta_x
+		self.robot_y += delta_y
+		self.robot_r += delta_r
+		self.robot_r = self.limitAngle(self.robot_r)
 
 	def run(self):
+		self.move(0.4, 0.5)
 
 		self.rate.sleep()
 
@@ -92,23 +139,37 @@ def main():
 
 	@my_socketIO.on('Server-request-agv-info')
 	def on_message(data):
-		# print('I received a message!')
+		# print('I received Request form Server!')
+
 		data_json = json.loads(data)
 		# print (data_json['mac'])
 		if data_json['mac'] == myObject.AGV_mac:
-			# print ("Server request info to Me!")
+			print ("Server request: Info to Me!")
 			myObject.measureFreq_event()
 
-			x = round(myObject.AGV_information.x, 3)
-			y = round(myObject.AGV_information.y, 3)
-			r = round(myObject.AGV_information.z, 3)
-			status = myObject.AGV_information.status
-			battery = myObject.AGV_information.battery
-			mode = myObject.AGV_information.mode
+			x = round(myObject.robot_x, 3)
+			y = round(myObject.robot_y, 3)
+			r = round(myObject.robot_r, 3)
+			battery = round(random.uniform(23.0, 25.5), 1)
+			status = round(random.uniform(0, 2), 0)
+			mode = round(random.uniform(0, 2), 0)
+			# print ("x: ", x)
+			# x = round(myObject.AGV_information.x, 3)
+			# y = round(myObject.AGV_information.y, 3)
+			# r = round(myObject.AGV_information.z, 3)
+			# status = myObject.AGV_information.status
+			# battery = myObject.AGV_information.battery
+			# mode = myObject.AGV_information.mode
 			listErrors = myObject.AGV_information.listError
 
 			data_send = {"id": data_json['id'], "name": data_json['name'], "mac": data_json['mac'], "mode": mode, "status": 1, "x": x, "y": y, "r": r, "status": status, "battery": battery, "listErrors": listErrors}
-			my_socketIO.emit("AGV-respond-info", json.dumps(data_send, indent = 4))
+			my_socketIO.emit("Robot-respond-info", json.dumps(data_send, indent = 4))
+
+	@my_socketIO.on('Server-send-agv-cmd')
+	def on_message(data):
+		# data_json = json.loads(data)
+		# if data_json['mac'] == myObject.AGV_mac:
+		print ("Server send: Command to Me!")
 
 	@my_socketIO.event
 	def connect():

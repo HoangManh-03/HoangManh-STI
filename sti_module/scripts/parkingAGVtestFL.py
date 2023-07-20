@@ -122,6 +122,9 @@ class ParkingAGV():
         self.ss_y = 0.0
         self.ss_a = 0.0
 
+        self.isDeceleration = False
+        self.ratioDeceleration = 2.5
+
     # function callback
     def callback_poseRobot(self, data):
         self.poseStampedAGV = data
@@ -409,93 +412,6 @@ class ParkingAGV():
 
             return True
     
-    def follow_target(self):
-        twist = Twist()
-        poseX = self.poseParking.position.x
-        poseY = self.poseParking.position.y
-        # angleAGV = self.theta_robotParking
-        dis = sqrt(poseX*poseX + poseY*poseY)
-        print(poseX, poseY, dis)
-
-        if self.dataPath.modeRun == 1 or self.dataPath.modeRun == 2:
-            if poseX <= 0.:
-                self.pub_Stop()
-                return 1
-            
-            else:
-                if self.zone_lidar.zone_sick_behind == 1 and self.req_parking.modeRun == 1:
-                    # print("co vat can")
-                    self.pub_Stop()
-                    self.statusVel = 0
-                    self.warn_agv = 1
-                    
-                else:
-                    self.warn_agv = 0
-                    
-                    if self.flagFollowPointFinish:
-                        self.curr_velocity = self.velSt*(dis/self.distDeceleration)
-                        self.curr_velocity = self.constrain(self.curr_velocity, self.min_linearVelocity, self.velSt)
-                        print(self.curr_velocity, self.infoPathFollow.velocity, "follow Finish Target")
-                        velX = -self.curr_velocity
-                        if self.getWaitPoint(poseX, poseY, self.curr_velocity):
-                            velX = -self.curr_velocity
-                            xCVFollow , yCVFollow = self.convert_relative_coordinates(self.infoPathFollow.X, self.infoPathFollow.Y)
-                            velAng = self.control_navigation(xCVFollow, yCVFollow, velX)
-                            twist.linear.x = velX
-                            twist.angular.z = velAng
-
-                            self.pub_cmdVel(twist, self.rate_pubVel)
-                        
-                        else:
-                            self.pub_Stop()
-                            self.warn_agv = 2
-                            return -1
-
-                    else:
-                        # kiem tra dang follow point cuoi chua
-                        # them phuong trinh giam toc
-                        if self.curr_velocity < self.infoPathFollow.velocity and self.statusVel != 1:
-                            self.statusVel = 1
-                            self.velSt = self.curr_velocity
-                            self.saveTimeVel = rospy.get_time()
-
-                        elif self.curr_velocity > self.infoPathFollow.velocity and self.statusVel != 2:
-                            self.statusVel = 2
-                            self.velSt = self.curr_velocity
-                            self.saveTimeVel = rospy.get_time()
-
-                        elif self.curr_velocity == self.infoPathFollow.velocity:
-                            self.statusVel = 0
-
-                        self.curr_velocity = self.getVeloctity(0, self.statusVel)
-                        print(self.curr_velocity, self.statusVel, self.infoPathFollow.velocity, "follow Normal Target")
-
-                        if self.curr_velocity != 0. :
-                            if self.getWaitPoint(poseX, poseY, self.curr_velocity):
-                                velX = -self.curr_velocity
-                                xCVFollow , yCVFollow = self.convert_relative_coordinates(self.infoPathFollow.X, self.infoPathFollow.Y)
-                                velAng = self.control_navigation(xCVFollow, yCVFollow, velX)
-                                twist.linear.x = velX
-                                twist.angular.z = velAng
-
-                                self.pub_cmdVel(twist, self.rate_pubVel)
-               
-                            else:
-                                self.pub_Stop()
-                                self.warn_agv = 2
-                                return -1
-                            
-        else:
-            if self.req_parking.modeRun == 3:
-                # print("Recieve data Stop!")
-                self.pub_cmdVel(Twist(), self.rate_pubVel)
-            elif self.req_parking.modeRun == 0:
-                # print("Recieve data Reset!")
-                self.resetAll()
-                self.pub_Stop()
-
-        return 0
-    
     def follow_targetVS2(self):
         twist = Twist()
         poseX = self.poseParking.position.x
@@ -506,6 +422,8 @@ class ParkingAGV():
 
         if self.dataPath.modeRun == 1 or self.dataPath.modeRun == 2:
             if poseX <= 0.:
+                self.statusVel = 0
+                self.isDeceleration = False
                 self.pub_Stop()
                 return 1
             
@@ -518,88 +436,149 @@ class ParkingAGV():
                     
                 else:
                     self.warn_agv = 0
-                    distance_decel = self.findLookAheadByVel(self.infoPathFollow.velocity)
-                    distance_decel = 0.35
-                    if (fabs(poseY) <= 0.01 and fabs(angleAGV) <= radians(1.)) or fabs(poseX) <= 0.6: # tinh van toc goc
-                        vel_x = 0.
-                        if dis <= distance_decel: # tinh van toc dai theo khoang cach
-                            vel_x = self.infoPathFollow.velocity*(dis/distance_decel)
-                            if vel_x >= self.infoPathFollow.velocity:
-                                vel_x = self.infoPathFollow.velocity
-                            if vel_x <= self.min_linearVelocity:
-                                vel_x = self.min_linearVelocity
 
-                        else:
-                            vel_x = self.infoPathFollow.velocity
+                    velX = 0
+                    distDeceleration = self.curr_velocity*self.ratioDeceleration
+                    if dis <= distDeceleration and self.isDeceleration == False:
+                        self.distDeceleration = dis
+                        self.isDeceleration = True
+                        self.velSt = self.curr_velocity
 
-                        kg = 0.35   # 0.7
-                        dentaAngle = -angleAGV
-                        velAng = kg*fabs(dentaAngle)
-                        if velAng >= 0.15:
-                            velAng = 0.15
+                    if self.isDeceleration:
+                        self.curr_velocity = self.velSt*(dis/self.distDeceleration)
+                        self.curr_velocity  = self.constrain(self.curr_velocity, self.min_linearVelocity, self.velSt)
+
+                    else:
+                        if self.statusVel == 0:
+                            self.saveTimeVel = rospy.get_time()
+                            self.statusVel = 1
                         
+                        if self.statusVel == 1: # tang toc
+                            if self.curr_velocity < self.infoPathFollow.velocity:
+                                self.curr_velocity = self.funcDecelerationByAcc(self.saveTimeVel, self.min_linearVelocity, self.infoPathFollow.velocity, 0.12)
+                            else:
+                                self.curr_velocity = self.infoPathFollow.velocity
+                                self.statusVel = 2
+
+                        if self.statusVel == 2:
+                            self.curr_velocity = self.infoPathFollow.velocity
+
+                    # ham xu ly
+                    if (fabs(poseY) <= 0.005 and fabs(angleAGV) <= radians(1.)) or fabs(poseX) <= 0.6:
+                        print("Mode follow Angle")
+                        velX = -self.curr_velocity
+                        kp = 0.35
+                        kd = 0.1
+                        dentaAngle = -angleAGV
+                        velAng = kp*fabs(dentaAngle) + kd*atan(fabs(poseY))
+                        # velAng = kp*fabs(dentaAngle)
                         if dentaAngle > 0:
                             velAng = velAng
                         else:
                             velAng = -velAng
-                        
-                        twist.linear.x = -vel_x
+
+                        twist.linear.x = velX
                         twist.angular.z = velAng
                         self.pub_cmdVel(twist, self.rate_pubVel)
 
                     else:
-                        if self.flagFollowPointFinish:
-                            self.curr_velocity = self.velSt*(dis/self.distDeceleration)
-                            self.curr_velocity = self.constrain(self.curr_velocity, self.min_linearVelocity, self.velSt)
-                            print(self.curr_velocity, self.infoPathFollow.velocity, "follow Finish Target")
+                        if self.getWaitPoint(poseX, poseY, self.curr_velocity):
+                            print("Mode follow Point")
                             velX = -self.curr_velocity
-                            if self.getWaitPoint(poseX, poseY, self.curr_velocity):
-                                velX = -self.curr_velocity
-                                xCVFollow , yCVFollow = self.convert_relative_coordinates(self.infoPathFollow.X, self.infoPathFollow.Y)
-                                velAng = self.control_navigation(xCVFollow, yCVFollow, velX)
-                                twist.linear.x = velX
-                                twist.angular.z = velAng
+                            xCVFollow , yCVFollow = self.convert_relative_coordinates(self.infoPathFollow.X, self.infoPathFollow.Y)
+                            velAng = self.control_navigation(xCVFollow, yCVFollow, velX)
 
-                                self.pub_cmdVel(twist, self.rate_pubVel)
-                            
-                            else:
-                                self.pub_Stop()
-                                self.warn_agv = 2
-                                return -1
-
+                            twist.linear.x = velX
+                            twist.angular.z = velAng
+                            self.pub_cmdVel(twist, self.rate_pubVel)
+                        
                         else:
-                            # kiem tra dang follow point cuoi chua
-                            # them phuong trinh giam toc
-                            if self.curr_velocity < self.infoPathFollow.velocity and self.statusVel != 1:
-                                self.statusVel = 1
-                                self.velSt = self.curr_velocity
-                                self.saveTimeVel = rospy.get_time()
+                            self.pub_Stop()
+                            self.warn_agv = 2
+                            return -1
+                        
+                    # distance_decel = self.findLookAheadByVel(self.infoPathFollow.velocity)
+                    # distance_decel = 0.35
+                    # if (fabs(poseY) <= 0.01 and fabs(angleAGV) <= radians(1.)) or fabs(poseX) <= 0.6: # tinh van toc goc
+                    #     vel_x = 0.
+                    #     if dis <= distance_decel: # tinh van toc dai theo khoang cach
+                    #         vel_x = self.infoPathFollow.velocity*(dis/distance_decel)
+                    #         if vel_x >= self.infoPathFollow.velocity:
+                    #             vel_x = self.infoPathFollow.velocity
+                    #         if vel_x <= self.min_linearVelocity:
+                    #             vel_x = self.min_linearVelocity
 
-                            elif self.curr_velocity > self.infoPathFollow.velocity and self.statusVel != 2:
-                                self.statusVel = 2
-                                self.velSt = self.curr_velocity
-                                self.saveTimeVel = rospy.get_time()
+                    #     else:
+                    #         vel_x = self.infoPathFollow.velocity
 
-                            elif self.curr_velocity == self.infoPathFollow.velocity:
-                                self.statusVel = 0
+                    #     kg = 0.35   # 0.7
+                    #     dentaAngle = -angleAGV
+                    #     velAng = kg*fabs(dentaAngle)
+                    #     if velAng >= 0.15:
+                    #         velAng = 0.15
+                        
+                    #     if dentaAngle > 0:
+                    #         velAng = velAng
+                    #     else:
+                    #         velAng = -velAng
+                        
+                    #     twist.linear.x = -vel_x
+                    #     twist.angular.z = velAng
+                    #     self.pub_cmdVel(twist, self.rate_pubVel)
 
-                            self.curr_velocity = self.getVeloctity(0, self.statusVel)
-                            print(self.curr_velocity, self.statusVel, self.infoPathFollow.velocity, "follow Normal Target")
+                    # else:
+                    #     if self.flagFollowPointFinish:
+                    #         self.curr_velocity = self.velSt*(dis/self.distDeceleration)
+                    #         self.curr_velocity = self.constrain(self.curr_velocity, self.min_linearVelocity, self.velSt)
+                    #         print(self.curr_velocity, self.infoPathFollow.velocity, "follow Finish Target")
+                    #         velX = -self.curr_velocity
+                    #         if self.getWaitPoint(poseX, poseY, self.curr_velocity):
+                    #             velX = -self.curr_velocity
+                    #             xCVFollow , yCVFollow = self.convert_relative_coordinates(self.infoPathFollow.X, self.infoPathFollow.Y)
+                    #             velAng = self.control_navigation(xCVFollow, yCVFollow, velX)
+                    #             twist.linear.x = velX
+                    #             twist.angular.z = velAng
 
-                            if self.curr_velocity != 0. :
-                                if self.getWaitPoint(poseX, poseY, self.curr_velocity):
-                                    velX = -self.curr_velocity
-                                    xCVFollow , yCVFollow = self.convert_relative_coordinates(self.infoPathFollow.X, self.infoPathFollow.Y)
-                                    velAng = self.control_navigation(xCVFollow, yCVFollow, velX)
-                                    twist.linear.x = velX
-                                    twist.angular.z = velAng
+                    #             self.pub_cmdVel(twist, self.rate_pubVel)
+                            
+                    #         else:
+                    #             self.pub_Stop()
+                    #             self.warn_agv = 2
+                    #             return -1
 
-                                    self.pub_cmdVel(twist, self.rate_pubVel)
+                    #     else:
+                    #         # kiem tra dang follow point cuoi chua
+                    #         # them phuong trinh giam toc
+                    #         if self.curr_velocity < self.infoPathFollow.velocity and self.statusVel != 1:
+                    #             self.statusVel = 1
+                    #             self.velSt = self.curr_velocity
+                    #             self.saveTimeVel = rospy.get_time()
+
+                    #         elif self.curr_velocity > self.infoPathFollow.velocity and self.statusVel != 2:
+                    #             self.statusVel = 2
+                    #             self.velSt = self.curr_velocity
+                    #             self.saveTimeVel = rospy.get_time()
+
+                    #         elif self.curr_velocity == self.infoPathFollow.velocity:
+                    #             self.statusVel = 0
+
+                    #         self.curr_velocity = self.getVeloctity(0, self.statusVel)
+                    #         print(self.curr_velocity, self.statusVel, self.infoPathFollow.velocity, "follow Normal Target")
+
+                    #         if self.curr_velocity != 0. :
+                    #             if self.getWaitPoint(poseX, poseY, self.curr_velocity):
+                    #                 velX = -self.curr_velocity
+                    #                 xCVFollow , yCVFollow = self.convert_relative_coordinates(self.infoPathFollow.X, self.infoPathFollow.Y)
+                    #                 velAng = self.control_navigation(xCVFollow, yCVFollow, velX)
+                    #                 twist.linear.x = velX
+                    #                 twist.angular.z = velAng
+
+                    #                 self.pub_cmdVel(twist, self.rate_pubVel)
                 
-                                else:
-                                    self.pub_Stop()
-                                    self.warn_agv = 2
-                                    return -1
+                    #             else:
+                    #                 self.pub_Stop()
+                    #                 self.warn_agv = 2
+                    #                 return -1
                             
         else:
             if self.req_parking.modeRun == 3:

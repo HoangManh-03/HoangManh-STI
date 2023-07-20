@@ -51,7 +51,7 @@ class Communicate_socketIO():
 
 		self.AGV_IP = '192.168.1.100'
 		self.AGV_port = 6000
-		self.AGV_mac = "0c:9a:3c:07:bb:61"
+		self.AGV_mac = "0c:9a:3c:07:bb:6f"
 
 		# -
 		rospy.Subscriber("/NN_infoRespond", NN_infoRespond, self.AGVInfor_callback)	
@@ -90,7 +90,7 @@ def main():
 	is_connected = 0
 	time_save = time.time()
 
-	@my_socketIO.on('Server-request-info')
+	@my_socketIO.on('Server-request-agv-info')
 	def on_message(data):
 		# print('I received a message!')
 		# print(type(json.loads(data)))

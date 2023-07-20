@@ -254,80 +254,17 @@ class Reconnect_node():
 		# -- .
 		self.reconnect_main = Reconnect(self.topicSub_main, self.timeLost_main, self.timeWait_main, self.path_main)
 		# ---------------------
-		# -- -- OC 
-		self.path_oc = rospy.get_param("path_oc", '')
-		self.timeLost_oc = rospy.get_param("timeLost_oc", 3)
-		self.timeWait_oc = rospy.get_param("timeWait_oc", 5)
-		self.topicSub_oc = "/lift_status"		
-		self.isRuned_oc = 0
-		self.timeReaded_oc = time.time()
-		rospy.Subscriber(self.topicSub_oc, Lift_status, self.callback_oc)
-		# -- .
-		self.reconnect_oc = Reconnect(self.topicSub_oc, self.timeLost_oc, self.timeWait_oc, self.path_oc)
-		# ---------------------
-		# -- -- HC 
-		self.path_hc = rospy.get_param("path_hc", '')
-		self.timeLost_hc = rospy.get_param("timeLost_hc", 3)
-		self.timeWait_hc = rospy.get_param("timeWait_hc", 5)
-		self.topicSub_hc = "/HC_info"		
-		self.isRuned_hc = 0
-		self.timeReaded_hc = time.time()
-		rospy.Subscriber(self.topicSub_hc, HC_info, self.callback_hc)
-		# -- .
-		self.reconnect_hc = Reconnect(self.topicSub_hc, self.timeLost_hc, self.timeWait_hc, self.path_hc)
-		# ---------------------
-		# -- -- IMU
-		self.path_imu = rospy.get_param("path_imu", '')
-		self.timeLost_imu = rospy.get_param("timeLost_imu", 3)
-		self.timeWait_imu = rospy.get_param("timeWait_imu", 5)
-		self.topicSub_imu = "/imu/data"		
-		self.isRuned_imu = 0
-		self.timeReaded_imu = time.time()
-		rospy.Subscriber(self.topicSub_imu, Imu, self.callback_imu)
-		# -- .
-		self.reconnect_imu = Reconnect(self.topicSub_imu, self.timeLost_imu, self.timeWait_imu, self.path_imu)
-		# ---------------------
 		# -- -- NAV350 
 		self.path_nav350 = rospy.get_param("path_nav350", '')
-		self.timeLost_nav350 = rospy.get_param("timeLost_nav350", 3)
+		self.timeLost_nav350 = rospy.get_param("timeLost_nav350", 1.2)
 		self.timeWait_nav350 = rospy.get_param("timeWait_nav350", 5)
-		self.topicSub_nav350 = "/nav350_data"		
+		self.topicSub_nav350 = "/nav350_data"
 		self.isRuned_nav350 = 0
 		self.timeReaded_nav350 = time.time()
 		rospy.Subscriber(self.topicSub_nav350, Nav350_data, self.callback_nav350)
 		# -- .
 		self.reconnect_nav350 = Reconnect(self.topicSub_nav350, self.timeLost_nav350, self.timeWait_nav350, self.path_nav350)
-		# ---------------------
-		# -- -- Driverall ------------------------------------------------
-		self.path_driverAll = rospy.get_param("path_driverAll", '')
-		# -- -- -- Driver1
-		self.timeLost_driver1 = rospy.get_param("timeLost_driver", 3)
-		self.timeWait_driver1 = rospy.get_param("timeWait_driver", 5)
-		self.topicSub_driver1 = "/driver1_respond"
-		self.isRuned_driver1 = 0
-		self.timeReaded_driver1 = time.time()
-		rospy.Subscriber(self.topicSub_driver1, Driver_respond, self.callback_driver1)
-		# -- .
-		self.reconnect_driver1 = Reconnect(self.topicSub_driver1, self.timeLost_driver1, self.timeWait_driver1, self.path_driverAll)
-		# -- -- Driver2 
-		# self.timeLost_driver2 = rospy.get_param("timeLost_driver2", 3)
-		# self.timeWait_driver2 = rospy.get_param("timeWait_driver2", 5)
-		# self.topicSub_driver2 = "/driver2_respond"
-		# self.isRuned_driver2 = 0
-		# self.timeReaded_driver2 = time.time()
-		# self.nameNode_driver2 = ''
-		# rospy.Subscriber(self.topicSub_driver2, Driver_respond, self.callback_driver2)
-		# -- .
-		# self.reconnect_driver2 = Reconnect(self.topicSub_driver2, self.timeLost_driver2, self.timeWait_driver2, self.path_driverAll)
-		# -- -- LoadCell
-		# self.timeLost_loadcell = rospy.get_param("timeLost_loadcell", 3)
-		# self.timeWait_loadcell = rospy.get_param("timeWait_loadcell", 5)
-		# self.topicSub_loadcell = "/driver2_respond"
-		# self.isRuned_loadcell = 0
-		# self.timeReaded_loadcell = time.time()
-		# self.nameNode_loadcell = ''
 		# ---------------------------------------------- Close driver ALL ----------------------------
-		# ---------------------
 		# -- -- Parking
 		self.path_parking = rospy.get_param("path_parkingControl", '')
 		self.timeLost_parking = rospy.get_param("timeLost_parking", 3)
@@ -346,33 +283,9 @@ class Reconnect_node():
 		self.isRuned_main = 1
 		self.timeReaded_main = time.time()
 
-	def callback_oc(self, data):
-		self.isRuned_oc = 1
-		self.timeReaded_oc = time.time()
-
-	def callback_hc(self, data):
-		self.isRuned_hc = 1
-		self.timeReaded_hc = time.time()
-
-	# def callback_loadcell(self, data):
-	# 	self.isRuned_loadcell = 1
-	# 	self.timeReaded_loadcell = time.time()
-
-	def callback_imu(self, data):
-		self.isRuned_imu = 1
-		self.timeReaded_imu = time.time()
-
 	def callback_nav350(self, data):
 		self.isRuned_nav350 = 1
 		self.timeReaded_nav350 = time.time()
-
-	def callback_driver1(self, data):
-		self.isRuned_driver1 = 1
-		self.timeReaded_driver1 = time.time()
-
-	# def callback_driver2(self, data):
-	# 	self.isRuned_driver2 = 1
-	# 	self.timeReaded_driver2 = time.time()
 		
 	def callback_parking(self, data):
 		self.isRuned_parking = 1
@@ -383,30 +296,10 @@ class Reconnect_node():
 		process, num = self.reconnect_main.run_reconnect_vs2(self.isRuned_main, self.timeReaded_main)
 		self.statusReconnect.main.sts = process
 		self.statusReconnect.main.times = num
-		# -- oc
-		process, num = self.reconnect_oc.run_reconnect_vs2(self.isRuned_oc, self.timeReaded_oc)
-		self.statusReconnect.oc.sts = process
-		self.statusReconnect.oc.times = num
-		# -- hc
-		process, num = self.reconnect_hc.run_reconnect_vs2(self.isRuned_hc, self.timeReaded_hc)
-		self.statusReconnect.hc.sts = process
-		self.statusReconnect.hc.times = num
-		# -- imu
-		process, num = self.reconnect_imu.run_reconnect_vs2(self.isRuned_imu, self.timeReaded_imu)
-		self.statusReconnect.imu.sts = process
-		self.statusReconnect.imu.times = num
 		# -- nav350
 		process, num = self.reconnect_nav350.run_reconnect_vs2(self.isRuned_nav350, self.timeReaded_nav350)
 		self.statusReconnect.lidar.sts = process
 		self.statusReconnect.lidar.times = num
-		# -- driverAll
-		process, num = self.reconnect_driver1.run_reconnect_vs2(self.isRuned_driver1, self.timeReaded_driver1)
-		self.statusReconnect.driverAll.sts = process
-		self.statusReconnect.driverAll.times = num
-		# -- driver2
-		# process, num = self.reconnect_driver2.run_reconnect_vs2(self.isRuned_driver2, self.timeReaded_driver2)
-		# self.statusReconnect.driver2.sts = process
-		# self.statusReconnect.driver2.times = num
 		# -- parking
 		process, num = self.reconnect_parking.run_reconnect(self.isRuned_parking, self.timeReaded_parking)
 		self.statusReconnect.parking.sts = process

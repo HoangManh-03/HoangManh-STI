@@ -55,7 +55,7 @@ timeLost_loadcell: 10
 timeLost_oc: 20
 timeLost_imu: 5
 timeLost_hc: 5
-timeLost_nav350: 10
+timeLost_nav350: 1.2
 timeLost_parking: 5
 timeLost_goalControl: 4
 
@@ -67,7 +67,7 @@ timeWait_oc: 20
 timeWait_hc: 20
 timeWait_imu: 20
 timeWait_loadcell: 20
-timeWait_nav350: 30
+timeWait_nav350: 15
 timeWait_hmi: 20
 timeWait_parking: 20
 timeWait_goalControl: 15

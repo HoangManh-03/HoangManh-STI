@@ -1208,7 +1208,7 @@ class ros_control():
 						a2 = 1
 
 					# - Đang đi ra khỏi điểm thao tác.
-					if self.status_goalControl.misson == 2 and self.parking_status.status == 2:
+					if self.status_goalControl.misson == 2 and self.parking_status.status_now == 2:
 						a2 = 1
 					# --
 					if a1 == 1 or a2 == 1:
@@ -1734,3 +1734,4 @@ Stt :
 52: error: bien doi tf loi
 
 """
+
