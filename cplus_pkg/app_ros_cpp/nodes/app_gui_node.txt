@@ -1,0 +1,84 @@
+/*  Chỉ chạy giao dienj ==> NG*/
+// int main(int argc, char *argv[])
+// {
+
+//   ros::init(argc, argv, "app_gui_node",ros::init_options::AnonymousName);
+//   // ros::Rate loop_rate(40);
+//   QApplication a(argc, argv);
+//   signal(SIGABRT, signal_handler);
+//   AppGui w;
+
+//   // set the window title as the node name
+//   w.setWindowTitle(QString::fromStdString(
+//                        ros::this_node::getName()));
+
+//   // load the icon from our qrc file and set it as the application icon
+//   QIcon icon(":/icons/my_gui_icon.png");
+//   w.setWindowIcon(icon);
+
+//   w.show();
+//   return a.exec();
+// }
+
+/* chạy chương trình chính, chạy giao diện phụ >> NG*/
+// int main(int argc, char *argv[])
+// {
+//   ros::init(argc, argv, "app_gui_node",ros::init_options::AnonymousName);
+//   ros::NodeHandle n;
+//   ros::Rate loop_rate(40);
+//   signal(SIGABRT, signal_handler);
+//   QApplication a(argc, argv);	
+//   AppGui w;
+
+//   w.self_valueLable.lbv_ip = w.get_ipAuto(w.name_card);
+//   w.self_valueLable.lbv_mac = w.get_MAC(w.name_card);
+//   w.self_valueLable.lbv_namePc = w.get_hostname();
+//   // w.timeSave_setting = ros::Time::now().toSec();
+// 	// w.timeSave_cancelMisson = ros::Time::now().toSec();
+// 	// w.timeSave_showToyoWrite = ros::Time::now().toSec();
+// 	// w.pre_timePing = ros::Time::now().toSec();
+// 	w.setWindowTitle(QString::fromStdString(ros::this_node::getName()));
+
+// 	// load the icon from our qrc file and set it as the application icon
+
+//   try{
+//     thread th1(w.run_screen, argc, argv);
+//     // th1.join();
+//     while(ros::ok() && w.shutdown_flag == 0 && w.is_exist == 1){
+//       cout << "Đã run việc get dữ liệu" << endl;
+//       w.controlAll();
+//       w.controlColor();
+//       // --
+//       w.readButton();
+//       w.pub_button.publish(w.app_button);
+
+//       if (w.status_cancelMission.data == 1){
+//         w.self_statusButton.bt_cancelMission = 0;
+//         w.cancelMission_control.data = 0;
+//       }
+
+//       if (w.self_statusButton.bt_cancelMission == 1){
+//         w.cancelMission_control.data = 1;
+//       }
+
+//       w.pub_cancelMission.publish(w.cancelMission_control);
+
+//       // ----------------------
+//       // self_valueLable = self.valueLable
+//       // self_statusColor = self.statusColor
+//       // -- 
+//       w.robotPoseNow = w.robotPose_nav.pose;
+//       // -
+//       w.self_valueLable.arrReflector = w.arrReflector; /// <<<<<<<<<<<<<<<<<<<<<<
+//       // ros::spinOnce();     // allow receiving callbacks function
+//       loop_rate.sleep();
+//     }
+//     th1.join();
+//   }
+//   catch(...){
+//     QApplication::quit();
+//     w.shutdown_flag = 1;
+//   }
+
+//   return 0;
+// }

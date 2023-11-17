@@ -1,0 +1,28 @@
+<launch>
+  
+
+  <!-- Giao tiếp với traffic -->
+  <!-- <node name="stiClient" pkg="agvreal_test" type="stiClient.py"/> -->
+
+  <!-- Nhận lộ trình và lỗi từ stiControl_fake -->
+  <node name="stiClient2_fake" pkg="agvreal_test" type="stiClient2_fake.py"/>
+
+  <node name="stiDevice2_fake" pkg="agvreal_test" type="stiDevice_fake.py" output="screen" >
+    <rosparam command="load" file="$(find agvreal_test)/config/param_robot2.yaml" />
+  </node>
+
+  <!-- Điều phối chung -->
+  <node name="stiControl2_fake" pkg="agvreal_test" type="stiControl_fake.py">
+    <rosparam command="load" file="$(find agvreal_test)/config/param_robot2.yaml" />
+  </node>
+
+  <!-- Điều hướng AGV  -->
+  <node name="goal2_control" pkg="agvreal_test" type="goal_control.py">
+    <rosparam command="load" file="$(find agvreal_test)/config/param_robot2.yaml" />
+  </node>
+
+  <!-- AGV - TF -->
+  <node name="agv2_sim" pkg="agvreal_test" type="agv_sim.py" respawn="false" >
+    <rosparam command="load" file="$(find agvreal_test)/config/param_robot2.yaml" />
+  </node>
+</launch>

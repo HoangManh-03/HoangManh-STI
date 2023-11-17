@@ -1,0 +1,6 @@
+<launch>
+	<rosparam command="load"  file="$(find launchcplus_pkg)/config/param.yaml" />
+	<!-- <node pkg="launchcplus_pkg" type="launchAll_nodes" name="launchAll_nodes" output="screen"> </node> -->
+	<!--<node pkg="launchcplus_pkg" type="launchAll_rep.py" name="launchAll_nodes" output="screen"> </node> -->
+	<node pkg="launchcplus_pkg" type="launchAll_nodes" name="launchAll_nodes" output="screen"> </node>
+</launch>

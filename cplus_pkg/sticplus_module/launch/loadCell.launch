@@ -1,0 +1,17 @@
+<launch>
+    <arg name="node_namespace" default="read_loadcell" />
+
+    <!-- Set parameters -->
+	<param name="port" value="/dev/stibase_loadcell" />
+	<param name="baudrate" value="57600" />
+
+    <param name="id_loadcell" value="3" />
+	<param name="topicSub_loadcell" value="/loadcell_query" />
+	<param name="topicPub_loadcell" value="/loadcell_respond" />
+	<param name="origin_weight" value="100" />
+
+    <node pkg="sti_module" 
+        name="$(arg node_namespace)" 
+        type="$(arg node_namespace).py"
+        output="screen"/>
+</launch>

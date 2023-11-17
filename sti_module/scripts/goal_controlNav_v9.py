@@ -1100,6 +1100,7 @@ class goalControl():
                     if ( round(self.req_move.target_x, 3) != round(self.target_x, 3) ) or ( round(self.req_move.target_y, 3) != round(self.target_y, 3) ): # neu co thay doi diem dich
                         self.stop()
                         dk = self.update_all()
+                        rospy.loginfo("Im here! -------------------- process 3 - update all --------------")
                         if dk == 1:
                             rospy.logwarn("Change target from: X = %s |Y = %s to: X = %s |Y = %s ", self.target_x, self.target_y ,self.req_move.target_x, self.req_move.target_y)
                             self.process = 4
@@ -1477,7 +1478,7 @@ class goalControl():
                                                                     self.poseRbMa.position.y,\
                                                                     self.cur_goal_y)
 
-                print("Mode Target= %s, dis_hc= %s , x_now= %s, y_now= %s, distance_goal= %s, kc_conlai= %s" %(self.is_target ,self.dis_hc, self.poseRbMa.position.x, self.poseRbMa.position.y, self.distance_goal, self.kc_con_lai))
+                # print("Mode Target= %s, dis_hc= %s , x_now= %s, y_now= %s, distance_goal= %s, kc_conlai= %s" %(self.is_target ,self.dis_hc, self.poseRbMa.position.x, self.poseRbMa.position.y, self.distance_goal, self.kc_con_lai))
                 # self.theta = theta_poin - self.theta_rb_ht
                 
                 # self.vel_x_control = 0.45

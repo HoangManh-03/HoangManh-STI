@@ -1,0 +1,20 @@
+<launch>
+
+      <!-- <arg name="node_namespace" default="parking_nav_v1" /> -->
+      <!-- <arg name="node_namespace" default="makePathParkingV2" /> -->
+      <arg name="node_namespace2" default="Parkingnode_cpp" />
+      
+      <!-- <rosparam command="load" 
+                file="$(find sticplus_module)/config/param_parking.yaml" 
+                ns="$(arg node_namespace)"   /> -->
+      <!-- <node pkg="sticplus_module" 
+            name="$(arg node_namespace)" 
+            type="$(arg node_namespace).py" /> -->
+            <!-- output="screen"/> -->
+
+      <node pkg="sticplus_module" 
+            name="$(arg node_namespace2)" 
+            type="$(arg node_namespace2)"
+            output="screen"/>
+
+</launch>

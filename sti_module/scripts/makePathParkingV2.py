@@ -4,6 +4,7 @@
 # Detail : make path parking and pub pose parking
 
 import roslib
+import copy
 import sys
 import signal
 import tf
@@ -160,9 +161,11 @@ class BroadcasterParking(threading.Thread):
 
         self.stepPoint = 0.01
 
+        self.savePosetarget = Pose()
+
     def cbPose(self, data):
         self.is_pose_robot = True
-        if self.is_transform:
+        if self.is_transform and self.savePosetarget == self.req_parking.poseTarget:
             if self.transformPoseNAV('frame_target', 'frame_robot'):
                 self.isTransFormPose = True
             else:
@@ -233,7 +236,7 @@ class BroadcasterParking(threading.Thread):
         self.is_request_parking = True
 
 
-    def makePath(self): #pose local
+    def makePath(self, _requestPar): #pose local
         # save = rospy.get_time()
         # print(save)
         # self.myPath = Paraboll(pointOne, pointSecond)
@@ -247,8 +250,8 @@ class BroadcasterParking(threading.Thread):
             myPath = QuadraticBezierCurves(pointOne, pointSecond, Point(pointOne.x, 0.))
             listPoint = myPath.slip()
 
-        self.msgPathParking.modeRun = self.req_parking.modeRun
-        self.msgPathParking.offset = self.req_parking.offset
+        self.msgPathParking.modeRun = _requestPar.modeRun
+        self.msgPathParking.offset = _requestPar.offset
 
         self.msgPathParking.poseStart.position.x = poseRobotInParkingNow.position.x
         self.msgPathParking.poseStart.position.y = poseRobotInParkingNow.position.y
@@ -309,37 +312,34 @@ class BroadcasterParking(threading.Thread):
                     print("Recieve All Data Needed (^-^)")
             
             elif self.process == 2:
-                if self.req_parking:
-                    modeRun = self.req_parking.modeRun
-                    if modeRun == 1 or modeRun == 2:
+                if self.is_request_parking:
+                    requestPar = copy.deepcopy(self.req_parking)
+                    if requestPar.modeRun == 1 or requestPar.modeRun == 2:
                         print("Mode Run != 0")
                         if self.is_transform and self.isTransFormPose:
                             self.resetALl()
-                            self.process = 3
                             print("Done Transform!")
+                            if self.makePath(requestPar):
+                                self.process = 3
+                                print("make Path Done! Start Publish data")
 
                     else:
-                        self.msgPathParking.modeRun = modeRun
-                        self.msgPathParking.offset = self.req_parking.offset
+                        self.msgPathParking.modeRun = requestPar.modeRun 
+                        self.msgPathParking.offset = requestPar.offset
 
-            elif self.process == 3: # make path
-                if self.makePath():
-                    self.process = 4
-                    print("make Path Done! Start Publish data")
-
-            elif self.process == 4:
-                modeRun = self.req_parking.modeRun
-                if modeRun == 0:
+            elif self.process == 3:
+                requestPar = copy.deepcopy(self.req_parking)
+                if requestPar.modeRun == 0 or self.savePosetarget != requestPar.poseTarget:
                     self.resetALl()
-                    self.msgPathParking.modeRun = modeRun
-                    self.msgPathParking.offset = self.req_parking.offset
+                    self.msgPathParking.modeRun = requestPar.modeRun
+                    self.msgPathParking.offset = requestPar.offset
                     self.process = 2
                     print("Reset!")
                 
                 else:
                     self.pubPath.publish(self.msgPath)
 
-            if self.req_parking:
+            if self.is_request_parking:
                 self.pubPathParking.publish(self.msgPathParking)
 
             self.rate.sleep()
@@ -374,8 +374,10 @@ def main():
         # Keep the main thread running, otherwise signals are ignored.
         while not rospy.is_shutdown():
             if br.is_request_parking:
-                if br.req_parking.modeRun == 1 or br.req_parking.modeRun == 2:
-                    br.sendTransform('frame_map_nav350', 'frame_target', br.req_parking.poseTarget) # -- edit 03/03/2022: frame_map_nav350 frame_global_map
+                requestPar = br.req_parking
+                if requestPar.modeRun == 1 or requestPar.modeRun == 2:
+                    br.savePosetarget = copy.deepcopy(requestPar.poseTarget)
+                    br.sendTransform('frame_map_nav350', 'frame_target', br.savePosetarget) # -- edit 03/03/2022: frame_map_nav350 frame_global_map
                     br.is_transform = True
 
                 elif br.req_parking.modeRun == 0:

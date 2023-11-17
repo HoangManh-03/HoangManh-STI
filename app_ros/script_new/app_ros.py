@@ -555,14 +555,14 @@ class Program(threading.Thread):
 			angle_robot = angle
 		self.valueLable.lbv_coordinates_r = str( round( degrees(angle_robot), 3) )
 		# --
-		self.valueLable.lbv_route_target = str(self.NN_cmdRequest.target_id) + "\n" + str(self.NN_cmdRequest.target_x) + "\n" + str(self.NN_cmdRequest.target_y) + "\n" + str(round(degrees(self.NN_cmdRequest.target_z), 2)) + "\n" + str(self.NN_cmdRequest.offset)
+		self.valueLable.lbv_route_target = str(self.NN_cmdRequest.target_id) + "\n" + str(round(self.NN_cmdRequest.target_x, 3)) + "\n" + str(round(self.NN_cmdRequest.target_y, 3)) + "\n" + str(round(degrees(self.NN_cmdRequest.target_z), 2)) + "\n" + str(round(self.NN_cmdRequest.offset, 3))
 		# # -
 		if len(self.NN_cmdRequest.list_id) >= 5:
-			self.valueLable.lbv_route_point0 = str(self.NN_cmdRequest.list_id[0]) + "\n" + str(self.NN_cmdRequest.list_x[0]) + "\n" + str(self.NN_cmdRequest.list_y[0]) + "\n" + str(self.NN_cmdRequest.list_speed[0])
-			self.valueLable.lbv_route_point1 = str(self.NN_cmdRequest.list_id[1]) + "\n" + str(self.NN_cmdRequest.list_x[1]) + "\n" + str(self.NN_cmdRequest.list_y[1]) + "\n" + str(self.NN_cmdRequest.list_speed[1])
-			self.valueLable.lbv_route_point2 = str(self.NN_cmdRequest.list_id[2]) + "\n" + str(self.NN_cmdRequest.list_x[2]) + "\n" + str(self.NN_cmdRequest.list_y[2]) + "\n" + str(self.NN_cmdRequest.list_speed[2])
-			self.valueLable.lbv_route_point3 = str(self.NN_cmdRequest.list_id[3]) + "\n" + str(self.NN_cmdRequest.list_x[3]) + "\n" + str(self.NN_cmdRequest.list_y[3]) + "\n" + str(self.NN_cmdRequest.list_speed[3])
-			self.valueLable.lbv_route_point4 = str(self.NN_cmdRequest.list_id[4]) + "\n" + str(self.NN_cmdRequest.list_x[4]) + "\n" + str(self.NN_cmdRequest.list_y[4]) + "\n" + str(self.NN_cmdRequest.list_speed[4])
+			self.valueLable.lbv_route_point0 = str(self.NN_cmdRequest.list_id[0]) + "\n" + str(round(self.NN_cmdRequest.list_x[0], 3)) + "\n" + str(round(self.NN_cmdRequest.list_y[0], 3)) + "\n" + str(self.NN_cmdRequest.list_speed[0])
+			self.valueLable.lbv_route_point1 = str(self.NN_cmdRequest.list_id[1]) + "\n" + str(round(self.NN_cmdRequest.list_x[1], 3)) + "\n" + str(round(self.NN_cmdRequest.list_y[1], 3)) + "\n" + str(self.NN_cmdRequest.list_speed[1])
+			self.valueLable.lbv_route_point2 = str(self.NN_cmdRequest.list_id[2]) + "\n" + str(round(self.NN_cmdRequest.list_x[2], 3)) + "\n" + str(round(self.NN_cmdRequest.list_y[2], 3)) + "\n" + str(self.NN_cmdRequest.list_speed[2])
+			self.valueLable.lbv_route_point3 = str(self.NN_cmdRequest.list_id[3]) + "\n" + str(round(self.NN_cmdRequest.list_x[3], 3)) + "\n" + str(round(self.NN_cmdRequest.list_y[3], 3)) + "\n" + str(self.NN_cmdRequest.list_speed[3])
+			self.valueLable.lbv_route_point4 = str(self.NN_cmdRequest.list_id[4]) + "\n" + str(round(self.NN_cmdRequest.list_x[4], 3)) + "\n" + str(round(self.NN_cmdRequest.list_y[4], 3)) + "\n" + str(self.NN_cmdRequest.list_speed[4])
 		
 		self.valueLable.lbv_route_job1 = str(self.NN_cmdRequest.before_mission)
 		self.valueLable.lbv_route_job2 = str(self.NN_cmdRequest.after_mission)

@@ -1,0 +1,21 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/opt/ros/melodic/lib/python2.7/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/opt/ros/melodic/lib/python2.7/dist-packages"
+    ],
+    "files.associations": {
+        "string": "cpp",
+        "array": "cpp",
+        "string_view": "cpp",
+        "sstream": "cpp",
+        "regex": "cpp",
+        "*.tcc": "cpp",
+        "complex": "cpp",
+        "fstream": "cpp",
+        "ostream": "cpp",
+        "thread": "cpp",
+        "iostream": "cpp"
+    }
+}

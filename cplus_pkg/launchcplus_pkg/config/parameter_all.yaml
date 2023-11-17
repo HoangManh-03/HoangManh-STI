@@ -1,0 +1,104 @@
+#------ PORT PHYSICAL ------#
+scanmap: 0
+disable_oc: 0
+
+#------ PORT PHYSICAL ------#
+port_hmi     : stibase_hmi
+port_main    : stibase_main83 # shiv34 
+port_mc      : stibase_mc821z
+port_driver1 : ttyS0
+port_driver2 : ttyS1
+port_sc      : stibase_sc821
+port_oc      : stibase_oc82
+port_hc      : stibase_hc82
+port_magLine : stibase_magLine
+port_camera  : /017322072873
+port_lms100  : 192.168.10.10
+port_tim551  : 192.168.100.100
+port_ipClient: 10.10.2.9
+
+#------ File launch Path------#
+path_firstWork    : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/kickoff/firstWork.launch # clean log.
+path_checkPort    : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/kickoff/checkPhysical.launch
+path_reconnectAll : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/kickoff/reconnect.launch
+path_appLaunch    : /home/amr1-l300/catkin_ws/src/app_ros/launch/app_launch.launch
+# -- 
+path_hmi          : /home/amr1-l300/catkin_ws/src/sti_control/launch/stiNextion_comunicate.launch
+path_syn          : /home/amr1-l300/catkin_ws/src/sti_control/launch/stiNextion_syntheticInfo.launch # -- 
+path_main         : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/board/POWER.launch
+path_mc           : /home/amr1-l300/catkin_ws/src/robot_launch/launch/base/MC.launch
+path_sc           : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/board/SC.launch
+path_oc           : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/board/OC.launch
+path_hc           : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/board/HC.launch
+path_magLine      : /home/amr1-l300/catkin_ws/src/sti_control/launch/stiMagneticLine.launch
+
+path_driverLeft   : /home/amr1-l300/catkin_ws/src/base_pkg/launch/driverLeft.launch
+path_driverRight  : /home/amr1-l300/catkin_ws/src/base_pkg/launch/driverRight.launch
+# --
+path_tf           : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/tf/tf_full.launch
+path_camera       : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/camera/D435.launch
+path_lidar        : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/lidar/lidar_full.launch
+# -- 
+path_kinematic    : /home/amr1-l300/catkin_ws/src/base_pkg/launch/kinematic.launch
+path_imuFilter    : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/imu/imuBno_filter.launch
+path_odomEncoder  : /home/amr1-l300/catkin_ws/src/odom_pkg/launch/odom_encoder.launch
+path_odomHector   : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/lidar/hector_mapping/hector_odom_v3.launch
+path_poseLidar    : /home/amr1-l300/catkin_ws/src/odom_pkg/launch/pose_lidar.launch
+# -- 
+path_ekf          : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/ekf/ekf.launch
+path_mapServer    : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/2DLandmark/map_server.launch
+path_amcl         : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/2DLandmark/amcl_v2.launch
+# --
+path_posePublisher: /home/amr1-l300/catkin_ws/src/pose_publisher/launch/robot_pose.launch
+# -- add Pose Aruco
+path_ApriAddAruco : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/aruco/apriltag_d435_addPoseAruco.launch
+path_savePoseAruco: /home/amr1-l300/catkin_ws/src/sti_module/launch/getPoseTag.launch
+# -- Setpose
+path_setPose      : /home/amr1-l300/catkin_ws/src/sti_module/launch/poseRobotTag.launch
+# -- Parking
+path_parking      : /home/amr1-l300/catkin_ws/src/sti_module/launch/parkingControl.launch
+path_apriltag     : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/aruco/launch_apriltag.launch
+# -- 
+path_safetyZone   : /home/amr1-l300/catkin_ws/src/safety_zone/launch/safety_zone.launch
+# -- 
+path_navigation   : /home/amr1-l300/catkin_ws/src/sti_module/launch/goalControl.launch
+path_webconsole   : /home/amr1-l300/catkin_ws/src/sti_webconsole/launch/sti_webconsole.launch
+path_client       : /home/amr1-l300/catkin_ws/src/sti_control/launch/stiClient.launch
+path_control      : /home/amr1-l300/catkin_ws/src/sti_control/launch/stiControl.launch
+path_debug        : /home/amr1-l300/catkin_ws/src/sti_control/launch/stiDebug.launch
+# -- -- khong bat luon.
+path_checkShelves : /home/amr1-l300/catkin_ws/src/check_shelves/launch/check_shelves.launch # check ke
+# -- Detect Tag
+path_tagSetpose  : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/aruco/apriltag_d435_setpose.launch
+path_tagParking  : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/aruco/apriltag_d435_parking.launch
+path_zone3d      : /home/amr1-l300/catkin_ws/src/safe_pcl/launch/zone3d.launch
+
+path_cartographer : /home/amr1-l300/catkin_ws/src/launch_pkg/launch/cartogepher/cartographer.launch
+
+#------ Time check lost connect ------#
+timeLost_hmi: 3
+timeLost_main: 3
+timeLost_mc: 3
+timeLost_driver1: 3
+timeLost_driver2: 3
+timeLost_sc: 3
+timeLost_oc: 3
+timeLost_hc: 3
+timeLost_camera: 3
+timeLost_lidar: 3
+timeLost_magLine: 3
+timeLost_parking: 20
+
+#------ Time wait after connect ------#
+timeWait_hmi: 20
+timeWait_main: 20
+timeWait_mc: 20
+timeWait_driver1: 20
+timeWait_driver2: 20
+timeWait_sc: 20
+timeWait_oc: 20
+timeWait_hc: 20
+timeWait_magLine: 20
+timeWait_camera: 20
+timeWait_lidar: 20
+timeWait_parking: 20

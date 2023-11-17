@@ -1,0 +1,4 @@
+<launch>
+  <node name="app_gui_node" pkg="app_ros_cpp" type="app_gui_node" output="screen"/>
+  <!-- <node name="talker" pkg="template_gui_package" type="talker" output="screen"/> -->
+</launch>

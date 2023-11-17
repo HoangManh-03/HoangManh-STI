@@ -1,0 +1,44 @@
+#------ PORT PHYSICAL ------#
+scanmap: 0
+disable_oc: 1
+#------ PORT PHYSICAL ------#
+port_nav350 : 192.168.100.10
+port_main    : stibase_main822
+port_hc     : stibase_hc82
+port_imu    : stibase_imu
+port_driverLeft : ttyS0
+port_driverRight: ttyS1
+#------ File launch Path------#
+path_firstWork  : /home/stivietnam/catkin_ws/src/launch_pkg/launch/kickoff/firstWork.launch # clean log.
+# -- 
+path_main       : /home/stivietnam/catkin_ws/src/launch_pkg/launch/board/POWER.launch
+path_hmi        : /home/stivietnam/catkin_ws/src/sti_control/launch/stiNextion_comunicate.launch
+path_driverLeft : /home/stivietnam/catkin_ws/src/base_pkg/launch/driverLeft.launch
+path_driverRight: /home/stivietnam/catkin_ws/src/base_pkg/launch/driverRight.launch
+path_nav350     : /home/stivietnam/catkin_ws/src/sicknav350/launch/sicknav350.launch
+path_hc         : /home/stivietnam/catkin_ws/src/launch_pkg/launch/board/HC.launch
+path_imu        : /home/stivietnam/catkin_ws/src/ros_imu_bno055/launch/imu.launch
+# --
+path_tf         : /home/stivietnam/catkin_ws/src/launch_pkg/launch/tf/tf_full.launch
+# -- 
+path_kinematic  : /home/stivietnam/catkin_ws/src/base_pkg/launch/kinematic.launch
+# -- 
+path_imuFilter  : /home/stivietnam/catkin_ws/src/ros_imu_bno055/launch/imu_filter.launch
+path_robotPoseNav : /home/stivietnam/catkin_ws/src/sicknav350/launch/robotPoseNav.launch
+# -- 
+path_ekf        : /home/stivietnam/catkin_ws/src/launch_pkg/launch/ekf/ekf.launch
+# --
+path_posePublisher: /home/stivietnam/catkin_ws/src/pose_publisher/launch/robot_pose.launch
+  
+#------ Time wait after connect ------#
+timeWait_main: 20
+timeWait_mc: 20
+timeWait_sc: 20
+timeWait_oc: 20
+timeWait_hc: 20
+timeWait_camera: 20
+timeWait_lidar: 20
+timeWait_hmi: 20
+timeWait_magLine: 20
+timeWait_parking: 20
+timeWait_485: 20

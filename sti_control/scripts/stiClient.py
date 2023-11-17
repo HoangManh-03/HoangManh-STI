@@ -282,6 +282,7 @@ class read_and_respond_UDP():
 		for t in range(0,2):
 			x = int(list_byte[pos_byte + t])
 			n += x*pow(256, 2 - t - 1)
+
 		if n == 40000:
 			return 4
 		else:
@@ -494,13 +495,14 @@ class read_and_respond_UDP():
 		self.NN_cmdRequest.process = self.byte_to_int(data_receive[6])
 
 		self.NN_cmdRequest.tag =  self.bytes_list_to_int(data_receive, 7, 2)
+		self.NN_cmdRequest.target_id = self.bytes_list_to_int(data_receive, 9, 2)
 
 		self.NN_cmdRequest.target_x = round(self.bytes_list_to_coor_vs1(data_receive, 9) , 3)
 		self.NN_cmdRequest.target_y = round(self.bytes_list_to_coor_vs1(data_receive, 13) , 3)
 			
 		self.NN_cmdRequest.target_z = round(self.bytes_list_to_corner(data_receive, 17), 3)
 		
-		# self.NN_cmdRequest.tag = 
+		# self.NN_cmdRequest.target_id = 
 		self.NN_cmdRequest.offset = self.bytes_list_to_offset(data_receive, 19) # 4 bytes
 
 		for l in range(5):
@@ -611,12 +613,10 @@ class read_and_respond_UDP():
 		if self.process == 0:
 			self.process = 1
 
-
 		elif self.process == 1: # recivce data raw
-			try:			
+			try:		
 				self.data_received, addr = self.udp.recvfrom(1024)
 				self.HOST_sento = addr[0]
-				# print ("add rec: ",self.HOST_sento)
 				# rospy.loginfo ("lenght frame: %s - Frame: %s", self.byte_to_int(self.data_received[0]), self.data_received[1])
 			except socket.error:
 				self.log_mess("err", "Error -- recv() --!", 0)
@@ -656,6 +656,12 @@ class read_and_respond_UDP():
 					# for i in range(len(mm)):
 						# abc.append(self.byte_to_int(mm[i]))
 					# print ("sent:", mm)
+
+					# st = ''
+					# for i in mm:
+					# 	st = st + str(int(i)) + ' '
+					
+					# print(st)
 
 					self.udp.sendto(mm, (self.HOST_sento, self.PORT_sento))
 				else:

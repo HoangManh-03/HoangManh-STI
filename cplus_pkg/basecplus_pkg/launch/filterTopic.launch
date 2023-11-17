@@ -1,0 +1,9 @@
+<launch>
+	<!-- Set parameters -->
+	<param name="frequency_control" type="double" value="25.0" />
+	<param name="topicSub_driver1" type="str" value="/driver1_respond" />
+	<param name="topicSub_driver2" type="str" value="/driver2_respond" />
+	<param name="topicPub_driver1" type="str" value="/driver1_filter" />
+	<param name="topicPub_driver2" type="str" value="/driver2_filter" />
+	<node pkg="basecplus_pkg" type="filterTopic_cpp" name="filterTopic_node" output="screen"> </node>
+</launch>

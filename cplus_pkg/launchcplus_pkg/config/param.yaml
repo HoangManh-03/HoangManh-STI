@@ -1,0 +1,89 @@
+#------ PORT PHYSICAL ------#
+scanmap: 0
+disable_oc: 1
+#------ PORT PHYSICAL ------#
+port_nav350 : 192.168.100.10
+port_main    : stibase_main822
+port_hc     : stibase_hc82
+port_oc     : stibase_oc82
+port_imu    : stibase_imu
+port_driverAll  : stibase_motor
+port_loadcell : stibase_loadcell
+#------ File launch Path ------#
+path_firstWork  : /home/stivietnam/catkin_ws/src/launch_pkg/launch/kickoff/firstWork.launch # clean log.
+path_checkPort    : /home/stivietnam/catkin_ws/src/launch_pkg/launch/kickoff/checkPhysical.launch
+path_reconnectBase : /home/stivietnam/catkin_ws/src/launch_pkg/launch/kickoff/reconnectBase.launch
+path_reconnectDriver : /home/stivietnam/catkin_ws/src/launch_pkg/launch/kickoff/reconnectDriver.launch
+path_appLaunch       : /home/stivietnam/catkin_ws/src/app_ros/launch/app_launch.launch
+# -- 
+path_main       : /home/stivietnam/catkin_ws/src/launch_pkg/launch/board/POWER.launch
+path_oc         : /home/stivietnam/catkin_ws/src/launch_pkg/launch/board/OC.launch
+path_hc         : /home/stivietnam/catkin_ws/src/launch_pkg/launch/board/HC.launch
+path_imu        : /home/stivietnam/catkin_ws/src/ros_imu_bno055/launch/imu.launch
+path_loadcell   : /home/stivietnam/catkin_ws/src/sti_module/launch/loadCell.launch
+# -
+path_driverAll  : /home/stivietnam/catkin_ws/src/base_pkg/launch/drivers.launch # driver motor
+path_driverReconnect  : /home/stivietnam/catkin_ws/src/base_pkg/launch/reconnectDriverELD2.launch # -
+# -
+path_nav350     : /home/stivietnam/catkin_ws/src/sicknav350/launch/sicknav350.launch
+# --
+path_tf         : /home/stivietnam/catkin_ws/src/launch_pkg/launch/tf/tf_full.launch
+# -- 
+path_kinematic  : /home/stivietnam/catkin_ws/src/base_pkg/launch/kinematic.launch
+# -- 
+path_imuFilter  : /home/stivietnam/catkin_ws/src/ros_imu_bno055/launch/imu_filter.launch
+path_robotPoseNav : /home/stivietnam/catkin_ws/src/sicknav350/launch/robotPoseNav.launch
+# -- 
+path_ekf        : /home/stivietnam/catkin_ws/src/launch_pkg/launch/ekf/ekf.launch
+#--
+path_safetyNav350: /home/stivietnam/catkin_ws/src/safety_zone/launch/safety_zone.launch
+#--
+path_client       : /home/stivietnam/catkin_ws/src/sti_control/launch/stiClient.launch
+path_control      : /home/stivietnam/catkin_ws/src/sti_control/launch/stiControl.launch
+
+#-- 
+path_goalControl:    /home/stivietnam/catkin_ws/src/sti_module/launch/goalControl.launch
+path_parkingControl: /home/stivietnam/catkin_ws/src/sti_module/launch/parkingControl.launch
+# --
+path_dataApp      : /home/stivietnam/catkin_ws/src/app_ros/launch/app_ros.launch # data_synthesis.launch
+# --
+path_posePublisher: /home/stivietnam/catkin_ws/src/pose_publisher/launch/robot_pose.launch
+
+
+# -----------------------------for C++ scripts ---------------------------------------------------
+#--
+#path_kinematic  : /home/stivietnam/catkin_ws/src/basecplus_pkg/launch/kinematic.launch
+#--
+#path_safetyNav350: /home/stivietnam/catkin_ws/src/safety_zone_cplus/launch/safety_zone.launch
+#--
+#path_control      : /home/stivietnam/catkin_ws/src/cplus_pkg/sticplus_control/launch/stiControl.launch       
+#--
+#path_goalControl:    /home/stivietnam/catkin_ws/src/cplus_pkg/sticplus_module/launch/goalControl.launch
+#--
+#path_parkingControl: /home/stivietnam/catkin_ws/src/cplus_pkg/sticplus_module/launch/parkingControl.launch   
+#--
+#path_driverAll  : /home/stivietnam/catkin_ws/src/basecplus_pkg/launch/drivers.launch # driver motor
+
+#------ Time check lost connect ------#
+timeLost_main: 5
+timeLost_driver: 5
+timeLost_loadcell: 10
+timeLost_oc: 20
+timeLost_imu: 5
+timeLost_hc: 5
+timeLost_nav350: 1.2
+timeLost_parking: 5
+timeLost_goalControl: 4
+
+#------ Time wait after connect ------#
+timeWait_main: 20
+timeWait_mc: 20
+timeWait_sc: 20
+timeWait_oc: 20
+timeWait_hc: 20
+timeWait_imu: 20
+timeWait_loadcell: 20
+timeWait_nav350: 15
+timeWait_hmi: 20
+timeWait_parking: 20
+timeWait_goalControl: 15

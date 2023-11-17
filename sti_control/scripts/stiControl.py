@@ -250,7 +250,7 @@ class ros_control():
 		self.serverMission_liftDown = 66 # 2 66
 		self.serverMission_charger = 6 # 5
 		self.serverMission_unknown = 0
-		self.serverMission_liftDown_charger = 5 # 6
+		self.serverMission_liftDown_charger = 10
 		# -- Lift task.
 		self.liftTask = 0 
 		self.liftUp = 2
@@ -840,7 +840,7 @@ class ros_control():
 			listError_now.append(471)
 
 		# -- 19/01/2022 - Mat giao tiep voi Server 
-		sts_sr = self.detectLost_server()
+		sts_sr = 0 # self.detectLost_server()
 		if sts_sr == 1: # lost server
 			listError_now.append(431)
 		elif sts_sr == 2: # lost server: Ping

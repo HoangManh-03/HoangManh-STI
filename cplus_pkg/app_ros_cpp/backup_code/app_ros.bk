@@ -1,0 +1,351 @@
+// Author : Phùng Quý Dương 
+// Date: 19-10-2023
+
+/*
+    - Node App_ros
+    - function:
+        + Backend của giao diện app
+*/
+
+#include <QDialog>
+#include <QMainWindow>
+#include <QCoreApplication>
+
+#include <bits/stdc++.h>
+#include <unistd.h>
+#include <vector>
+#include <thread>
+#include <signal.h>
+#include <csignal>
+
+using namespace std;
+
+struct statusButton{
+    bool bt_passAuto = 0;
+    bool bt_passHand = 0;
+    bool bt_cancelMission = 0;
+    bool bt_tryTarget_hide = 0;
+    bool bt_setting = 0;
+    bool bt_clearError = 0;
+
+    bool bt_forwards = 0;
+    bool bt_backwards = 0;
+    bool bt_rotation_left = 0;
+    bool bt_rotation_right = 0;
+    bool bt_stop = 0;
+
+    bool bt_coorAverage = 0;
+    bool bt_disPointA = 0;
+    bool bt_disPointB = 0;
+
+    bool bt_chg_on = 0;
+    bool bt_chg_off = 0;
+
+    bool bt_spk_on = 0;
+    bool bt_spk_off = 0;
+
+    bool bt_disableBrake = 0;
+
+    bool bt_lift_up = 0;
+    bool bt_lift_down = 0;
+    bool bt_lift_reset = 0;
+
+    bool bt_hideSetting = 0;
+    // -
+    bool bt_resetFrameWork = 0;
+    int vs_speed = 50;
+
+    bool bt_tryTarget_start = 0;
+    bool bt_tryTarget_stop = 0;
+    bool bt_tryTarget_reset = 1;
+    bool ck_tryTarget_safety = 0;
+};
+
+struct statusColor{
+	// --
+    bool lbc_safety_up = 0;
+    bool lbc_safety_ahead = 0;
+    bool lbc_safety_behind = 0;
+    // --
+    bool cb_status = 0;
+    bool lbc_battery = 0;
+
+    // --
+    bool lbc_button_clearError = 0;
+    bool lbc_button_power = 0;
+    bool lbc_blsock = 0;
+    bool lbc_emg = 0;
+
+    bool lbc_limit_up = 0;
+    bool lbc_limit_down = 0;
+    bool lbc_detect_lifter = 0;
+
+    bool lbc_port_rtc = 0;
+    bool lbc_port_rs485 = 0;
+    bool lbc_port_nav350 = 0;
+};
+
+struct valueLable{
+    uint8_t modeRuning = 1;
+
+    string lbv_name_agv = "";
+    string lbv_ip = "";
+    string lbv_battery = "";
+    string lbv_date = "";
+
+    string lbv_coordinates_x = "";
+    string lbv_coordinates_y = "";
+    string lbv_coordinates_r = "";
+
+    string lbv_numbeReflector = "";
+    string lbv_pingServer = "";
+    string lbv_jobRuning = "";
+    string lbv_goalFollow_id = "";
+    
+    string lbv_route_target = "";
+    string lbv_route_point0 = "";
+    string lbv_route_point1 = "";
+    string lbv_route_point2 = "";
+    string lbv_route_point3 = "";
+    string lbv_route_point4 = "";
+    string lbv_route_job1 = "";
+    string lbv_route_job2 = "";
+    string lbv_route_job1_mean = "";
+    string lbv_route_job2_mean = "";
+    string lbv_route_message = "";
+
+    string lbv_conveyorA = "";
+    string lbv_conveyorB = "";
+
+    string lbv_coorAverage_x = "";
+    string lbv_coorAverage_y = "";
+    string lbv_coorAverage_r = "";
+    string lbv_coorAverage_times = "";
+    string lbv_deltaDistance = "";
+
+    string lbv_velLeft = "";
+    string lbv_velRight = "";
+
+    string lbv_mac = "";
+    string lbv_namePc = "";
+
+    string lbv_launhing = "";
+    string lbv_numberLaunch = "";
+    float percentLaunch = 0;
+    vector<string> listError;                    // <<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    vector<string> listError_pre;
+
+    string lbv_notification_driver1 = "";
+    string lbv_notification_driver2 = "";
+
+    string lbv_qualityWifi = 0;
+    // -
+    vector<string> list_logError;
+    vector<string> list_logError_pre;
+    // --
+    string lbv_navi_job = "";
+    string lbv_navi_type = "";
+    string lbv_debug1 = "";
+    string lbv_debug2 = "";
+    // -
+    string lbv_reflectorDetect = "";
+    // -
+    vector<string> arrReflector;
+    string angleCompare = 0;
+    
+    double lbv_tryTarget_x = 0;
+    double lbv_tryTarget_y = 0;
+    double lbv_tryTarget_r = 0;
+    double lbv_tryTarget_d = 0;
+};
+
+struct Reflector{
+    double x = 0;
+    double y = 0;
+    int localID = 0;
+    int globalID = 0;
+};
+
+class WelcomeScreen(QDialog){
+	public:
+    super(WelcomeScreen, self).__init__()
+    loadUi("/home/stivietnam/catkin_ws/src/app_ros/interface/app.ui", self)
+    // --
+    statusButton statusButton;
+    statusColor statusColor;
+    valueLable valueLable;
+    // -
+    self.bt_controlConveyor_show.released.connect(self.released_controlConveyor_show)
+    self.bt_controlConveyor_hide.released.connect(self.released_controlConveyor_hide)
+    // -- -- -- 
+    self.bt_exit.pressed.connect(self.out)
+    // -
+    self.bt_cancelMission.pressed.connect(self.pressed_cancelMission)
+    self.bt_cancelMission.released.connect(self.released_cancelMission)
+    // -
+    self.bt_passHand.pressed.connect(self.pressed_passHand)
+    self.bt_passHand.released.connect(self.released_passHand)
+    // -
+    self.bt_passAuto.pressed.connect(self.pressed_passAuto)
+    self.bt_passAuto.released.connect(self.released_passAuto)
+    // -
+    self.bt_clearError.pressed.connect(self.pressed_clearError)
+    self.bt_clearError.released.connect(self.released_clearError)
+    // -- --
+    self.bt_speaker_on.clicked.connect(self.clicked_speaker_on)
+    self.bt_speaker_off.clicked.connect(self.clicked_speaker_off)
+    // -
+    self.bt_charger_on.clicked.connect(self.clicked_charger_on)
+    self.bt_charger_off.clicked.connect(self.clicked_charger_off)
+    // -- 
+    self.bt_disableBrake_on.clicked.connect(self.clicked_brakeOn)
+    self.bt_disableBrake_off.clicked.connect(self.clicked_brakeOff)
+
+    // --
+    self.bt_forwards.clicked.connect(self.clicked_forwards)
+    self.bt_backwards.clicked.connect(self.clicked_backwards)
+    // -
+    self.bt_rotation_left.clicked.connect(self.clicked_rotation_left)
+    self.bt_rotation_right.clicked.connect(self.clicked_rotation_right)
+    // -
+    self.bt_stop.clicked.connect(self.clicked_stop)
+    // -- Setting devices
+    self.bt_setting.pressed.connect(self.pressed_setting)
+    self.bt_setting.released.connect(self.released_setting)
+    self.setting_status = 0
+    self.timeSave_setting = rospy.Time.now()
+    // -
+    self.bt_hideSetting.clicked.connect(self.clicked_hideSetting)
+    // -
+    self.bt_pw_cancel.clicked.connect(self.clicked_password_cancel)
+    self.bt_pw_agree.clicked.connect(self.clicked_password_agree)
+    self.password_data = ""
+    self.password_right = "0111"
+    self.bt_pw_0.clicked.connect(self.clicked_password_n0)
+    self.bt_pw_1.clicked.connect(self.clicked_password_n1)
+    self.bt_pw_2.clicked.connect(self.clicked_password_n2)
+    self.bt_pw_3.clicked.connect(self.clicked_password_n3)
+    self.bt_pw_4.clicked.connect(self.clicked_password_n4)
+    self.bt_pw_5.clicked.connect(self.clicked_password_n5)
+    self.bt_pw_6.clicked.connect(self.clicked_password_n6)
+    self.bt_pw_7.clicked.connect(self.clicked_password_n7)
+    self.bt_pw_8.clicked.connect(self.clicked_password_n8)
+    self.bt_pw_9.clicked.connect(self.clicked_password_n9)
+    self.bt_pw_clear.clicked.connect(self.clicked_password_clear)
+    self.bt_pw_delete.clicked.connect(self.clicked_password_delete)
+
+    // --
+    self.bt_lift_up.pressed.connect(self.pressed_liftUp)
+    self.bt_lift_down.pressed.connect(self.pressed_liftDown)
+    self.bt_lift_reset.pressed.connect(self.pressed_liftReset)
+
+    // --
+    self.bt_coorAverage.pressed.connect(self.pressed_bt_coorAverage)
+    self.bt_coorAverage.released.connect(self.released_bt_coorAverage)
+
+    self.bt_disPointA.clicked.connect(self.clicked_pointA)
+    self.bt_disPointB.clicked.connect(self.clicked_pointB)
+    // -- 
+
+    // -- Set speed manual
+    self.bt_upSpeed.pressed.connect(self.pressed_upSpeed)
+    self.bt_reduceSpeed.pressed.connect(self.pressed_reduceSpeed)
+
+    // -- Reset FrameWork
+    self.bt_resetFrameWork.pressed.connect(self.pressed_resetFrameWork)
+    self.bt_resetFrameWork.released.connect(self.released_resetFrameWork)
+    // --
+    self.bt_reflectorCheck.pressed.connect(self.pressed_reflectorCheck)
+    // -
+    self.bt_hideNav350.pressed.connect(self.pressed_hideNav350)
+    self.bt_refresh_showRelector.pressed.connect(self.pressed_refresh_showRelector)
+    
+    // ------------------------
+    self.bt_tryTarget_show.pressed.connect(self.pressed_tryTarget)
+    self.bt_tryTarget_show.released.connect(self.released_tryTarget)
+    // -
+    self.bt_tryTarget_hide.pressed.connect(self.pressed_tryTarget_hide)
+    self.bt_tryTarget_hide.released.connect(self.released_tryTarget_hide)
+    // -
+    self.bt_tryTarget_up.pressed.connect(self.pressed_tryTarget_up)
+    self.bt_tryTarget_up.released.connect(self.released_tryTarget_up)
+    // // -
+    self.bt_tryTarget_down.pressed.connect(self.pressed_tryTarget_down)
+    self.bt_tryTarget_down.released.connect(self.released_tryTarget_down)
+    // // -
+    self.bt_tryTarget_reset.pressed.connect(self.pressed_tryTarget_reset)
+    self.bt_tryTarget_reset.released.connect(self.released_tryTarget_reset)
+    self.bt_tryTarget_reset.setStyleSheet("background-color: blue;")
+    // // -
+    self.bt_tryTarget_start.pressed.connect(self.pressed_tryTarget_start)
+    self.bt_tryTarget_start.released.connect(self.released_tryTarget_start)
+    // // -
+    self.bt_tryTarget_stop.pressed.connect(self.pressed_tryTarget_stop)
+    self.bt_tryTarget_stop.released.connect(self.released_tryTarget_stop)
+    // -
+    self.bt_tryTarget_x.pressed.connect(self.pressed_tryTarget_x)
+    // -
+    self.bt_tryTarget_y.pressed.connect(self.pressed_tryTarget_y)
+    // -
+    self.bt_tryTarget_r.pressed.connect(self.pressed_tryTarget_r)
+    // -
+    self.bt_tryTarget_d.pressed.connect(self.pressed_tryTarget_d)
+
+    // -- -- -- Timer updata data
+    // -- Fast
+    timer_fast = QTimer(self)
+    timer_fast.timeout.connect(self.process_fast)
+    timer_fast.start(50)
+    // -- normal
+    timer_normal = QTimer(self)
+    timer_normal.timeout.connect(self.process_normal)
+    timer_normal.start(996)
+    // -- Slow
+    timer_slow = QTimer(self)
+    timer_slow.timeout.connect(self.process_slow)
+    timer_slow.start(3000)
+    // --
+    self.modeRuning = 0
+    self.modeRun_launch = 0
+    self.modeRun_byhand = 1
+    self.modeRun_auto = 2
+    self.modeRun_cancelMission = 5
+
+    self.modeRuning = self.modeRun_launch
+    // --
+
+    self.password_data = ""
+    // --
+    self.timeSave_cancelMisson = rospy.Time.now()
+    self.cancelMission_status = 0
+    // -- 
+    self.isShow_setting = 0
+    self.isShow_reflectorCheck = 0
+    self.isShow_tryTarget = 0
+    // -
+    self.robotPoseNow = Pose()
+    self.pointA = Point()
+    self.pointB = Point()
+    // -
+    self.bt_coorAverage_status = 0
+    // -
+    self.countTime_coorAverage = 0
+    self.total_x = 0.0
+    self.total_y = 0.0
+    self.total_angle = 0.0
+    // - 
+    self.enable_showToyoWrite = 0
+    self.timeSave_showToyoWrite = rospy.Time.now()
+    // -
+    self.isShow_moveHand = 1
+    // - 
+    self.flag_updateShowReflector = 0
+    // self.show_reflector()
+
+    self.changeNow = 0
+    self.lbv_tryTarget_x.setText(str(self.valueLable.lbv_tryTarget_x))
+    self.lbv_tryTarget_y.setText(str(self.valueLable.lbv_tryTarget_y))
+    self.lbv_tryTarget_r.setText(str(self.valueLable.lbv_tryTarget_r))
+    self.lbv_tryTarget_d.setText(str(self.valueLable.lbv_tryTarget_d))
+};
