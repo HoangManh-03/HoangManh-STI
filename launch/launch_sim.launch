@@ -1,0 +1,26 @@
+<launch>
+
+    <!-- <arg name="background_r" default="100" />
+    <arg name="background_g" default="100" />
+    <arg name="background_b" default="100" /> -->
+    <arg name="rviz" default="false"/>
+<!-- 
+    <param name="/sim1/background_r" value="$(arg background_r)" />
+    <param name="/sim1/background_g" value="$(arg background_g)" />
+    <param name="/sim1/background_b" value="$(arg background_b)" /> -->
+
+    <rosparam command="load" file="$(find manh_pack)/config/back.yaml" />
+
+    <node pkg="turtlesim" name="sim1" type="turtlesim_node"/>
+    <node pkg="turtlesim" name="sim2" type="turtlesim_node"/>
+
+    <node pkg="turtlesim" name="mimic" type="mimic">
+        <remap from="input" to="sim1/turtle1"/>
+        <remap from="output" to="sim2/turtle1"/>
+    </node>
+
+    <group if="$(arg rviz)"> 
+        <node pkg="rviz" type="rviz" name="rviz" required="true"/>
+    </group>
+
+</launch>
