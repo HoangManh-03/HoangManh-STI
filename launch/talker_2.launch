@@ -1,0 +1,5 @@
+<launch>
+
+        <node pkg="manh_pack" type="talker_2.py" name="talker_2"/>
+
+</launch>

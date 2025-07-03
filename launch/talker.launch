@@ -1,0 +1,15 @@
+<launch>
+        <group ns="manh_pack_1">
+            <node pkg="manh_pack" type="talker_1.py" name="talker_1" output="screen">
+                <remap from="chatter_1" to="/chatter_1"/>
+                <remap from="chatter_2" to="/chatter_2"/>
+            </node>
+        </group>
+
+        <group ns="manh_pack_2">
+            <node pkg="manh_pack" type="talker_2.py" name="talker_2" output="screen">
+                <remap from="chatter_1" to="/chatter_1"/>
+                <remap from="chatter_2" to="/chatter_2"/>
+            </node>
+        </group>
+</launch>
