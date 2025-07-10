@@ -1,0 +1,8 @@
+uint8 status_rec_can
+float32 voltages
+uint16 voltages_analog
+float32 charge_current
+uint16 charge_analog
+bool status_btn_power
+bool status_input1
+uint8 temperture

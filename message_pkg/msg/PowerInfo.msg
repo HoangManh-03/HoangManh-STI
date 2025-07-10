@@ -1,0 +1,8 @@
+float32 voltages 
+float32 voltages_analog
+float32 charge_current
+float32 charge_analog
+uint8 status_btn_reset
+uint8 status_btn_power
+uint8 emg_status
+uint8 status_rec_can

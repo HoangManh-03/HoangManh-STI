@@ -1,0 +1,16 @@
+message_pkg/ReconnectSts hmi
+message_pkg/ReconnectSts main
+message_pkg/ReconnectSts mc
+message_pkg/ReconnectSts imu
+message_pkg/ReconnectSts driver1
+message_pkg/ReconnectSts driver2
+message_pkg/ReconnectSts driver_all
+message_pkg/ReconnectSts sc
+message_pkg/ReconnectSts oc
+message_pkg/ReconnectSts hc
+message_pkg/ReconnectSts rtc
+message_pkg/ReconnectSts camera
+message_pkg/ReconnectSts lidar
+message_pkg/ReconnectSts magline
+message_pkg/ReconnectSts loadcell
+message_pkg/ReconnectSts parking

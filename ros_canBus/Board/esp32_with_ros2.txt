@@ -1,0 +1,101 @@
+### Ubuntu side
+1. Tai micro_ros 
+    git clone https://github.com/micro-ROS/micro-ROS-Agent.git -b humble
+2. Tải các gói phụ thuộc
+    git clone https://github.com/micro-ROS/micro_ros_msgs.git -b humble
+3. Build Package
+
+### MCU side
+1. platformio init --board esp32dev 
+2. Thêm vào file platformio.ini:
+    [env:esp32dev]
+    platform = espressif32
+    board = esp32dev
+    framework = arduino
+    board_microros_distro = humble
+    board_microros_transport = serial
+    lib_deps = 
+        https://github.com/micro-ROS/micro_ros_platformio
+
+    upload_port = /dev/ttyUSB0
+
+3. Tải thư viện và build
+    pio lib install # Install dependencies
+    pio run # Build the firmware
+    pio run --target upload # Flash the firmware
+
+4. Thêm msg ROS2 vào dự án:
+# Tạo thư mục extra_packages
+<Project_directory>/extra_packages
+# Thêm pkg ROS vào thư mục extra_packages
+# Kích hoạt bản dựng thư viện và áp dụng các sửa đổi thư viện:
+    pio run --target clean_microros  # Clean library
+    pio run # Build the firmware
+    
+5, Sửa file ~/.ros/FASTRTPS_DEFAULT_PROFILES.xml để ros_agent chỉ pub data cục bộ
+# --------------------------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8" ?>
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+    <transport_descriptors>
+        <transport_descriptor>
+            <transport_id>custom_transport</transport_id>
+            <type>UDPv4</type>
+            <interfaceWhiteList>
+                <address>127.0.0.1</address>
+            </interfaceWhiteList>
+        </transport_descriptor>
+    </transport_descriptors>
+
+    <participant profile_name="custom_participant" is_default_profile="true">
+        <rtps>
+            <builtin>
+                <metatrafficUnicastLocatorList>
+                    <locator>
+                        <udpv4>
+                            <address>127.0.0.1</address>
+                            <!-- <port>7412</port> -->
+                        </udpv4>
+                    </locator>
+                </metatrafficUnicastLocatorList>
+
+                <!-- Bật multicast -->
+                <metatrafficMulticastLocatorList>
+                    <locator>
+                        <udpv4>
+                            <address>239.255.0.1</address>
+                            <!-- <port>7400</port> -->
+                        </udpv4>
+                    </locator>
+                </metatrafficMulticastLocatorList>
+
+                <initialPeersList>
+                    <locator>
+                        <udpv4>
+                            <address>127.0.0.1</address>
+                            <!-- <port>7412</port> -->
+                        </udpv4>
+                    </locator>
+                    <locator>
+                        <udpv4>
+                            <address>239.255.0.1</address>
+                            <!-- <port>7400</port> -->
+                        </udpv4>
+                    </locator>
+                </initialPeersList>
+            </builtin>
+
+            <useBuiltinTransports>true</useBuiltinTransports>
+
+            <userTransports>
+                <transport_id>custom_transport</transport_id>
+            </userTransports>
+        </rtps>
+    </participant>
+</profiles>
+# --------------------------------------------------------------------------------
+echo 'export FASTRTPS_DEFAULT_PROFILES_FILE=~/.ros/FASTRTPS_DEFAULT_PROFILES.xml' >> ~/.bashrc
+export ROS_LOCALHOST_ONLY=1
+
+
+
+

@@ -1,0 +1,10 @@
+uint8 status_rec_can
+bool area1_zone1
+bool area1_zone2
+bool area1_zone3
+bool area1_zone4
+bool area2_zone1
+bool area2_zone2
+bool area2_zone3
+bool area2_zone4
+uint8 collision_sensor

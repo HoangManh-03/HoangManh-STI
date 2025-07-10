@@ -1,0 +1,20 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/adminn/ws_agvmag/install/teleop_twist_keyboard/lib/python3.10/site-packages",
+        "/home/adminn/ws_agvmag/install/ros_canBus/lib/python3.10/site-packages",
+        "/home/adminn/ws_agvmag/install/micro_ros_msgs/local/lib/python3.10/dist-packages",
+        "/home/adminn/ws_agvmag/install/message_pkg/local/lib/python3.10/dist-packages",
+        "/home/adminn/ws_agvmag/install/launch_pkg/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/adminn/ws_agvmag/install/teleop_twist_keyboard/lib/python3.10/site-packages",
+        "/home/adminn/ws_agvmag/install/ros_canBus/lib/python3.10/site-packages",
+        "/home/adminn/ws_agvmag/install/micro_ros_msgs/local/lib/python3.10/dist-packages",
+        "/home/adminn/ws_agvmag/install/message_pkg/local/lib/python3.10/dist-packages",
+        "/home/adminn/ws_agvmag/install/launch_pkg/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}

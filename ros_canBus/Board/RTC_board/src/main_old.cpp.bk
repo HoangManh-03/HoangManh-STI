@@ -1,0 +1,167 @@
+#include <Arduino.h>
+#include <micro_ros_platformio.h>
+
+#include <rcl/rcl.h>
+#include <rclc/rclc.h>
+#include <rclc/executor.h>
+
+#include <std_msgs/msg/int32.h>
+
+#define LED_PIN 33
+
+#if !defined(MICRO_ROS_TRANSPORT_ARDUINO_SERIAL)
+#error This example is only avaliable for Arduino framework with serial transport.
+#endif
+
+rcl_publisher_t publisher;
+std_msgs__msg__Int32 msg;
+
+rclc_executor_t executor;
+rclc_support_t support;
+rcl_allocator_t allocator;
+rcl_node_t node;
+rcl_timer_t timer;
+uint8_t step = 0;
+uint8_t num_blink = 0;
+
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
+#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){check_rc_soft();}else{digitalWrite(LED_PIN, 1);}}
+
+
+bool rccheck(rcl_ret_t fn) {
+  rcl_ret_t temp_rc = fn;
+  if (temp_rc != RCL_RET_OK){
+    return 0;
+  }
+  return 1;
+}
+
+void check_rc_soft(){
+  digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+  // delay(1000);
+}
+
+// Error handle loop
+void error_loop() {
+  // while(1) {
+    // if (step == 0){
+      // digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+    //   delay(1000);
+    // }
+    // else if (step == 1){
+    //   digitalWrite(LED_PIN, 1);
+    //   delay(100);
+    //   digitalWrite(LED_PIN, 0);
+    //   delay(10);
+    //   digitalWrite(LED_PIN, 1);
+    //   delay(100);
+    //   digitalWrite(LED_PIN, 0);
+    //   delay(1000);
+    // }
+    // delay(100);
+  // }
+}
+
+void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
+  RCLC_UNUSED(last_call_time); // đánh dấu tham số không được sử dụng <last_call_time>
+  if (timer != NULL) {
+    RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
+    msg.data++;
+  }
+}
+
+void setup() {
+  // Configure serial transport
+  Serial.begin(115200);
+  
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH);
+ 
+  set_microros_serial_transports(Serial);
+  delay(10);
+
+  allocator = rcl_get_default_allocator();
+
+  // //create init_options
+  while (rccheck(rclc_support_init(&support, 0, NULL, &allocator)))
+  {
+    // error_loop();
+  }
+  
+  // RCCHECK(rclc_support_init(&support, 0, NULL, &allocator)); // khởi tạo môi trường hỗ trợ (support environment) cho ROS Client Library (RCL)
+  // // create node
+  // // Dòng mã "RCCHECK(rclc_node_init_default(&node, "micro_ros_platformio_node", "", &support));" trong ngôn ngữ lập trình C/C++ là một câu lệnh được sử dụng trong ROS (Robot Operating System) hoặc một framework tương tự để khởi tạo một node (nút) trong một ứng dụng ROS.
+
+  // // Trong đó:
+
+  // // "RCCHECK" có thể là một macro được định nghĩa trong mã nguồn của ứng dụng ROS, được sử dụng để kiểm tra và xử lý các lỗi hoặc các trường hợp ngoại lệ xảy ra trong quá trình thực thi của câu lệnh.
+  // // "rclc_node_init_default()" là một hàm được sử dụng để khởi tạo một node ROS với các cài đặt mặc định. Hàm này thường được sử dụng để tạo một node mới mà không cần phải cấu hình các thông số cụ thể.
+  // // "&node" là một con trỏ trỏ tới một biến hoặc một cấu trúc dữ liệu mà hàm này sẽ sử dụng để lưu trữ thông tin về node sau khi nó được khởi tạo.
+  // // ""micro_ros_platformio_node"" là tên của node được khởi tạo. Tên này sẽ được sử dụng để xác định node trong mạng ROS.
+  // // "" là một tham số trống được sử dụng để chứa namespace của node. Trong trường hợp này, không có namespace được sử dụng, do đó, giá trị này được để trống.
+  // // "&support" là một con trỏ trỏ tới một biến hoặc một cấu trúc dữ liệu chứa thông tin về môi trường hỗ trợ của node, bao gồm thông tin về allocator (bộ cấp phát bộ nhớ) và các tài nguyên khác cần thiết cho việc chạy của node.
+  // RCCHECK(rclc_node_init_default(&node, "micro_ros_platformio_node", "", &support));
+  // step = 1;
+  // // while (rclc_node_init_default(&node, "micro_ros_platformio_node", "", &support))
+  // // {
+  // //   error_loop();
+  // // }
+
+  // // create publisher
+  // RCCHECK(rclc_publisher_init_default(
+  //   &publisher,
+  //   &node,
+  //   ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+  //   "micro_ros_platformio_node_publisher"));
+
+  // // while (rclc_publisher_init_default(
+  // //   &publisher,
+  // //   &node,
+  // //   ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+  // //   "micro_ros_platformio_node_publisher"))
+  // //   {
+  // //     error_loop();
+  // //   }
+
+  // // create timer, khởi tạo timer
+  //  const unsigned int timer_timeout = 500;
+  //  RCCHECK(rclc_timer_init_default(
+  //    &timer,
+  //    &support,
+  //    RCL_MS_TO_NS(timer_timeout),
+  //    timer_callback));
+
+  //   // while (rclc_timer_init_default(
+  //   //  &timer,
+  //   //  &support,
+  //   //  RCL_MS_TO_NS(timer_timeout),
+  //   //  timer_callback))
+  //   //  {
+  //   //    error_loop();
+  //   //  }
+
+  // // create executor /  khởi tạo một executor trong ứng dụng ROS
+  // // Executors là một cơ chế quan trọng để quản lý các công việc (tasks) và sự kiện (events).
+  // RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
+  // // while (rclc_executor_init(&executor, &support.context, 1, &allocator)){
+  // //   error_loop();
+  // // }
+
+  // RCCHECK(rclc_executor_add_timer(&executor, &timer));
+  // // while (rclc_executor_add_timer(&executor, &timer)){
+  // //   error_loop();
+  // // }
+
+  // msg.data = 0;
+}
+
+void loop() {
+
+  digitalWrite(LED_PIN, 1);
+  delay(100);
+  digitalWrite(LED_PIN, 0);
+  delay(100);
+  // RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
+  // delay(10);
+  // rclc_executor_spin(&executor);
+}
