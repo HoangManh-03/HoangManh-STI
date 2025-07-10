@@ -1,0 +1,756 @@
+#!/usr/bin/env python3
+
+"""
+*** infomation
+*** Task Description: 
+    + Tìm ra vị trí cuả robot trên map
+    + Cải tiến thuật toán khớp gương: 
+        -> sử dụng góc, khoảng cách theo tài liệu: X 
+        -> thuật toán Ransac: 0
+        -> Thuật toán Xác suất: 0
+        -> Thuật toán Query Ball Point: 0
+
+    + Chưa áp dụng thuật toán bù chuyển động
+    + tối ưu các hàm tính toán từ list -> numpy.array -> đạt hiệu năng cao > 8 Hz: OK 
+    + Sử dụng msg tiêu chuẩn xuyên suốt: OK
+
+*** Need to do
+    + Vấn đề gương ảo ???? Lôĩ gương nhỏ hơn 3 thì sao ????
+    + Mục tiêu vận tốc >= 0.8 m/s
+    
+"""
+
+from sensor_msgs.msg import PointCloud2, LaserScan
+from std_msgs.msg import Int8, String
+ 
+from math import atan2, sin, cos, sqrt, fabs, degrees, isnan, radians, log, exp, asin, acos, tan
+from math import pi as PI
+import rospy
+import time
+import copy
+
+import json
+
+import numpy as np
+from scipy.optimize import minimize
+
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point, Pose, Quaternion, PoseStamped, TwistWithCovarianceStamped
+from navigation_reflector.msg import *
+from itertools import combinations
+
+import tf
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from collections import Counter
+
+class reflectorMap():
+    def __init__(self, _id = 0, _x = 0., _y = 0.):
+        self.id = _id
+        self.x = _x
+        self.y = _y
+
+class Navigation_mode():
+    def __init__(self):
+        rospy.init_node('navigation_node', anonymous = True)
+        self.rate = rospy.Rate(50)
+
+        # -- ros pub && sub 
+
+        rospy.Subscriber('/r2000_reflectors', R2000_reflectors, self.callback_infoRawReflector, queue_size = 10)
+        self.data_raw_reflector = R2000_reflectors()
+        self.is_rawReflector = False
+
+        rospy.Subscriber('/map', R2000_reflectors, self.callback_map, queue_size = 10)
+        self.data_map = R2000_reflectors()
+        self.is_recv_mapdata = False
+
+        rospy.Subscriber('/raw_vel', TwistWithCovarianceStamped, self.callback_rawvel, queue_size = 10)
+        self.data_rawvel = TwistWithCovarianceStamped()
+        self.is_recv_rawvel = False
+
+        # self.marker_pub_predict = rospy.Publisher('/visualization_marker_predict', Marker, queue_size=10)
+        # self.marker_pub_matching = rospy.Publisher('/visualization_marker_matching', Marker, queue_size=10)
+
+        self.lidar_pose_pub = rospy.Publisher('/r2000_data', R2000_data, queue_size=10)
+        # self.lidar_pose_data = R2000_data()
+
+        # -- Constant varibles
+        self.SCANNING_FREQUENCY = 11 #Hz
+        self.SCANNING_PERIOD = 1/self.SCANNING_FREQUENCY
+
+        self.DISTANCE_X_BETWEEN_LIDAR_RB = 0.404 #m
+        self.DISTANCE_Y_BETWEEN_LIDAR_RB = 0.0 #m
+        # self.ANGLE_BETWEEN_LIDAR_RB = 0  # rad
+
+        # -- global variables
+        self.process = 0
+        self.pre_mess = ''
+        self.ls_predict_ref = []
+
+        # # -- Khai báo tf -- 
+        self.br = tf.TransformBroadcaster()
+        self.ref_frame = "world"
+        self.origin_frame = "map"
+
+        self.translation = (0,0,0)
+        self.quanternion = quaternion_from_euler(0, 0, 0)
+
+        self.list_M_distance = []   # khoảng cách giữa các điểm gương trên map tham chiếu
+        self.list_M_angle = []      # Góc giữa các gương tham chiếu
+
+        # -- 
+        self.num_refStart = -1
+        self.num_getPoseReflector = 0
+        self.data_store = []
+        self.ls_refFilter_average = []
+
+        self.list_N_distance = []   # khoảng cách giữa các điểm gương phát hiện được
+        self.list_N_angle = []      # Góc giữa các gương phát hiện được
+
+        # -- 
+        self.distance_matching_error_threshold = 0.05  # (zf = 2 cm )
+        self.angle_matching_error_threshold = 5*PI/180     # (gf = 1 độ)
+        self.list_Z_distance = []
+        self.list_Z_angle = []
+        self.min_distance_values = []
+        self.min_angle_values = []
+        self.posOf_min_distance_values = []
+        self.posOf_min_angle_values = []
+
+        self.list_IDref_referential_satify = []
+        self.list_IDref_detected_sastify = []
+
+        self.displacement_dx = 0     # khoảng dịch chuyển x cuả robot so vơí vị trí bắt đâù
+        self.displacement_dy = 0     # khoảng dịch chuyển y cuả robot so vơí vị trí bắt đâù
+
+        self.pre_detected_ref = 0
+        self.ANGLE_TRANSLATE = PI
+
+        self.pre_phiR = 0
+        self.step = 0
+
+        self.x_tf = 0.0
+        self.y_tf = 0.0
+        self.r_tf = 0.0
+
+        self.ls_reference_ref_dr = []
+        self.ls_reference_ref_d = []
+        self.ls_reference_ref_theta = []
+        self.ls_reference_ref_xy = []
+        # self.ls_dectected_ref = []
+
+    def callback_infoRawReflector(self, data):
+        self.data_raw_reflector = data
+        self.is_rawReflector = True
+
+    def callback_map(self, data):
+        self.data_map = data
+        self.is_recv_mapdata = True
+
+    def callback_rawvel(self, data):
+        self.data_rawvel = data
+        self.is_recv_rawvel = True
+
+    def euler_to_quaternion(self, euler):
+        quat = Quaternion()
+        odom_quat = quaternion_from_euler(0, 0, euler)
+        quat.x = odom_quat[0]
+        quat.y = odom_quat[1]
+        quat.z = odom_quat[2]
+        quat.w = odom_quat[3]
+        return odom_quat
+
+    def pub_marker(self, marker_pub, list_point, r, g, b):
+        # Tạo Marker kiểu SPHERE_LIST để hiển thị danh sách các điểm tâm
+        marker = Marker()
+
+        # Đặt các thuộc tính cơ bản cho Marker
+        marker.header.frame_id = 'scanner_link'  # Frame tham chiếu, ví dụ: "world" hoặc "map"
+        marker.header.stamp = rospy.Time.now()
+
+        marker.ns = "circle_centers"
+        marker.id = 0  # ID của marker
+        marker.type = Marker.SPHERE_LIST  # Sử dụng SPHERE_LIST để hiển thị nhiều điểm
+        marker.action = Marker.ADD  # Thao tác: thêm vào hiển thị
+
+        # Kích thước của các hình cầu (tất cả các điểm tâm sẽ có cùng kích thước)
+        marker.scale.x = 0.2  # Bán kính SPHERE trên trục x
+        marker.scale.y = 0.2  # Bán kính SPHERE trên trục y
+        marker.scale.z = 0.2  # Bán kính SPHERE trên trục z
+
+        # Màu sắc của các hình cầu (RGBA)
+        marker.color.r = r  # Màu đỏ
+        marker.color.g = g  # Màu xanh lá
+        marker.color.b = b  # Màu xanh dương
+        marker.color.a = 1.0  # Độ đậm của màu (1.0 là không trong suốt)
+
+        # Pose
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+        # Thêm danh sách các điểm vào Marker
+        for center in list_point:
+            p = Point()
+            p.x = center[0]
+            p.y = center[1]
+            p.z = center[2]
+            marker.points.append(p)
+
+        marker_pub.publish(marker)
+
+    def log_mess(self, typ, mess, val):
+        if self.pre_mess != mess:
+            if typ == "info":
+                rospy.loginfo (mess + ": %s", val)
+            elif typ == "warn":
+                rospy.logwarn (mess + ": %s", val)
+            else:
+                rospy.logerr (mess + ": %s", val)
+        self.pre_mess = mess
+
+    def find_min_max(self, lst):
+        if not lst:
+            return None, None  # Trả về None nếu danh sách rỗng
+
+        min_value = min(lst, key=lambda x: x[1])[1]
+        max_value = max(lst, key=lambda x: x[1])[1]
+
+        return min_value, max_value
+
+    def common_elements(self, list1, list2):
+        # Chuyển danh sách nhỏ thành set để tìm kiếm nhanh hơn
+        if len(list1) > len(list2):
+            list1, list2 = list2, list1  # Đảm bảo list1 luôn nhỏ hơn
+
+        set_list2 = set(list2)
+        return [x for x in list1 if x in set_list2]
+    
+    def multiply_matrices(self, A, B):
+        # Kiểm tra nếu số cột của A khác số hàng của B thì không thể nhân
+        if len(A[0]) != len(B):
+            raise ValueError("Số cột của ma trận A phải bằng số hàng của ma trận B.")
+
+        # Tạo ma trận kết quả với số hàng = số hàng của A, số cột = số cột của B
+        result = [[0 for _ in range(len(B[0]))] for _ in range(len(A))]
+
+        # Nhân ma trận A với B
+        for i in range(len(A)):  # Duyệt từng hàng của A
+            for j in range(len(B[0])):  # Duyệt từng cột của B
+                for k in range(len(B)):  # Duyệt từng phần tử để nhân
+                    result[i][j] += A[i][k] * B[k][j]
+
+        return result
+
+    def get_matrix_size(self, matrix):
+        rows = len(matrix)  # Số hàng
+        cols = len(matrix[0]) if matrix else 0  # Số cột (giả sử ma trận không rỗng)
+        return rows, cols
+
+    def find_min_in_columns(self, matrix):
+        if not matrix or not matrix[0]:  # Kiểm tra ma trận rỗng
+            return []
+
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        min_values = []  # Lưu giá trị nhỏ nhất của mỗi cột
+        positions = []   # Lưu vị trí (hàng, cột) của giá trị nhỏ nhất
+
+        for j in range(cols):  # Duyệt từng cột
+            min_value = matrix[0][j]  # Giả sử phần tử đầu tiên là nhỏ nhất
+            min_row = 0  # Vị trí hàng của giá trị nhỏ nhất
+
+            for i in range(1, rows):  # Duyệt từng hàng
+                if matrix[i][j] < min_value:
+                    min_value = matrix[i][j]
+                    min_row = i
+
+            min_values.append(min_value)
+            positions.append((min_row, j))  # Lưu vị trí (hàng, cột)
+
+        return min_values, positions
+    
+    def column_minimums(self, n, list2, matrix):
+        min_values = []
+        positions = []
+
+        # Duyệt qua từng cột
+        if n == 2:
+            for col in range(len(list2)):
+                column_values = [row[col][4] for row in matrix]
+                min_value = min(column_values)
+                min_position = column_values.index(min_value)
+                
+                min_values.append(min_value)
+                positions.append([min_position, col])
+
+        elif n == 3:
+            for col in range(len(list2)):
+                column_values = [row[col][6] for row in matrix]
+                min_value = min(column_values)
+                min_position = column_values.index(min_value)
+                
+                min_values.append(min_value)
+                positions.append([min_position, col])
+
+        # print("\nGiá trị khoảng cách nhỏ nhất trong từng cột:")
+        # for i in range(len(min_values)):
+        #     print(f"Cột {i+1}: Giá trị khoảng cách nhỏ nhất = {min_values[i]}, Vị trí = {positions[i]}")
+
+        return min_values, positions
+
+    def SVD_algorithm(self, ls_pointMap, ls_pointRef):
+        # Tập hợp A và B (ví dụ)
+        A = np.array(ls_pointMap) # map
+        B = np.array(ls_pointRef) # gương
+
+        # Tính trung bình của A và B
+        mu_A = np.mean(A, axis=0)
+        mu_B = np.mean(B, axis=0)
+
+        # Tái căn giữa các điểm (A_n và B_n)
+        A_n = A - mu_A
+        B_n = B - mu_B
+
+        # Tính ma trận hiệp phương sai H
+        H = np.zeros((2, 2))
+
+        for i in range(len(A)):
+            H += np.outer(A_n[i], B_n[i])
+
+        # Phân tích SVD trên ma trận Hstivietnam
+        U, S, Vt = np.linalg.svd(H)
+
+        # Tính ma trận quay R
+        R = Vt.T @ U.T
+
+        # Nếu cần điều chỉnh (det(R) = -1), sửa đổi Vt hoặc R để giữ R là ma trận quay hợp lệ
+        if np.linalg.det(R) < 0:
+            Vt[1,:] *= -1
+            R = Vt.T @ U.T
+
+        # Tính vector tịnh tiến t
+        t = -R @ mu_A + mu_B
+
+        # Tọa độ của robot trong hệ tọa độ robot (0, 0)
+        # x_l, y_l = np.array([0, 0])
+
+        # Tính tọa độ của robot trong hệ tọa độ toàn cục (với chuyển vị)
+        robot_position_global = (np.linalg.inv(R) @ (-t)).T
+        
+        # Tính góc quay theta_g
+        theta_g = -np.arctan2(R[1, 0], R[0, 0])
+
+        # print(f"Ma trận quay R:\n{R}")
+        # print(f"Vector tịnh tiến t: {t}")
+        # print(f"Tọa độ trong hệ toàn cục: {robot_position_global}")
+        # print(f"Góc quay trong hệ toàn cục: {theta_g} độ")
+
+        return robot_position_global[0], robot_position_global[1], theta_g
+
+    def count_duplicate_pairs(self, lst):
+        # Chuyển danh sách con thành tuple để có thể đếm được
+        tuple_list = [tuple(sublist) for sublist in lst]
+        
+        # Đếm số lần xuất hiện của từng cặp
+        count_dict = Counter(tuple_list)
+        
+        return dict(count_dict)
+
+    def find_max_element(self, x, data):
+        # Lọc các phần tử có giá trị thứ 2 trong tuple bằng x
+        filtered = {key: value for key, value in data.items() if (key[1] == x and value >= 3)}
+        
+        # print(filtered)
+        if not filtered:
+            return None  # Nếu không có phần tử nào thỏa mãn, trả về None
+        
+        # Tìm phần tử có giá trị lớn nhất trong dictionary đã lọc
+        max_element = max(filtered, key=filtered.get)
+        
+        return max_element
+
+    def pub_lidar_pose(self, pub, x, y, phi, no_ref):
+        lidar_data = R2000_data()
+        lidar_data.header.frame_id = "scanner_link"
+        lidar_data.x = x
+        lidar_data.y = y
+        lidar_data.phi = phi
+        lidar_data.number_reflectors = no_ref
+        pub.publish(lidar_data)
+
+    def calculate_reflector_position_in_map(self, x_ss, y_ss, r_ss, x_ref, y_ref):
+        # Tính toán ma trận quay thủ công (cos(R), sin(R))
+        cos_R = cos(r_ss)
+        sin_R = sin(r_ss)
+
+        x_m = x_ss + (cos_R*x_ref - sin_R*y_ref)
+        y_m = y_ss + (sin_R*x_ref + cos_R*y_ref)
+
+        return x_m, y_m
+    
+    def run(self):
+        while not rospy.is_shutdown():
+            # -- wait for recv full data
+            if self.process == 0:
+                c_k = 0
+                if self.is_recv_mapdata == True:
+                    c_k = c_k + 1
+                else:
+                    self.log_mess("warn","Wait data from Map node", c_k)
+
+                if self.is_rawReflector == True:
+                    c_k = c_k + 1
+                else:
+                    self.log_mess("warn","Wait data from Estimate reflector center node", c_k)
+
+                # if self.is_recv_rawvel == True:
+                #     c_k = c_k + 1
+                # else:
+                #     self.log_mess("warn","Wait data from Kinematic node", c_k)
+
+                if c_k == 2:
+                    rospy.loginfo("Completed wakeup ('_')")
+                    self.process = 1              
+
+            # -- Tìm ra vị trí khởi tạo cuả robot trên bản đồ và những gương nào đang được khớp với nhau
+            elif self.process == 1:
+                if self.is_rawReflector == False:
+                    self.rate.sleep()
+                    continue
+                    
+                self.is_rawReflector = False
+
+                # -- tìm list gương detected
+                ls_detected_ref = []
+                for index, ref in enumerate(self.data_raw_reflector.reflectors):
+                    ls_detected_ref.append([ref.LocalID, ref.Cart_X, ref.Cart_Y])
+                
+                # - Xác định khoảng cách và góc giưã các gương
+                self.list_N_distance = []
+                n = len(ls_detected_ref)
+                for i in range(0, n):
+                    for j in range(i, n):
+                        if j != i:
+                            dx = ls_detected_ref[j][1] - ls_detected_ref[i][1]
+                            dy = ls_detected_ref[j][2] - ls_detected_ref[i][2]
+                            d = sqrt(dx*dx + dy*dy)
+                            self.list_N_distance.append([ls_detected_ref[i][0], ls_detected_ref[j][0], d])
+
+                # print("Mảng thông số khoảng cách giưã các gương phát hiện là: ", self.list_N_distance)
+
+                # -- tìm list gương tham chiếu
+                self.ls_reference_ref_xy = []
+
+                for index, ref in enumerate(self.data_map.reflectors):
+                    self.ls_reference_ref_dr.append([ref.GlobalID, ref.Polar_Dist, ref.Polar_Phi])
+                    self.ls_reference_ref_d.append(ref.Polar_Dist)
+                    self.ls_reference_ref_theta.append(ref.Polar_Phi)
+                    self.ls_reference_ref_xy.append([ref.GlobalID, ref.Cart_X, ref.Cart_Y])
+                            
+                # - Step 1: Tìm khoảng cách giữa các gương tham chiếu
+                n = len(self.ls_reference_ref_xy)
+                self.list_M_distance = []
+
+                for i in range(0, n):
+                    for j in range(i, n):
+                        if j != i:
+                            dx = self.ls_reference_ref_xy[j][1] - self.ls_reference_ref_xy[i][1]
+                            dy = self.ls_reference_ref_xy[j][2] - self.ls_reference_ref_xy[i][2]
+                            d = sqrt(dx*dx + dy*dy)
+                            self.list_M_distance.append([self.ls_reference_ref_xy[i][0], self.ls_reference_ref_xy[j][0], d])
+                
+                print("Mảng thông số khoảng cách các gương tham chiếu là: ", self.list_M_distance)    ## số lượng là nC2 giá trị
+
+                # - Tìm sự khác nhau giữa 2 map gương tham chiếu và map gương detect được
+                self.list_Z_distance = [[[x[0],x[1], y[0], y[1], abs(x[2] - y[2])] for y in self.list_N_distance] for x in self.list_M_distance]
+
+                # - Tìm giá trị nhỏ nhất từ các cột của list khoảng cách
+                self.min_distance_values, posOf_min_distance_values = self.column_minimums(2, self.list_N_distance, self.list_Z_distance)
+
+                # print("\nGiá trị khoảng cách nhỏ nhất trong từng cột:")
+                # for i in range(len(self.min_distance_values)):
+                #     print(f"Cột {i+1}: Giá trị khoảng cách nhỏ nhất = {self.min_distance_values[i]}, Vị trí = {posOf_min_distance_values[i]}")
+
+                # - Đưa ra giá trị khoảng cách và góc thoả mãn, kết hợp bươcs trene và bước dươí được
+                list_IDref_satify_fromd = []
+
+                for i in range(len(self.min_distance_values)):
+                    if self.min_distance_values[i] <= self.distance_matching_error_threshold:
+                        row = posOf_min_distance_values[i][0]
+                        col = posOf_min_distance_values[i][1]
+
+                        val = self.list_Z_distance[row][col]
+                        list_IDref_satify_fromd.append([val[0], val[1], val[2], val[3]])
+
+                # print("Các vị trí gương khớp cua xet khoang cach là:", list_IDref_satify_fromd)
+                # print("---")
+                # print("Các vị trí gương khớp phát hiện xet khoang cach là:", list_IDref_detected_satify_fromd)
+                # print("******\n")
+                
+                # Chỉ ra ID nào của phát hiện trùng với gương tham chiếu dựa trên khoảng cách
+                ls_IDmatch_distance = []
+                for i in range(len(list_IDref_satify_fromd)):
+                    for j in range(i, len(list_IDref_satify_fromd)):
+                        if j != i:
+                            idj_ref = list_IDref_satify_fromd[j]
+                            idi_ref = list_IDref_satify_fromd[i]
+                            id_same_ref = 0
+                            id_same_det = 0
+                            if idj_ref[0] == idi_ref[0]:
+                                id_same_ref = idj_ref[0]
+
+                            if idj_ref[0] == idi_ref[1]:
+                                id_same_ref = idj_ref[0]
+
+                            if idj_ref[1] == idi_ref[0]:
+                                id_same_ref = idj_ref[1]                            
+
+                            if idj_ref[1] == idi_ref[1]:
+                                id_same_ref = idj_ref[1]
+                            
+                            # -- 
+                            if idj_ref[2] == idi_ref[2]:
+                                id_same_det = idj_ref[2]
+
+                            if idj_ref[2] == idi_ref[3]:
+                                id_same_det = idj_ref[2]
+
+                            if idj_ref[3] == idi_ref[2]:
+                                id_same_det = idj_ref[3]                            
+
+                            if idj_ref[3] == idi_ref[3]:
+                                id_same_det = idj_ref[3]
+
+                            # -
+                            if id_same_ref != 0 and id_same_det != 0:
+                                ls_IDmatch_distance.append([id_same_ref, id_same_det])
+                                # print(f"Gương tham chiếu thứ {id_same_ref} có thể trùng với gương phát hiện thứ {id_same_det}")
+
+                # - Tính số lượng của từng ID của gương detect vơí gương tham chiếu theo góc 
+                id_match_distance = self.count_duplicate_pairs(ls_IDmatch_distance)
+                print("Số lượng điểm khớp theo kc là: ", id_match_distance)
+                ls_match_distance = []
+
+                # Lặp qua các giá trị của gương detect và tìm phần tử có giá trị lớn nhất và qua ngưỡng nhất định
+                for ref in ls_detected_ref:
+                    result = self.find_max_element(ref[0], id_match_distance)
+                    if result:
+                        ls_match_distance.append(result)
+
+                print("Kết quả theo Khoảng cách là:", ls_match_distance)
+                print("-----\n")
+
+                # - Kiểm tra xem có id nào cuả map tham chiếu bị trùng hay không ?
+                is_not_uniqueID = False
+                ls_index_id = []
+                for i in range(0, len(ls_match_distance)):
+                    for j in range(i, len(ls_match_distance)):
+                        if j != i:
+                            idj_ref = ls_match_distance[j][0]
+                            idi_ref = ls_match_distance[i][0]
+
+                            if idj_ref == idi_ref:
+                                is_not_uniqueID = True
+                                ls_index_id.append(i)
+                                ls_index_id.append(j)
+                                break
+                    
+                if is_not_uniqueID:
+                    is_not_uniqueID = False
+                    print(f"ID trên map tham chiếu khi khớp gương bị trùng => clear cac id trung {ls_index_id}")
+                    del ls_match_distance[ls_index_id[0]]
+                    del ls_match_distance[ls_index_id[1]-1]
+
+                if len(ls_match_distance) < 3:
+                    print("Số gương khớp < 3")
+                else:
+                    # # -- Use SVD for find pos of robot on map
+                    # # - Step 0: Lọc map tham chiếu khớp trong map gốc
+                    n = len(self.ls_reference_ref_xy)
+                    ls_reference_refFilter = []
+                    for ref in self.ls_reference_ref_xy:
+                        for id_ref in ls_match_distance:
+                            if ref[0] == id_ref[0]:
+                                ls_reference_refFilter.append([ref[1], ref[2]])
+
+                    n = len(ls_detected_ref)
+                    ls_detected_refFilter = []
+                    for ref in ls_detected_ref:
+                        for id_ref in ls_match_distance:
+                            if ref[0] == id_ref[1]:
+                                ls_detected_refFilter.append([ref[1], ref[2]])
+                    
+                    # -- Step 1: find pose of robot
+                    xr, yr, phiR = self.SVD_algorithm(ls_reference_refFilter, ls_detected_refFilter)
+                    print("num ref matching: ", len(ls_detected_refFilter), "| Pose: ", xr, yr, degrees(phiR))
+
+                    # # - send transform to rviz
+                    self.translation = (xr, yr, 0.0)
+                    self.quanternion = self.euler_to_quaternion(phiR)
+                    self.br.sendTransform(self.translation, self.quanternion, rospy.Time.now(), self.ref_frame, self.origin_frame)
+
+                    # -- publish data
+                    self.pub_lidar_pose(self.lidar_pose_pub, xr, yr, phiR, len(ls_match_distance))
+                    
+                    # -- update tranform data for next step
+                    self.x_tf = xr
+                    self.y_tf = yr
+                    self.r_tf = phiR
+
+                    print("--move to next step --")
+                # -- move to next step
+                self.process = 3
+
+            # - Tìm ra vị trí robot sau khi đã tìm ra vị trí khởi tạo
+            elif self.process == 3:
+                if self.is_rawReflector == False:
+                    self.rate.sleep()
+                    continue
+                    
+                self.is_rawReflector = False
+
+                # -- tìm list gương detected
+                ls_detected_ref = []
+                for index, ref in enumerate(self.data_raw_reflector.reflectors):
+                    ls_detected_ref.append([ref.LocalID, ref.Cart_X, ref.Cart_Y])
+
+                # - Step 1: Biến đổi các gương phát hiện đươc trên map gốc
+                convert_posReflector = []
+                convert_posReflector_d = []
+                convert_posReflector_theta = []
+                for ref in ls_detected_ref:
+                    x_cv, y_cv = self.calculate_reflector_position_in_map(self.x_tf, self.y_tf, self.r_tf, ref[1], ref[2])
+                    d_raw = sqrt(x_cv*x_cv + y_cv*y_cv)
+                    theta_raw = atan2(y_cv, x_cv)
+
+                    convert_posReflector.append([ref[0], d_raw, theta_raw])
+                    convert_posReflector_d.append(d_raw)
+                    convert_posReflector_theta.append(theta_raw)       
+
+                # for i in range(len(convert_posReflector)):
+                #     print(f"Gương phát hiện thứ {convert_posReflector[i][0]} có thông số là: d = {convert_posReflector[i][1]}, theta = {convert_posReflector[i][2]}")
+                # print("\n")
+                # for i in range(len(self.ls_reference_ref_dr)):
+                #     print(f"Gương tham chiếu thứ {self.ls_reference_ref_dr[i][0]} có thông số là: d = {self.ls_reference_ref_dr[i][1]}, theta = {self.ls_reference_ref_dr[i][2]}")
+                # print("--------------")                    
+
+                # - Step 2: Tìm ma trận trọng số w giữa map gương tham chiếu và map gương phát hiện
+                D_n = np.array(convert_posReflector_d)  # n = 3
+                D_m = np.array(self.ls_reference_ref_d)  # m = 4
+
+                # Giả sử góc của các gương detected và tham chiếu (đơn vị: radian)
+                A_n = np.array(convert_posReflector_theta)  # n = 3
+                A_m = np.array(self.ls_reference_ref_theta)  # m = 4
+
+                # Tạo ma trận sai số khoảng cách và góc bằng cách mở rộng (broadcasting)
+                sigma_d = D_n.reshape(1, -1) - D_m.reshape(-1, 1)  # Ma trận m x n
+                sigma_a = A_n.reshape(1, -1) - A_m.reshape(-1, 1)  # Ma trận m x n
+
+                # Tính trọng số w
+                w = np.abs(sigma_d * sigma_a)         
+
+                # In kết quả
+                # print("Ma trận sai số khoảng cách (sigma_d):\n", sigma_d)
+                # print("Ma trận sai số góc (sigma_a):\n", sigma_a)
+                # print("Ma trận trọng số (w):\n", w)
+
+                # Đặt ngưỡng w_sigma
+                w_sigma = 0.01  # sai số khoảng cách * sai số góc 
+
+                # Tìm giá trị nhỏ nhất tại mỗi cột
+                min_values = np.min(w, axis=0)
+
+                # Tìm chỉ số hàng tương ứng với giá trị nhỏ nhất tại mỗi cột
+                min_indices = np.argmin(w, axis=0)
+
+                # So sánh với ngưỡng w_sigma
+                valid_indices = np.where(min_values < w_sigma, min_indices, -1)
+
+                # In kết quả
+                print("Giá trị nhỏ nhất tại mỗi cột:", min_values)
+                print("Chỉ số hàng tương ứng (hoặc -1 nếu không đạt ngưỡng):", valid_indices)
+
+                # -- xử lý khi bị có trường hợp các id trùng nhau 
+                is_not_uniqueID = False
+                # ls_index_id = []
+                for i in range(0, len(valid_indices)):
+                    for j in range(i, len(valid_indices)):
+                        if j != i:
+                            idj_ref = valid_indices[j]
+                            idi_ref = valid_indices[i]
+                            minj_val = min_values[j]
+                            mini_val = min_values[i]
+
+                            if idj_ref == idi_ref:
+                                if minj_val < mini_val:
+                                    valid_indices[i] = -1
+                                elif minj_val > mini_val:
+                                    valid_indices[j] = -1
+
+                print("Chỉ số hàng tương ứng sau update (hoặc -1 nếu không đạt ngưỡng):", valid_indices)
+
+                # - Tạo list thoả mãn để tính lại vị trí của robot
+                # # - Step 0: Lọc map tham chiếu khớp trong map gốc
+                n = len(self.ls_reference_ref_xy)
+                ls_reference_refFilter = []
+                for ref in self.ls_reference_ref_xy:
+                    for id_ref in valid_indices:
+                        if id_ref != -1 and ref[0] == (id_ref + 1):
+                            ls_reference_refFilter.append([ref[1], ref[2]])
+
+                # print(f"Chiều của list tham chiếu là: {len(ls_reference_refFilter)}")
+                # print("-----")
+
+                ls_detected_refFilter = []
+                
+                for i, id_ref in enumerate(valid_indices):
+                    if id_ref != -1:
+                        ls_detected_refFilter.append([ls_detected_ref[i][1], ls_detected_ref[i][2]])
+
+                # print(f"Chiều của list phát hiện là: {len(ls_detected_refFilter)}")
+                # print("-----")    
+
+                # print(f"Chiều của list phát hiện gốc là: {len(ls_detected_ref)}")
+                # print("-----")
+
+                if len(ls_detected_refFilter) < 3:
+                    print("Số gương khớp nhỏ hơn 3")
+                else:
+                    # -- Step 1: find pose of robot
+                    xr, yr, phiR = self.SVD_algorithm(ls_reference_refFilter, ls_detected_refFilter)
+                    print("num ref matching: ", len(ls_detected_refFilter), "| Pose: ", xr, yr, degrees(phiR))
+                    print("#######################################")
+
+                    # # - send transform to rviz
+                    self.translation = (xr, yr, 0.0)
+                    self.quanternion = self.euler_to_quaternion(phiR)
+                    self.br.sendTransform(self.translation, self.quanternion, rospy.Time.now(), self.ref_frame, self.origin_frame)
+
+                    # -- publish data
+                    self.pub_lidar_pose(self.lidar_pose_pub, xr, yr, phiR, len(ls_match_distance))
+
+                    # -- update tranform data for next step
+                    self.x_tf = xr
+                    self.y_tf = yr
+                    self.r_tf = phiR
+                                
+                # -- move to next step
+                # self.process = -1                    
+
+            self.rate.sleep()
+
+def main():
+    print ("--- Run navigation mode---")
+    program = Navigation_mode()
+    program.run()
+
+    print ("--- close! ---")
+
+if __name__ == '__main__':
+    main()
+
+
+
+

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(sticplus_module)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -15,16 +15,16 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
 )
 
-generate_messages(
-  DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
-  sensor_msgs
-  geometry_msgs
-  nav_msgs
-  sti_msgs
-  message_pkg
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+#   sensor_msgs
+#   geometry_msgs
+#   nav_msgs
+#   sti_msgs
+#   message_pkg
 
-)
+# )
 
 catkin_package(
 
@@ -46,8 +46,8 @@ include_directories(
 
 add_executable(Parkingnode_cpp src/parking_nav_nm.cpp)
 target_link_libraries(Parkingnode_cpp ${catkin_LIBRARIES})
-add_dependencies(Parkingnode_cpp Parkingnode_generate_messages_cpp)
+# add_dependencies(Parkingnode_cpp Parkingnode_generate_messages_cpp)
 
 add_executable(goalControlnode_cpp src/goal_control.cpp)
 target_link_libraries(goalControlnode_cpp ${catkin_LIBRARIES})
-add_dependencies(goalControlnode_cpp goalcontrol_generate_messages_cpp)
+# add_dependencies(goalControlnode_cpp goalcontrol_generate_messages_cpp)

@@ -8,7 +8,7 @@ from math import sqrt
 class Quangduong:
     def __init__(self):
         rospy.init_node('testVel', anonymous=True)
-        self.time_tr = rospy.get_time();
+        self.time_tr = rospy.get_time()
         self.rate = rospy.Rate(20)
         self.pub_cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 

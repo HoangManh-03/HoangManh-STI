@@ -1,0 +1,4 @@
+<launch>
+	<node pkg="launch_pkg" name="check_cpu" type="checkCpu_v3.py" output="screen"> </node>
+</launch>
+

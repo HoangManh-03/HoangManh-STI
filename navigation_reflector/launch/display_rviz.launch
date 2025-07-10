@@ -1,0 +1,11 @@
+<launch>
+    <!-- Arguments -->
+    <!-- <arg name="slam_methods" default="cartographer" doc="slam type [gmapping, cartographer, hector, karto, frontier_exploration]"/>  -->
+    <!-- gmapping : default -->
+    <arg name="open_rviz" default="true"/>
+
+    <!-- rviz -->
+    <group if="$(arg open_rviz)">
+        <node type="rviz" name="rviz" pkg="rviz" args="-d $(find pf_driver)/rviz/r2000.rviz" />
+    </group>
+</launch>

@@ -1,0 +1,4 @@
+<launch>
+	<!-- <node pkg="navigation_reflector" name="median_filer_laser" type="median_filer_laser.py" output="screen" > </node> -->
+	<node pkg="navigation_reflector" name="average_filer_laser" type="average_filer_laser.py" output="screen" > </node>
+</launch>

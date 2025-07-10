@@ -1,0 +1,13 @@
+<launch>
+	<node pkg="check_cpu" name="check_cpu" type="checkCpu.py" output="screen"> </node>
+        <param name="port_driverAll" value="stibase_motor" />
+        <param name="port_RTC" value="stibase_rtc" />
+        <param name="port_Lidar_1" value="192.168.100.2" />
+        <param name="port_Lidar_2" value="192.168.100.20" />
+        <param name="name_card" value="wlo2" />
+        <param name="name_eth" value="eno1" />
+        <param name="SSID_wifi" value="SSS" />
+        <param name="PASS_wifi" value="88888888" />
+        <param name="ip_address" value="192.168.1.100" />
+
+</launch>

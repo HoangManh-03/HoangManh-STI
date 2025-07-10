@@ -26,7 +26,8 @@ class CheckPhysical:
         self.rate = rospy.Rate(1)
 
         self.port_nav350 = rospy.get_param('port_nav350', '')   
-        self.port_main  = rospy.get_param('port_main', '')    
+        self.port_main  = rospy.get_param('port_main', '')
+        self.port_rtc  = rospy.get_param('port_rtc', '')
         self.port_oc     = rospy.get_param('port_oc', '')
         self.port_hc     = rospy.get_param('port_hc', '')
         self.port_imu     = rospy.get_param('port_imu', '')
@@ -57,7 +58,7 @@ class CheckPhysical:
             vitri = output.find("stibase")
 
             name = output[(vitri):(vitri+len(nameport))]
-            # print(name)
+
             if name == nameport:
                 return 1
             return 0
@@ -106,12 +107,18 @@ class CheckPhysical:
           # -- D435
             self.statusPort.camera = True
             
-          # -- POWER ( main 82)        
-            if self.usbSerial_check(self.port_main) == 1:
-                self.statusPort.main = True
+          # -- POWER ( main 82)
+            self.statusPort.main = True       
+            #if self.usbSerial_check(self.port_main) == 1:
+            #    self.statusPort.main = True
+            #else:
+            #    self.statusPort.main = False
+	  # -- RTC 
+            if self.usbSerial_check(self.port_rtc) == 1:
+                self.statusPort.rtc = True
             else:
-                self.statusPort.main = False
-
+                self.statusPort.rtc = False
+                
           # -- MC 
             self.statusPort.mc = True         
 

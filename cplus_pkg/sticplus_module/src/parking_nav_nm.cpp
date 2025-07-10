@@ -35,85 +35,102 @@
 
 using namespace std;
 
-class ParkingNAV{
-    public:
-    string rate_str;
-    int rate;
+class parkingNAV
+{
+public:
     // ros::Rate loop_rate(int x);
     ros::Subscriber sub_ParkingRequest;
     message_pkg::Parking_request req_parking;
-    bool is_request_parking;
+    bool is_request_parking = false;
 
     ros::Subscriber sub_robotPose;
-    bool is_pose_robot;
+    bool is_pose_robot = false;
     geometry_msgs::Pose poseRbMa;
     geometry_msgs::PoseStamped poseStampedAGV;
-    float theta_robotNow;
+    float theta_robotNow = 0.0;
 
     ros::Subscriber sub_GetRobotOdom;
-    bool is_odom_rb;
+    bool is_odom_rb = false;
     nav_msgs::Odometry odom_rb;
 
     ros::Subscriber sub_HCinfo;
     sti_msgs::HC_info zone_lidar;
-    bool is_check_zone;
+    bool is_check_zone = false;
 
     ros::Publisher pub_cmd_vel;
-    double time_tr;
-    uint8_t rate_pubVel;
+    double time_tr = ros::Time::now().toSec();
+    uint8_t rate_pubVel = 15;
 
     ros::Publisher pub_ParkingRespond;
     // message_pkg::Parking_respond data_PubRespond;
-    double timePubRespond;
-    uint8_t rate_pubRespond;
-    uint8_t auto_reset;
+    double timePubRespond = ros::Time::now().toSec();
+    uint8_t rate_pubRespond = 30;
+    uint8_t auto_reset = 0;
 
     //tf
-    tf::TransformBroadcaster tf_broadcaster;
-    tf::TransformListener tf_listener;
+    // tf::TransformBroadcaster tf_broadcaster;
+    // tf::TransformListener tf_listener;
 
-    double odom_x_ht;
-    double odom_y_ht;
-    double odom_g;
+    double odom_x_ht = 0.0;
+    double odom_y_ht = 0.0;
+    double odom_g = 0.0;
 
-    int8_t step_moveForward;
-    double x_odom_start;
-    double y_odom_start; 
+    int8_t step_moveForward = 0;
+    double x_odom_start = 0.0;
+    double y_odom_start = 0.0; 
 
-    int8_t step_Rotary;
-    double angle_odom_start;
+    int8_t step_Rotary = 0;
+    double angle_odom_start = 0.0;
 
-    float min_vel;
-    float min_velFinish;
-    float min_rol;
-    float min_rolFinish;
+    float min_vel = 0.03;
+    float min_velFinish = 0.04;
+    float min_rol = 0.1;
+    float min_rolFinish = 0.15;
 
-    float max_vel;
-    float max_rol;
+    float max_vel = 0.07;
+    float max_rol = 0.3;
 
-    bool pubTransform;
-    int16_t process;
+    bool pubTransform = false;
+    int16_t process = 0;
     
-    double ss_x;
-    double ss_y;
-    double ss_a;
+    double ss_x = 0.0;
+    double ss_y = 0.0;
+    double ss_a = 0.0;
         
-    int8_t warn_agv;
-    // geometry_msgs::Pose poseThenTransform;
-    int time_waitTransfrom;
-    // double time_startTransform;
-    bool is_transform;
+    int8_t warn_agv = 0;
+    double time_waitTransfrom = ros::Time::now().toSec();
+    double time_startTransform = ros::Time::now().toSec();    
+    bool is_transform = false;
 
-    bool shutdown_flag;
+    bool shutdown_flag = 0;
     geometry_msgs::Pose posetf;
-    double yawtf;
+    double yawtf = 0.0;
 
-    void request_callback(const message_pkg::Parking_request data){
+    double SGo_forward = 0.0;
+    double AGO_rotary = 0.0;
+    int8_t direct_forward = 0; // 1 tien, 2 lui
+    int8_t direct_rotary = 0; // 1 quay trai, 2 quay phai
+    geometry_msgs::Pose poseThenTransform;
+    
+    parkingNAV(ros::NodeHandle *nh, ros::NodeHandle *npr){
+        // subscriber topic
+        sub_ParkingRequest = nh->subscribe("/parking_request", 1000, &parkingNAV::request_callback, this);
+        sub_robotPose = nh->subscribe("/robotPose_nav", 1000, &parkingNAV::getPose, this);
+        sub_GetRobotOdom = nh->subscribe("/odometry", 1000, &parkingNAV::cbGetRobotOdom, this);
+        sub_HCinfo = nh->subscribe("/HC_info", 1000, &parkingNAV::zone_callback, this);   
+
+        // pusblish topic
+        pub_cmd_vel = nh->advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
+        pub_ParkingRespond = nh->advertise<message_pkg::Parking_respond>("/parking_respond", 1000);
+    }
+    ~parkingNAV(){};
+
+    void request_callback(const message_pkg::Parking_request& data){
         req_parking = data;
         is_request_parking = true;
     }
 
-    void getPose(const geometry_msgs::PoseStamped data){
+    void getPose(const geometry_msgs::PoseStamped& data){
         poseStampedAGV = data;
         poseRbMa = data.pose;
         // quata = ( poseRbMa.orientation.x,\
@@ -125,7 +142,7 @@ class ParkingNAV{
         is_pose_robot = true;
     }
 
-    void cbGetRobotOdom(nav_msgs::Odometry msg){
+    void cbGetRobotOdom(const nav_msgs::Odometry& msg){
 
         tf::Quaternion q(msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, \
                             msg.pose.pose.orientation.z, msg.pose.pose.orientation.w);
@@ -148,7 +165,7 @@ class ParkingNAV{
         }
     }
 
-    void zone_callback(const sti_msgs::HC_info data){
+    void zone_callback(const sti_msgs::HC_info& data){
         zone_lidar = data;
         is_check_zone = true;
     }
@@ -271,6 +288,7 @@ class ParkingNAV{
     void sendTransform(string frame_world, string frame_id_pointTarget, geometry_msgs::Pose point_target){
         // time_startTransform = ros::Time::now().toSec();
         tf::Transform transform;
+        tf::TransformBroadcaster tf_broadcaster;
         transform.setOrigin(tf::Vector3(point_target.position.x, point_target.position.y, -1.0));
 
         // tf::Quaternion q(point_target.orientation.x, point_target.orientation.y, \
@@ -289,6 +307,7 @@ class ParkingNAV{
     geometry_msgs::Pose transformPoseNAV(string frame_id_pointTarget, string frame_agvNAV){
         geometry_msgs::Pose poseThenTransform;
         tf::StampedTransform transform;
+        tf::TransformListener tf_listener;
         try{
             tf_listener.waitForTransform(frame_id_pointTarget, frame_agvNAV, ros::Time(0), ros::Duration(10.0));
             tf_listener.lookupTransform(frame_id_pointTarget, frame_agvNAV, ros::Time(0), transform);
@@ -623,24 +642,199 @@ class ParkingNAV{
             usleep(10000); 
         }
     }
+
+    void run()
+    {
+        if (process == 0){
+            // ROS_INFO("wait receive all need data......");
+            // if (is_pose_robot == true){
+            //     c_k = c_k + 1;
+            // }
+            // if (is_odom_rb == true) {
+            //     c_k = c_k + 1;
+            // }
+            // if (is_check_zone == true){
+            //     c_k = c_k + 1;
+            // }
+            // if (c_k == 3){
+            //     process = 1;
+            //     // ROS_INFO("Done receive all need data!");
+            // }
+            if  (is_pose_robot == true && is_odom_rb == true && is_check_zone == true){
+                process = 1;
+            }
+        }
+        else if (process == 1){ // cho tin hieu Parking
+            if (is_request_parking == true){
+                if (req_parking.modeRun == 1 || req_parking.modeRun == 2 || req_parking.modeRun == 3){ //un
+                    ROS_INFO("Received data request Parking, Start Process!");
+                    time_waitTransfrom = time(NULL);
+                    pubTransform = true;
+                    process = 41;
+                }
+            }
+        }
+        else if (process == 21){   // tinh quang duong di chuyen
+            
+            if (float(time(NULL) - time_waitTransfrom) <= 1.5){
+                poseThenTransform = transformPoseNAV("frame_target", "frame_robot");
+            }
+            else{
+                if (poseThenTransform.position.x == 0.0 && poseThenTransform.position.y == 0.0 && poseThenTransform.orientation.z == 0.0 && poseThenTransform.orientation.w == 0.0){
+                    // ROS_INFO("Value poseThenTransform is 0! Stop process, Wait for restart!");
+                    process = 52;
+                    pub_Stop();
+                }
+
+                else{
+                    if (fabs(poseThenTransform.position.y) <= 0.02){
+                        time_waitTransfrom = time(NULL);
+                        process = 31; // chuyen sang buoc tinh goc quay de lui vao ke
+                    }
+                    else{
+                        double angle = yawtf;
+
+                        if (fabs(angle) < M_PI/4 || fabs(angle) > (3*M_PI)/4){   // truong hop AGV lech goc lon
+                            AGO_rotary = fabs((M_PI/2) - fabs(angle));
+                            if ((angle > 0 && angle < M_PI/2) || (angle < 0 && fabs(angle) > M_PI/2)){
+                                direct_rotary = 1;
+                            }
+                            else{
+                                direct_rotary = 2;
+                            }
+
+                            step_moveForward = 0;
+                            process = -210;
+                        }
+
+                        else{
+                            if (fabs(angle) > M_PI/2){
+                                SGo_forward = fabs(poseThenTransform.position.y)/sin(M_PI - fabs(angle));
+                            }
+                            else{
+                                SGo_forward = fabs(poseThenTransform.position.y)/sin(fabs(angle));
+                            }
+
+                            if ((poseThenTransform.position.y > 0 && angle > 0) || (poseThenTransform.position.y < 0 && angle < 0)){
+                                direct_forward = 2;
+                            }
+                            else{
+                                direct_forward = 1;
+                            }
+
+                            step_moveForward = 0;
+                            process = -21;
+                        }
+                    }
+                }
+            }
+        }
+
+        else if (process == -21){ // di chuyen vao duong thang target
+            if (move_forward(SGo_forward, direct_forward, min_vel, 0) == 1){
+                time_waitTransfrom = time(NULL);
+                process = 21; // kiem tra lai xem da chinh xac chua     
+            }
+        }
+
+        else if (process == -210){ // quay goc truoc khi tinh chinh khoang cach neu goc di chuyen lon
+            if (rotary_around(AGO_rotary, direct_rotary, min_rol, max_rol, M_PI/5.0, 0.015) == 1){
+                time_waitTransfrom = time(NULL);
+                process = 21; // kiem tra lai xem da chinh xac chua  
+            }
+        }
+
+        else if (process == 31){  //tinh goc can quay
+            if (time(NULL) - time_waitTransfrom <= 1.5){
+                poseThenTransform = transformPoseNAV("frame_target", "frame_robot");
+            }
+
+            else{
+                // ROS_INFO(poseThenTransform);                   //****
+                if (poseThenTransform.position.x == 0.0 && poseThenTransform.position.y == 0.0 && poseThenTransform.orientation.z == 0.0 && poseThenTransform.orientation.w == 0.0 ){
+                    ROS_INFO("Value poseThenTransform is 0! Stop process, Wait for restart!");
+                    process = 52;
+                    pub_Stop();
+                }
+                else{
+                    double angle = yawtf;
+
+                    ROS_INFO("%f", M_PI - fabs(angle));
+                    if ((M_PI - fabs(angle)) <= 0.04){
+                        process = 41; // chuyen sang buoc parking
+                    }
+
+                    else{
+                        AGO_rotary = M_PI - fabs(angle);
+                        if (angle > 0){
+                            direct_rotary = 1;
+                        }
+                        else{
+                            direct_rotary = 2;
+                        }
+
+                        step_Rotary = 0;
+                        process = -31;
+                    }
+                }
+            }
+        }
+
+        else if (process == -31){ // quay vao duong thang target
+            if (rotary_around(AGO_rotary, direct_rotary, min_rol, max_rol, M_PI/6.0, 0.015) == 1){
+                time_waitTransfrom = time(NULL);
+                process = 31; // kiem tra lai xem da chinh xac chua
+            }
+        }
+
+        else if (process == 41){ // parking vao ke
+            // ROS_INFO("Start Parking!")
+            // if follow_target(min_vel, max_vel, min_vel, 0.3, 0) == 1){
+            // if follow_target(min_vel, max_vel, min_rol, 0.6, 0.4, 0) == 1){  // 0.5 | 0.35
+            int8_t stt = follow_target(min_velFinish, max_vel, min_rolFinish, 0.6, 0.4, 0);
+            if (stt == 1){  // 0.5 | 0.35
+                // ROS_INFO("Done Parking!")
+                usleep(500000);
+                process = 51;
+            }
+            else if (stt == 2){
+                // ROS_INFO("Value poseThenTransform is 0! Stop process, Wait for restart!")
+                process = 52;
+                pub_Stop();
+            }
+        }
+
+        else if (process == 51){ // wait for reset transform
+            // ROS_INFO("Done!")
+            if (req_parking.modeRun == 0){ //Reset
+                // req_parking = Parking_request()
+                // ROS_INFO("Recieve data Reset!")
+                resetAll();
+            }
+        }
+
+        else if (process == 52){ // loi pose transform error
+            if (req_parking.modeRun == 0){ //Reset
+                // req_parking = Parking_request()
+                // ROS_INFO("Recieve data Reset!")
+                resetAll();
+            }
+        }
+                
+        string mess_pub = Meaning(process, warn_agv);
+
+        pub_Status(process, req_parking.modeRun, posetf, req_parking.poseTarget, req_parking.offset, ss_x, ss_y, ss_a, mess_pub, warn_agv);
+    }
+
 };
 
 
-// void fnShutDown(int sig){
-//     ROS_INFO("Shutting down. cmd_vel will be 0");
-//     ParkingNAV self;
-//     geometry_msgs::Twist twist;
-//     self.pub_cmd_vel.publish(twist);
-
-//     ros::shutdown(); 
-// }
-
 void signal_handler(int signal_num){
-    ParkingNAV self;
-    self.shutdown_flag = 1;
-    cout << "Program stop due to Ctrl C";
-    geometry_msgs::Twist twist;
-    self.pub_cmd_vel.publish(twist);
+    // ParkingNAV self;
+    // self.shutdown_flag = 1;
+    // cout << "Program stop due to Ctrl C";
+    // geometry_msgs::Twist twist;
+    // self.pub_cmd_vel.publish(twist);
 
     ros::shutdown();
     exit(signal_num);
@@ -651,277 +845,37 @@ int main(int argc, char **argv)
     std::cout << "Program start!";
 
     ros::init(argc, argv, "Parking_navNM_cpp");
-    ros::NodeHandle n;
+    ros::NodeHandle nh;
+    ros::NodeHandle private_node_handle("~");
     ros::Rate loop_rate(40);
 
-    ParkingNAV self;
-    // ros::param::get("~rate", self.rate_str);
-    // self.rate = stoi(self.rate_str);
-    // self.rate = 40;
-    // ros::Rate loop_rate(self.rate);
-    // self.loop_rate(self.rate);
-    
-    // subcribe topic
-    self.sub_ParkingRequest = n.subscribe("/parking_request", 1000, &ParkingNAV::request_callback, &self);
-    self.is_request_parking = false;
+    // parkingNAV self = parkingNAV(&nh, &private_node_handle);
+    parkingNAV self = parkingNAV(&nh, &private_node_handle);
+    // ParkingNAV self;
 
-    self.sub_robotPose = n.subscribe("/robotPose_nav", 1000, &ParkingNAV::getPose, &self);
-    self.is_pose_robot = false;
-    self.theta_robotNow = 0.0;
-
-    self.sub_GetRobotOdom = n.subscribe("/odometry", 1000, &ParkingNAV::cbGetRobotOdom, &self);
-    self.is_odom_rb = false;
-
-    self.sub_HCinfo = n.subscribe("/HC_info", 1000, &ParkingNAV::zone_callback, &self);   
-    self.is_check_zone = false;
-
-    //pusblish topic
-    self.pub_cmd_vel = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
-    self.time_tr = ros::Time::now().toSec();
-    self.rate_pubVel = 15;
-
-    self.pub_ParkingRespond = n.advertise<message_pkg::Parking_respond>("/parking_respond", 1000);
-    self.timePubRespond = ros::Time::now().toSec();
-    self.rate_pubRespond = 30;
-
-    self.auto_reset = 0;  
-
-    self.odom_x_ht = 0.;
-    self.odom_y_ht = 0.;
-    self.odom_g = 0.;
-
-    self.step_moveForward = 0;
-    self.x_odom_start = 0.0;
-    self.y_odom_start = 0.0;
-
-    self.step_Rotary = 0;
-    self.angle_odom_start = 0.0;
-
-    self.min_vel = 0.03;
-    self.min_velFinish = 0.04;
-    self.min_rol = 0.1;
-    self.min_rolFinish = 0.15;
-
-    self.max_vel = 0.07;
-    self.max_rol = 0.3;
-
-    self.pubTransform = false;
-    self.process = 0;
-
-    self.ss_x = 0.0;
-    self.ss_y = 0.0;
-    self.ss_a = 0.0;
-    
-    self.warn_agv = 0;
-
-    self.time_waitTransfrom = time(NULL);
-    // self.time_startTransform = ros::Time::now().toSec();
-    self.is_transform = false;
-
-    self.shutdown_flag = 0;
-
-    self.yawtf = 0.;
+    while (ros::ok())
+    {
+        self.run();
+        ros::spinOnce();     // allow receiving callbacks function
+        loop_rate.sleep();
+    }
 
     //off all progress
-    signal(SIGABRT, signal_handler);
-    double SGo_forward = 0.0;
-    double AGO_rotary = 0.0;
-    int8_t direct_forward = 0; // 1 tien, 2 lui
-    int8_t direct_rotary = 0; // 1 quay trai, 2 quay phai
-    geometry_msgs::Pose poseThenTransform;
-    try{
-        thread th1(&ParkingNAV::Program1, &self);
+    // signal(SIGABRT, signal_handler);
+    // try{
+    //     thread th1(&ParkingNAV::Program1, &self);
 
-        while (ros::ok())
-        {
-
-            if (self.process == 0){
-                // ROS_INFO("wait receive all need data......");
-                // if (self.is_pose_robot == true){
-                //     c_k = c_k + 1;
-                // }
-                // if (self.is_odom_rb == true) {
-                //     c_k = c_k + 1;
-                // }
-                // if (self.is_check_zone == true){
-                //     c_k = c_k + 1;
-                // }
-                // if (c_k == 3){
-                //     self.process = 1;
-                //     // ROS_INFO("Done receive all need data!");
-                // }
-                if  (self.is_pose_robot == true && self.is_odom_rb == true && self.is_check_zone == true){
-                    self.process = 1;
-                }
-            }
-            else if (self.process == 1){ // cho tin hieu Parking
-                if (self.is_request_parking == true){
-                    if (self.req_parking.modeRun == 1 || self.req_parking.modeRun == 2 || self.req_parking.modeRun == 3){ //un
-                        ROS_INFO("Received data request Parking, Start Process!");
-                        self.time_waitTransfrom = time(NULL);
-                        self.pubTransform = true;
-                        self.process = 41;
-                    }
-                }
-            }
-            else if (self.process == 21){   // tinh quang duong di chuyen
-                
-                if (float(time(NULL) - self.time_waitTransfrom) <= 1.5){
-                    poseThenTransform = self.transformPoseNAV("frame_target", "frame_robot");
-                }
-                else{
-                    if (poseThenTransform.position.x == 0.0 && poseThenTransform.position.y == 0.0 && poseThenTransform.orientation.z == 0.0 && poseThenTransform.orientation.w == 0.0){
-                        // ROS_INFO("Value poseThenTransform is 0! Stop process, Wait for restart!");
-                        self.process = 52;
-                        self.pub_Stop();
-                    }
-
-                    else{
-                        if (fabs(poseThenTransform.position.y) <= 0.02){
-                            self.time_waitTransfrom = time(NULL);
-                            self.process = 31; // chuyen sang buoc tinh goc quay de lui vao ke
-                        }
-                        else{
-                            double angle = self.yawtf;
-
-                            if (fabs(angle) < M_PI/4 || fabs(angle) > (3*M_PI)/4){   // truong hop AGV lech goc lon
-                                AGO_rotary = fabs((M_PI/2) - fabs(angle));
-                                if ((angle > 0 && angle < M_PI/2) || (angle < 0 && fabs(angle) > M_PI/2)){
-                                    direct_rotary = 1;
-                                }
-                                else{
-                                    direct_rotary = 2;
-                                }
-
-                                self.step_moveForward = 0;
-                                self.process = -210;
-                            }
-
-                            else{
-                                if (fabs(angle) > M_PI/2){
-                                    SGo_forward = fabs(poseThenTransform.position.y)/sin(M_PI - fabs(angle));
-                                }
-                                else{
-                                    SGo_forward = fabs(poseThenTransform.position.y)/sin(fabs(angle));
-                                }
-
-                                if ((poseThenTransform.position.y > 0 && angle > 0) || (poseThenTransform.position.y < 0 && angle < 0)){
-                                    direct_forward = 2;
-                                }
-                                else{
-                                    direct_forward = 1;
-                                }
-
-                                self.step_moveForward = 0;
-                                self.process = -21;
-                            }
-                        }
-                    }
-                }
-            }
-
-            else if (self.process == -21){ // di chuyen vao duong thang target
-                if (self.move_forward(SGo_forward, direct_forward, self.min_vel, 0) == 1){
-                    self.time_waitTransfrom = time(NULL);
-                    self.process = 21; // kiem tra lai xem da chinh xac chua     
-                }
-            }
-
-            else if (self.process == -210){ // quay goc truoc khi tinh chinh khoang cach neu goc di chuyen lon
-                if (self.rotary_around(AGO_rotary, direct_rotary, self.min_rol, self.max_rol, M_PI/5.0, 0.015) == 1){
-                    self.time_waitTransfrom = time(NULL);
-                    self.process = 21; // kiem tra lai xem da chinh xac chua  
-                }
-            }
-
-            else if (self.process == 31){  //tinh goc can quay
-                if (time(NULL) - self.time_waitTransfrom <= 1.5){
-                    poseThenTransform = self.transformPoseNAV("frame_target", "frame_robot");
-                }
-
-                else{
-                    // ROS_INFO(poseThenTransform);                   //****
-                    if (poseThenTransform.position.x == 0.0 && poseThenTransform.position.y == 0.0 && poseThenTransform.orientation.z == 0.0 && poseThenTransform.orientation.w == 0.0 ){
-                        ROS_INFO("Value poseThenTransform is 0! Stop process, Wait for restart!");
-                        self.process = 52;
-                        self.pub_Stop();
-                    }
-                    else{
-                        double angle = self.yawtf;
-
-                        ROS_INFO("%f", M_PI - fabs(angle));
-                        if ((M_PI - fabs(angle)) <= 0.04){
-                            self.process = 41; // chuyen sang buoc parking
-                        }
-
-                        else{
-                            AGO_rotary = M_PI - fabs(angle);
-                            if (angle > 0){
-                                direct_rotary = 1;
-                            }
-                            else{
-                                direct_rotary = 2;
-                            }
-
-                            self.step_Rotary = 0;
-                            self.process = -31;
-                        }
-                    }
-                }
-            }
-
-            else if (self.process == -31){ // quay vao duong thang target
-                if (self.rotary_around(AGO_rotary, direct_rotary, self.min_rol, self.max_rol, M_PI/6.0, 0.015) == 1){
-                    self.time_waitTransfrom = time(NULL);
-                    self.process = 31; // kiem tra lai xem da chinh xac chua
-                }
-            }
-
-            else if (self.process == 41){ // parking vao ke
-                // ROS_INFO("Start Parking!")
-                // if follow_target(min_vel, max_vel, min_vel, 0.3, 0) == 1){
-                // if follow_target(min_vel, max_vel, min_rol, 0.6, 0.4, 0) == 1){  // 0.5 | 0.35
-                int8_t stt = self.follow_target(self.min_velFinish, self.max_vel, self.min_rolFinish, 0.6, 0.4, 0);
-                if (stt == 1){  // 0.5 | 0.35
-                    // ROS_INFO("Done Parking!")
-                    usleep(500000);
-                    self.process = 51;
-                }
-                else if (stt == 2){
-                    // ROS_INFO("Value poseThenTransform is 0! Stop self.process, Wait for restart!")
-                    self.process = 52;
-                    self.pub_Stop();
-                }
-            }
-
-            else if (self.process == 51){ // wait for reset transform
-                // ROS_INFO("Done!")
-                if (self.req_parking.modeRun == 0){ //Reset
-                    // self.req_parking = Parking_request()
-                    // ROS_INFO("Recieve data Reset!")
-                    self.resetAll();
-                }
-            }
-
-            else if (self.process == 52){ // loi pose transform error
-                if (self.req_parking.modeRun == 0){ //Reset
-                    // self.req_parking = Parking_request()
-                    // ROS_INFO("Recieve data Reset!")
-                    self.resetAll();
-                }
-            }
-                    
-            string mess_pub = self.Meaning(self.process, self.warn_agv);
-
-            self.pub_Status(self.process, self.req_parking.modeRun, self.posetf, self.req_parking.poseTarget, self.req_parking.offset, self.ss_x, self.ss_y, self.ss_a, mess_pub, self.warn_agv);
-            ros::spinOnce();     // allow receiving callbacks function
-            loop_rate.sleep();
-        }
-        th1.join();
-    }
-    catch(...){
-        self.shutdown_flag = 1;
-    }
+    //     while (ros::ok())
+    //     {
+    //         self.run();
+    //         ros::spinOnce();     // allow receiving callbacks function
+    //         loop_rate.sleep();
+    //     }
+    //     th1.join();
+    // }
+    // catch(...){
+    //     self.shutdown_flag = 1;
+    // }
 
     return 0;
 }

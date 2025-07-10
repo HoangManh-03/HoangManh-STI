@@ -1,0 +1,12 @@
+<launch>
+      <!-- nhan Goal va dieu huong -->
+      <arg name="node_namespace" default="goal_control" />
+
+      <!-- <rosparam command="load" 
+                file="$(find sti_module)/config/param_goalControl.yaml" 
+                ns="$(arg node_namespace)"   /> -->
+      <node pkg="testMotionPlanning" 
+            name="$(arg node_namespace)" 
+            type="$(arg node_namespace)"
+            output="screen"/>
+</launch>

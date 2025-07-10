@@ -28,7 +28,7 @@ using namespace std;
 using namespace SickToolbox;
 
 #define DEFAULT_SICK_IP_ADDRESS "192.168.100.10"  ///< Default Sick LD INet 4 address
-#define DEFAULT_SICK_TCP_PORT   (2111)  ///< Default TCP port
+#define DEFAULT_SICK_TCP_PORT   (2111)  ///< Default TCP port Le Duc Anh chinh sua 2/2/2024
 
 void publish_scan(ros::Publisher *pub, double *range_values,
                   uint32_t n_range_values, unsigned int *intensity_values,
@@ -349,6 +349,7 @@ int main(int argc, char *argv[]) {
 
 	nh_ns.param("port", port, DEFAULT_SICK_TCP_PORT);
 	nh_ns.param("ipaddress", ipaddress, (std::string)DEFAULT_SICK_IP_ADDRESS);
+	
 	nh_ns.param("inverted", inverted, false);
 
   	nh_ns.param<std::string>("scan", scan, "scan");
@@ -518,7 +519,7 @@ int main(int argc, char *argv[]) {
 			double x1 = (double)sick_nav350.PoseData_.x;
 			double y1 = (double)sick_nav350.PoseData_.y;
 			double phi1 = sick_nav350.PoseData_.phi;
-		
+			
 			double x2, y2;
 			double phi2 = phi1 - 180000 - 1250 - 300;
 

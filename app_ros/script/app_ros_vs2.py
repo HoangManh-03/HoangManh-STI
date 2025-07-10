@@ -23,8 +23,8 @@ from PyQt5.QtCore import QTimer, QDateTime, Qt
 
 import sqlite3
 
-sys.path.append('/home/stivietnam/catkin_ws/devel/lib/python3/dist-packages')
-sys.path.append('/opt/ros/noetic/lib/python3/dist-packages')
+# sys.path.append('/home/stivietnam/catkin_ws/devel/lib/python3/dist-packages')
+# sys.path.append('/opt/ros/noetic/lib/python3/dist-packages')
 
 import roslib
 import rospy

@@ -2,7 +2,7 @@
 scanmap: 0
 disable_oc: 1
 #------ PORT PHYSICAL ------#
-port_nav350 : 192.168.100.10
+port_nav350 : 192.168.100.2
 port_main    : stibase_main822
 port_hc     : stibase_hc82
 port_imu    : stibase_imu

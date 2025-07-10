@@ -1,0 +1,3 @@
+<launch>
+	<node pkg="app_ros" type="reflector_qt.py" name="node_reflector" output="screen"> </node>
+</launch>

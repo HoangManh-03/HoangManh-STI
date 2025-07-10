@@ -22,6 +22,7 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
 )
+add_executable(goal_control_node src/goalControlCplus.cpp)
 
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch

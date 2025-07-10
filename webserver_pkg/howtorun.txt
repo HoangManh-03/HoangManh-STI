@@ -1,0 +1,4 @@
+roslaunch rosbridge_server rosbridge_websocket.launch
+
+Check ip of computer, change ip address in joystick.js file
+Open browser: IP:5500/webserver_pkg/joystick.html

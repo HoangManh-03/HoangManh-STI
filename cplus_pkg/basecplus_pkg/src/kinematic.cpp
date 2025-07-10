@@ -41,7 +41,7 @@ class kinematic{
     double angular_max;
     int max_rpm;
 
-    bool shutdown_flag;
+    bool shutdown_flag = 1;
 
     string topicControl_vel;
     string topicGet_vel;
@@ -52,7 +52,36 @@ class kinematic{
     string topicRespond_driverRight;
 
     string frame_id;
-    // -----------------
+
+    double lastTime_pub;
+    double time_pub;
+
+    // -- 
+    double lastTime_speed1;
+    double nowTime_speed1;
+    
+    double lastTime_speed2;
+    double nowTime_speed2;
+    // -- find main driver.
+    bool is_finded = 0;
+    uint8_t mainDriver = 0;
+    // -- frequence pub raw vel.
+    float fre_rawVel = 25.;
+    float cycle_rawVel = 1/fre_rawVel;
+    float timeout = cycle_rawVel*4;
+    bool isNew_driver1 = 0;
+    bool isNew_driver2 = 0;
+    // -- 
+    bool is_exit = 1;
+    //-- 
+    double nowTime_cmdVel;
+    double timeout_cmdVel = 0.4; 
+    bool is_timeout = 0;
+    // -- 
+    double max_deltaTime = 0.0;
+    // -- 
+    double max_rotation = 0.6;
+
     ros::Subscriber sub_ControlVel; 
     geometry_msgs::Twist cmd_vel;
 
@@ -76,34 +105,45 @@ class kinematic{
     message_pkg::Driver_query driver2_query;
     RPM driverRPM_query;
 
-    double lastTime_pub;
-    double time_pub;
+    // -----------------
+    Program(ros::NodeHandle *nh, ros::NodeHandle *npr){
+        ros::param::get("wheel_circumference", self.wheel_circumference);
+        ros::param::get("transmission_ratio", self.transmission_ratio);
+        ros::param::get("distanceBetwentWheels", self.distanceBetwentWheels);
+        ros::param::get("frequency_control", self.frequency_control);
 
-    // -- 
-    double lastTime_speed1;
-    double nowTime_speed1;
-    
-    double lastTime_speed2;
-    double nowTime_speed2;
-    // -- find main driver.
-    bool is_finded;
-    uint8_t mainDriver;
-    // -- frequence pub raw vel.
-    float fre_rawVel;
-    float cycle_rawVel;
-    float timeout;
-    bool isNew_driver1;
-    bool isNew_driver2;
-    // -- 
-    bool is_exit;
-    //-- 
-    double nowTime_cmdVel;
-    double timeout_cmdVel;
-    bool is_timeout;
-    // -- 
-    double max_deltaTime;
-    // -- 
-    double max_rotation = 0.6;
+        ros::param::get("linear_max", self.linear_max);
+        ros::param::get("angular_max", self.angular_max);
+        ros::param::get("max_rpm", self.max_rpm);
+
+        ros::param::get("topicControl_vel", self.topicControl_vel);
+        ros::param::get("topicGet_vel", self.topicGet_vel);
+
+        ros::param::get("topicControl_driverLeft", self.topicControl_driverLeft);
+        ros::param::get("topicControl_driverRight", self.topicControl_driverRight);
+        ros::param::get("topicRespond_driverLeft", self.topicRespond_driverLeft);
+        ros::param::get("topicRespond_driverRight", self.topicRespond_driverRight);
+
+        ros::param::get("frame_id", self.frame_id);
+
+        sub_ControlVel = nh->subscribe(self.topicControl_vel, 50, &kinematic::cmdVel_callback, this);
+        sub_taskDriver = nh->subscribe("/task_driver", 50, &kinematic::taskDriver_callback, this);
+        sub_driver1Respond = nh->subscribe(self.topicRespond_driverLeft, 50, &kinematic::driver1Respond_callback, this);
+        sub_driver2Respond = nh->subscribe(self.topicRespond_driverRight, 50, &kinematic::driver2Respond_callback, this);
+
+        // -----------------
+        pub_rawVel = nh->advertise<geometry_msgs::TwistWithCovarianceStamped>(self.topicGet_vel, 50);
+        pub_driverLeft = nh->advertise<message_pkg::Driver_query>(self.topicControl_driverLeft, 50);
+        pub_driverRight = nh->advertise<message_pkg::Driver_query>(self.topicControl_driverRight, 50);
+        lastTime_pub = ros::Time::now().toSec();
+        time_pub = 1/frequency_control;
+        lastTime_speed1 = ros::Time::now().toSec();
+        nowTime_speed1 = ros::Time::now().toSec();
+        
+        lastTime_speed2 = ros::Time::now().toSec();
+        nowTime_speed2 = ros::Time::now().toSec();
+        nowTime_cmdVel = ros::Time::now().toSec();
+    }
 
 	void taskDriver_callback(const std_msgs::Int16 data){
 		task_driver = data;
@@ -181,11 +221,6 @@ class kinematic{
 		rpm_query.motor2 = constrain(rpm_query.motor2, -max_rpm, max_rpm);
 		return rpm_query;
     }
-
-	// void vvv(double vel){
-	// 	t_incre = 0.5;
-	// 	t_decre = 0.5;
-    // }
 
 	geometry_msgs::TwistWithCovarianceStamped calculate_rawVel(double rp1, double rp2){ // rp1,rp2: RPM | out: Velocities(m/s;rad/s)
 		geometry_msgs::TwistWithCovarianceStamped vel;
@@ -282,6 +317,49 @@ class kinematic{
             usleep(1000);
         }
     }
+
+    void run(){
+        if (task_driver.data == 0){ // -- Nothing
+            driver1_query.task = 0;
+            driver2_query.task = 0;
+        }
+
+        else if (task_driver.data == 1){ // -- Reset + Read status
+            driver1_query.task = 1;
+            driver2_query.task = 1;
+        }
+        else if (task_driver.data == 2){ // -- Read status
+            driver1_query.task = 2;
+            driver2_query.task = 2;
+        }
+
+        // -- PUB
+        double t_pub_1 = ros::Time::now().toSec() - lastTime_pub;
+        double t_pub = t_pub_1 - t_pub_1/60.0;
+
+        if (t_pub > time_pub){
+            lastTime_pub = ros::Time::now().toSec();
+            driverRPM_query = calculateRPM(cmd_vel.linear.x, cmd_vel.angular.z);
+
+            driver1_query.modeStop = 1;
+            driver1_query.rotationSpeed = int(driverRPM_query.motor1);
+
+            driver2_query.modeStop = 1;
+            driver2_query.rotationSpeed = int(driverRPM_query.motor2);
+            
+            if (is_timeout == 1){
+                message_pkg::Driver_query driver_query;
+                pub_driverLeft.publish(driver_query);
+                pub_driverRight.publish(driver_query);
+            }
+            else{ // -- ok
+                pub_driverLeft.publish(driver1_query);
+                pub_driverRight.publish(driver2_query);
+            }
+        }
+        ros::spinOnce();     // allow receiving callbacks function
+        loop_rate.sleep();        
+    }
 };
 
 void signal_handler(int signal_num){
@@ -303,115 +381,13 @@ int main(int argc, char **argv)
     kinematic self;
 
     // parameters
-    ros::param::get("wheel_circumference", self.wheel_circumference);
-    ros::param::get("transmission_ratio", self.transmission_ratio);
-    ros::param::get("distanceBetwentWheels", self.distanceBetwentWheels);
-    ros::param::get("frequency_control", self.frequency_control);
-
-    ros::param::get("linear_max", self.linear_max);
-    ros::param::get("angular_max", self.angular_max);
-    ros::param::get("max_rpm", self.max_rpm);
-
-    ros::param::get("topicControl_vel", self.topicControl_vel);
-    ros::param::get("topicGet_vel", self.topicGet_vel);
-
-    ros::param::get("topicControl_driverLeft", self.topicControl_driverLeft);
-    ros::param::get("topicControl_driverRight", self.topicControl_driverRight);
-    ros::param::get("topicRespond_driverLeft", self.topicRespond_driverLeft);
-    ros::param::get("topicRespond_driverRight", self.topicRespond_driverRight);    
-
-    ros::param::get("frame_id", self.frame_id); 
-    // -----------------
-    self.sub_ControlVel = n.subscribe(self.topicControl_vel, 50, &kinematic::cmdVel_callback, &self);
-
-    self.sub_taskDriver = n.subscribe("/task_driver", 50, &kinematic::taskDriver_callback, &self);
-
-    self.sub_driver1Respond = n.subscribe(self.topicRespond_driverLeft, 50, &kinematic::driver1Respond_callback, &self);
-
-    self.sub_driver2Respond = n.subscribe(self.topicRespond_driverRight, 50, &kinematic::driver2Respond_callback, &self);
-
-    // -----------------
-    self.pub_rawVel = n.advertise<geometry_msgs::TwistWithCovarianceStamped>(self.topicGet_vel, 50);
-
-    self.pub_driverLeft = n.advertise<message_pkg::Driver_query>(self.topicControl_driverLeft, 50);
-
-    self.pub_driverRight = n.advertise<message_pkg::Driver_query>(self.topicControl_driverRight, 50);
-
-    self.lastTime_pub = ros::Time::now().toSec();
-    self.time_pub = 1/self.frequency_control; // s
-
-    // -- 
-    self.lastTime_speed1 = ros::Time::now().toSec();
-    self.nowTime_speed1 = ros::Time::now().toSec();
-    
-    self.lastTime_speed2 = ros::Time::now().toSec();
-    self.nowTime_speed2 = ros::Time::now().toSec();
-    // -- find main driver.
-    self.is_finded = 0;
-    self.mainDriver = 0;
-    // -- frequence pub raw vel.
-    self.fre_rawVel = 25.;
-    self.cycle_rawVel = 1/self.fre_rawVel;
-    self.timeout = self.cycle_rawVel*4;
-    self.isNew_driver1 = 0;
-    self.isNew_driver2 = 0;
-    // -- 
-    self.is_exit = 1;
-    //-- 
-    self.nowTime_cmdVel = ros::Time::now().toSec();
-    self.timeout_cmdVel = 0.4;
-    self.is_timeout = 0;
-    // -- 
-    self.max_deltaTime = 0.0;
-    // -- 
-    self.max_rotation = 0.6; // rad/s
-    self.shutdown_flag = 0;
     signal(SIGABRT, signal_handler);
 
     try{
         thread th1(&kinematic::run_getVel, &self);
 
         while(ros::ok()){
-            if (self.task_driver.data == 0){ // -- Nothing
-                self.driver1_query.task = 0;
-                self.driver2_query.task = 0;
-            }
-
-            else if (self.task_driver.data == 1){ // -- Reset + Read status
-                self.driver1_query.task = 1;
-                self.driver2_query.task = 1;
-            }
-            else if (self.task_driver.data == 2){ // -- Read status
-                self.driver1_query.task = 2;
-                self.driver2_query.task = 2;
-            }
-
-            // -- PUB
-            double t_pub_1 = ros::Time::now().toSec() - self.lastTime_pub;
-            double t_pub = t_pub_1 - t_pub_1/60.0;
-
-            if (t_pub > self.time_pub){
-                self.lastTime_pub = ros::Time::now().toSec();
-                self.driverRPM_query = self.calculateRPM(self.cmd_vel.linear.x, self.cmd_vel.angular.z);
-
-                self.driver1_query.modeStop = 1;
-                self.driver1_query.rotationSpeed = int(self.driverRPM_query.motor1);
-
-                self.driver2_query.modeStop = 1;
-                self.driver2_query.rotationSpeed = int(self.driverRPM_query.motor2);
-                
-                if (self.is_timeout == 1){
-                    message_pkg::Driver_query driver_query;
-                    self.pub_driverLeft.publish(driver_query);
-                    self.pub_driverRight.publish(driver_query);
-                }
-                else{ // -- ok
-                    self.pub_driverLeft.publish(self.driver1_query);
-                    self.pub_driverRight.publish(self.driver2_query);
-                }
-            }
-            ros::spinOnce();     // allow receiving callbacks function
-            loop_rate.sleep();
+            self.run();
         }
 
         th1.join();

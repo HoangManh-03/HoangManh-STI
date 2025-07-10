@@ -11,6 +11,10 @@ add_message_files(
 	FILES
   Status_conveyor.msg
   Control_conveyors.msg
+
+  MCU_info.msg
+  HCU_info.msg
+  PSU_info.msg
 )
 
 include_directories(

@@ -1,0 +1,33 @@
+<launch>
+	<node pkg="navigation_reflector" name="r2000_navigation" type="evaluate_lidar_info_v3.py" output="screen" > 
+		<param name="scanning_frequency" value="11.0"/>      				<!-- Tần số quét của lidar -->
+		<param name="distance_x" value="0.41"/>							<!-- Khoảng cách của lidar và tâm robot theo trục x -->
+		<param name="distance_y" value="0.0"/> 								<!-- Khoảng cách của lidar và tâm robot theo trục y -->
+		<param name="ref_frame" value="world"/>								<!-- frame lidar -->
+		<param name="origin_frame" value="frame_map_nav350"/>               <!-- frame map -->
+
+		<param name="distance_threshold_max" value="1.2"/>                  <!-- Khoảng cách ngưỡng lớn nhất cho phép để tìm gương khớp -->
+		<param name="distance_threshold_origin" value="1.0"/>				<!-- Khoảng cách ngưỡng ban đầu cho phép để tìm gương khớp -->
+		<param name="distance_threshold_increment" value="0.05"/> 			<!-- Độ tăng Khoảng cách ngưỡng cho phép để tìm gương khớp -->
+
+		<param name="angle_threshold_max" value="1.2"/> 					<!-- Góc ngưỡng lớn nhất cho phép để tìm gương khớp -->
+		<param name="angle_threshold_origin" value="1.0"/>					<!-- Góc ngưỡng ban đầu cho phép để tìm gương khớp -->
+		<param name="angle_threshold_increment" value="0.05"/> 			<!-- Độ tăng Góc ngưỡng cho phép để tìm gương khớp -->
+
+		<param name="angle_limit_lower" value="5"/> 						<!-- Góc cận trên cho phép để tìm gương khớp -->
+		<param name="angle_limit_upper" value="175"/>						<!-- Góc cận dưới cho phép để tìm gương khớp -->
+
+		<param name="weight_coef" value="25"/>								<!-- Trong số cho ngưỡng khớp map theo rmse -->
+		<param name="vel_coef" value="0.02"/>								<!-- Trong số cho ngưỡng khớp map theo vận tốc dài -->
+		<param name="omega_coef" value="0.04"/>								<!-- Trong số cho ngưỡng khớp map theo vận tốc quay -->
+
+		<param name="rmse_threshold_initmode" value="10.0"/>				<!-- Ngưỡng rmse trong chế độ init  -->
+		<param name="rmse_threshold_navmode" value="0.1"/>		 			<!-- Ngưỡng rmse trong chế độ navigation  -->
+		<param name="distance_coef_lower" value="0.25"/>							<!-- Trọng số khoảng cách cho khoảng gương tham chiếu phía dưới  -->
+		<param name="distance_coef_upper" value="0.05"/>							<!-- Trọng số khoảng cách cho khoảng gương tham chiếu phía dưới  -->
+
+		<param name='number_count_result' value='5'/>						<!-- Số lần báo lỗi đến khi kết thúc chương trình -->
+
+	</node>
+
+</launch>

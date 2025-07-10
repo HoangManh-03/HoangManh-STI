@@ -1,0 +1,14 @@
+<!-- HOANG AI TEST CHO AGV SHIV34  -->
+<!-- 19/3/2024  -->
+
+<launch>
+    <!-- vung lidar  -->
+    <arg name="node_namespace" default="safety_zoneNAV_v2" />
+    <rosparam command="load" 
+              file="$(find safety_zone)/config/zone_param_v2.yaml" 
+              ns="$(arg node_namespace)"   />
+    <node pkg="safety_zone" 
+          name="$(arg node_namespace)" 
+          type="$(arg node_namespace).py" 
+          output="screen"/>
+</launch>

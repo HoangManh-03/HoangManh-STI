@@ -1,0 +1,5 @@
+1. Lấy dữ liệu đầu tiên sau khi init mode thành công * hệ số => có thể chưa bao quát hết được hệ số của nó, vì nó sẽ phụ thuộc luôn vào giá trị đầu tiên của mỗi lần chạy
+    + Có nên, gán giá trị này mặc định = giá trị max khi robot đứng yên ko ?? => gán luôn, bỏ qua hệ số này
+
+2. Chế độ nav
+    + Chỉ lấy tối đa 5 giá trị cho svd khi robot quay

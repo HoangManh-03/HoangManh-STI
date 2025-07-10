@@ -122,6 +122,7 @@ class frame_info_tx:
 	Moving_error = 0
 	Perform_error = 0
 
+#
 #------------------------------------------------- Command
 class frame_command_rx:
 	"""
@@ -195,7 +196,6 @@ class read_and_respond_UDP():
 		self.HOST_receive = '172.21.84.213'
 		# -- add 22/01/2022
 		self.HOST_receive = self.get_ipAuto(self.name_card)
-
 
 		self.PORT_receive = 8888 # 8888
 		self.PORT_sento = 8000   # 8000
@@ -617,10 +617,10 @@ class read_and_respond_UDP():
 			try:		
 				self.data_received, addr = self.udp.recvfrom(1024)
 				self.HOST_sento = addr[0]
-				# rospy.loginfo ("lenght frame: %s - Frame: %s", self.byte_to_int(self.data_received[0]), self.data_received[1])
+				rospy.loginfo ("lenght frame: %s - Frame: %s", self.byte_to_int(self.data_received[0]), self.data_received[1])
 			except socket.error:
 				self.log_mess("err", "Error -- recv() --!", 0)
-			# print len(self.data_received)
+			print("len data",len(self.data_received))
 			if len(self.data_received) != 0:
 				# pass
 				self.process = 2
@@ -712,3 +712,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+#

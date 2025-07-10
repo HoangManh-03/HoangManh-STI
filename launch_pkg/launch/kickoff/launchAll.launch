@@ -1,4 +1,7 @@
 <launch>
 	<rosparam command="load"  file="$(find launch_pkg)/config/param.yaml" />
-	<node pkg="launch_pkg" type="launchAll.py" name="launch_nodes" output="screen"> </node>
+	<!-- old -->
+	<!-- <node pkg="launch_pkg" type="launchAll.py" name="launch_nodes" output="screen"> </node> -->
+	<!-- hoang sua test board moi -->
+	<node pkg="launch_pkg" type="launchAllBN.py" name="launch_nodes" output="screen"> </node>
 </launch>

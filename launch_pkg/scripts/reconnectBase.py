@@ -254,6 +254,17 @@ class Reconnect_node():
 		# -- .
 		self.reconnect_main = Reconnect(self.topicSub_main, self.timeLost_main, self.timeWait_main, self.path_main)
 		# ---------------------
+		# -- -- RTC
+		self.path_rtc = rospy.get_param("path_rtc", '')
+		self.timeLost_rtc = rospy.get_param("timeLost_rtc", 1)
+		self.timeWait_rtc = rospy.get_param("timeWait_rtc", 5)
+		self.topicSub_rtc = "/CAN_received"
+		self.isRuned_rtc = 0
+		self.timeReaded_rtc = time.time()
+		rospy.Subscriber(self.topicSub_rtc, CAN_received, self.callback_rtc)
+		# -- .
+		self.reconnect_rtc = Reconnect(self.topicSub_rtc, self.timeLost_rtc, self.timeWait_rtc, self.path_rtc)
+		# ---------------------
 		# -- -- OC 
 		self.path_oc = rospy.get_param("path_oc", '')
 		self.timeLost_oc = rospy.get_param("timeLost_oc", 3)
@@ -295,6 +306,10 @@ class Reconnect_node():
 		self.isRuned_main = 1
 		self.timeReaded_main = time.time()
 
+	def callback_rtc(self, data):
+		self.isRuned_rtc = 1
+		self.timeReaded_rtc = time.time()
+
 	def callback_oc(self, data):
 		self.isRuned_oc = 1
 		self.timeReaded_oc = time.time()
@@ -309,7 +324,7 @@ class Reconnect_node():
 
 	def reconnect_node(self):
 		# -- main
-		process, num = self.reconnect_main.run_reconnect_vs2(self.isRuned_main, self.timeReaded_main)
+		process, num = self.reconnect_rtc.run_reconnect_vs2(self.isRuned_rtc, self.timeReaded_rtc)
 		self.statusReconnect.main.sts = process
 		self.statusReconnect.main.times = num
 		# -- oc
@@ -317,15 +332,15 @@ class Reconnect_node():
 		# self.statusReconnect.oc.sts = process
 		# self.statusReconnect.oc.times = num
 		# -- hc
-		process, num = self.reconnect_hc.run_reconnect_vs2(self.isRuned_hc, self.timeReaded_hc)
-		self.statusReconnect.hc.sts = process
-		self.statusReconnect.hc.times = num
+		# process, num = self.reconnect_hc.run_reconnect_vs2(self.isRuned_hc, self.timeReaded_hc)
+		# self.statusReconnect.hc.sts = process
+		# self.statusReconnect.hc.times = num
 		# -- imu
-		process, num = self.reconnect_imu.run_reconnect_vs2(self.isRuned_imu, self.timeReaded_imu)
-		self.statusReconnect.imu.sts = process
-		self.statusReconnect.imu.times = num
-
+		# process, num = self.reconnect_imu.run_reconnect_vs2(self.isRuned_imu, self.timeReaded_imu)
+		# self.statusReconnect.imu.sts = process
+		# self.statusReconnect.imu.times = num
 		# -- -- -- 
+
 		tim = (time.time() - self.pre_timePub)%60
 		if (tim > self.cycle_timePub):
 			self.pre_timePub = time.time()

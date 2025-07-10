@@ -1,6 +1,10 @@
 <launch>
   <!-- nav350 Pi: 3.141592653 | -0.4152 0.0 -1 0 0 0-->
   <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="global_local_map_linker" args="-0.03 -0.196 0 0.038 0 0 frame_global_map frame_map_nav350" /> -->
+  <!-- x = -0.404, y = -0.042 -1 0.036 0 0 -->
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="base_nav350_linker" args="-0.404 -0.022 -1 0 0 0 frame_nav350 frame_robot" /> -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_nav350_linker" args="0 -0.022 -1 0 0 0 frame_nav350 frame_robot" />
+  
 
-  <node pkg="tf2_ros" type="static_transform_publisher" name="global_local_map_linker" args="-0.028 -0.21 0 0.02 0 0 frame_global_map frame_map_nav350" />
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="global_local_map_linker" args="-0.028 -0.21 0 0.02 0 0 frame_global_map frame_map_nav350" /> -->
 </launch>

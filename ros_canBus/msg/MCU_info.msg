@@ -1,0 +1,12 @@
+uint8 status_recCAN
+bool status_safetyRelay
+bool status_EMG1
+bool status_EMG2
+bool status_EMG3
+bool status_CS1
+bool status_CS2
+bool status_btnReset
+bool status_input1
+bool status_input2
+bool status_input3
+bool status_input4

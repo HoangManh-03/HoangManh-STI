@@ -1,0 +1,7 @@
+Chưa sử dụng multiprocessing
+
+*** Duyệt gương từ cuối tới đầu tiên
+    1. 100 gương: 1.8784444332122803: duyệt từ gương cuối tới gương đầu tiên
+    2. 150 gương: 2.6764495372772217
+
+*** 

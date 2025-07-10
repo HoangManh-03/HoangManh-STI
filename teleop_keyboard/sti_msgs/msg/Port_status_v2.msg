@@ -1,0 +1,12 @@
+int8 lidar_1
+int8 lidar_2
+int8 magline_front
+int8 magline_behind
+int8 camera
+int8 imu
+int8 led
+int8 speaker
+int8 rfid_1
+int8 rfid_2
+int8 rtc
+int8 driverall

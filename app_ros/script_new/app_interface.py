@@ -27,8 +27,8 @@ import rospy
 from ros_canBus.msg import *
 from sti_msgs.msg import *
 from message_pkg.msg import *
-from std_msgs.msg import Int16, Bool, Int8
-from geometry_msgs.msg import PoseStamped, Quaternion, Point, Pose
+from std_msgs.msg import Int16, Bool, Int8, String
+from geometry_msgs.msg import PoseStamped, Quaternion, Point, Pose, TwistWithCovarianceStamped, Twist
 
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from math import sin , cos , pi , atan2, radians, sqrt, pow, degrees
@@ -49,6 +49,7 @@ class statusButton:
 		self.bt_passHand = 0
 		self.bt_cancelMission = 0
 		self.bt_tryTarget_hide = 0
+		self.bt_info = 0
 		self.bt_setting = 0
 		self.bt_clearError = 0
 
@@ -70,9 +71,9 @@ class statusButton:
 
 		self.bt_disableBrake = 0
 
-		self.bt_lift_up = 0
-		self.bt_lift_down = 0
-		self.bt_lift_reset = 0
+		self.bt_lift = 0
+		# self.bt_lift_down = 0
+		# self.bt_lift_reset = 0
 
 		self.bt_hideSetting = 0
 		# -
@@ -83,6 +84,12 @@ class statusButton:
 		self.bt_tryTarget_stop = 0
 		self.bt_tryTarget_reset = 1
 		self.ck_tryTarget_safety = 0
+		
+		self.bt_remote = 0
+		self.soundtype = 0
+		self.ledtype = 0
+
+		self.bt_wifi = 0
 
 class statusColor:
 	def __init__(self):
@@ -97,16 +104,39 @@ class statusColor:
 		# --
 		self.lbc_button_clearError = 0
 		self.lbc_button_power = 0
-		self.lbc_blsock = 0
-		self.lbc_emg = 0
 
-		self.lbc_limit_up = 0
-		self.lbc_limit_down = 0
-		self.lbc_detect_lifter = 0
+		self.lbc_blsock1 = 0
+		self.lbc_emg1 = 0
+		self.lbc_blsock2 = 0
+		self.lbc_emg2 = 0
+		self.lbc_safety_relay = 0
+
+		# self.lbc_limit_up = 0
+		# self.lbc_limit_down = 0
+		# self.lbc_detect_lifter = 0
+
+		self.lbc_limitAbove = 0
+		self.lbc_limitBelow = 0
+		self.lbc_checkTray = 0
+
+		self.lbc_liftUp = 0
+		self.lbc_liftDown = 0
 
 		self.lbc_port_rtc = 0
 		self.lbc_port_rs485 = 0
 		self.lbc_port_nav350 = 0
+
+		self.lbc_can_rtc = 0
+		self.lbc_can_psu = 0
+		self.lbc_can_mcu = 0
+		self.lbc_can_hcu = 0
+		self.lbc_can_oc = 0
+
+		self.lbc_tryTarget_status = 0
+
+		self.lbc_deletePose = 0
+		self.lbc_addPose = 0
+	
 		# self. = 0
 		# self. = 0
 		# self. = 0
@@ -118,8 +148,22 @@ class valueLable:
 		self.modeRuning = 1
 
 		self.lbv_name_agv = ''
-		self.lbv_ip = ''
+
+		# - nuc info 
+		self.lbv_ipWifi = ''
+		self.lbv_mac = ''
+		self.lbv_namePc = ''
+		self.lbv_ipEthernet = ''
+		self.lbv_cpu_usage = ''
+		self.lbv_cpu_temp = ''
+		self.lbv_ram = ''
+		self.lbv_pingServer = ''
+		self.lbv_wifiQuality = ''
+		self.lbv_wifiSignal = ''
+		self.lbv_runtime = ''
+
 		self.lbv_battery = ''
+		self.lbv_voltage = ''
 		self.lbv_date = ''
 
 		self.lbv_coordinates_x = ''
@@ -127,7 +171,6 @@ class valueLable:
 		self.lbv_coordinates_r = ''
 
 		self.lbv_numbeReflector = ''
-		self.lbv_pingServer = ''
 		self.lbv_jobRuning = ''
 		self.lbv_goalFollow_id = ''
 		
@@ -154,9 +197,6 @@ class valueLable:
 
 		self.lbv_velLeft = ''
 		self.lbv_velRight = ''
-
-		self.lbv_mac = ''
-		self.lbv_namePc = ''
 
 		self.lbv_launhing = ''
 		self.lbv_numberLaunch = ''
@@ -186,7 +226,29 @@ class valueLable:
 		self.lbv_tryTarget_y = 0
 		self.lbv_tryTarget_r = 0
 		self.lbv_tryTarget_d = 0
+		self.lbv_tryTarget_id = 0
 
+		# - 
+		self.lbv_temp = ''
+
+		# -
+		self.list_SpecialPoint = []
+		self.id_number = 0
+		self.isUpdateList_SpecialPoint = True
+
+		self.ctrl_value = 0
+		self.num_val = 0
+		self.ratio_v = 0
+		self.raw_vel = ''
+		self.rate_reflector_map = 0.07
+		self.nav_angle = 0.0
+		self.rate_nav_dp = 2
+
+		# --
+		self.lbv_ap_ssid = 'STI_VietNam_No8'
+		self.lbv_ap_mac = ''
+		self.lbv_ap_signal = 0
+  
 class Reflector:
 	def __init__(self):
 		self.x = 0
@@ -194,10 +256,90 @@ class Reflector:
 		self.localID = 0
 		self.globalID = 0
 
+class RotatedPixmapLabel(QLabel):
+	def __init__(self, pixmap, angle=0, parent=None):
+		super().__init__(parent)
+		self.angle = angle  # Rotation angle
+		self.original_pixmap = pixmap
+		self.rotated_pixmap = pixmap  # Keep a rotated version of the pixmap
+		self.ANGLE_TARGET = 1
+
+		self.pixmap_resize_w = 0
+		self.pixmap_resize_h = 0
+
+		# self.updatePixmap(1)
+
+	def updatePixmap(self, ratio):
+		"""Rotates the pixmap by the specified angle and updates the label."""
+		transform = QTransform().rotate(self.angle)
+		self.rotated_pixmap = self.original_pixmap.transformed(transform, Qt.SmoothTransformation)
+		self.setPixmap(self.rotated_pixmap)
+		self.setScaledContents(True)
+		# self.setCentralWidget(self)
+
+		self.pixmap_resize_w = self.rotated_pixmap.width()/ratio
+		self.pixmap_resize_h = self.rotated_pixmap.height()/ratio
+		self.resize(self.pixmap_resize_w, self.pixmap_resize_h)
+
+	def setAngle(self, angle):
+		"""Sets the rotation angle and updates the pixmap."""
+		if angle == 0:
+			self.angle = 0
+		else:
+			self.angle = self.ANGLE_TARGET
+		# self.angle = angle
+		# self.updatePixmap()
+
+	def paintEvent(self, event):
+		"""Paints the rotated pixmap on the label."""
+		painter = QPainter(self)
+		painter.setRenderHint(QPainter.Antialiasing)
+
+		# print("{x}, {y}, {z}, {t}".format(x = self.width(), y = self.height(), z = self.rotated_pixmap.width(), t = self.rotated_pixmap.height()))
+		# Draw the rotated pixmap centered in the label
+
+		painter.drawPixmap(
+			(self.width() - self.pixmap_resize_w) / 2,
+			(self.height() - self.pixmap_resize_h) / 2,
+			self.rotated_pixmap
+		)
+
+		super().paintEvent(event)
+
 class WelcomeScreen(QDialog):
 	def __init__(self):
 		super(WelcomeScreen, self).__init__()
-		loadUi("/home/stivietnam/catkin_ws/src/app_ros/interface/app.ui", self)
+		loadUi("/home/stivietnam/catkin_ws/src/app_ros/interface/app_ver4.ui", self)
+
+		# -- nav350 label for reflectors
+		self.pathIconNAV = '/home/stivietnam/catkin_ws/src/app_ros/interface/nav350.png'
+		pixmap = QPixmap(self.pathIconNAV)
+		self.lb_nav350 = RotatedPixmapLabel(pixmap, 0, self.fr_showReflector)
+		self.lb_nav350.setGeometry(400, 200, 30, 25)
+		self.lb_nav350.angle = 0
+		self.lb_nav350.updatePixmap(2)
+		self.fr_showReflector.update()
+		# --
+		self.pathIconAGV = '/home/stivietnam/catkin_ws/src/app_ros/interface/LAGV_frontview_nobg.png'
+		pixmap = QPixmap(self.pathIconAGV)
+		self.lb_agv_img = RotatedPixmapLabel(pixmap, 0, self.fr_AGVanimation)
+		self.AGV_IMG_X = 100
+		self.AGV_IMG_Y = 62
+		self.AGV_IMG_WIDTH_NORMAL = 108
+		self.AGV_IMG_HEIGHT_NORMAL = 145
+
+		self.AGV_IMG_WIDTH_ROTATED = 110
+		self.AGV_IMG_HEIGHT_ROTATED = 148
+		self.lb_agv_img.setAngle(0)
+		self.lb_agv_img.updatePixmap(1)
+		self.fr_AGVanimation.update()
+
+		self.lb_agv_img.setGeometry(self.AGV_IMG_X, self.AGV_IMG_Y, self.AGV_IMG_WIDTH_NORMAL, self.AGV_IMG_HEIGHT_NORMAL)
+		self.lb_safety1.setGeometry(200, 160, 41, 31)
+		self.lb_safety2.setGeometry(200, 160, 41, 31)
+		self.lb_safety3.setGeometry(200, 160, 41, 31)
+		self.lb_warehouse.setGeometry(475, 105, 100, 100)
+
 		# --
 		self.statusButton = statusButton()
 		self.statusColor  = statusColor()
@@ -229,7 +371,7 @@ class WelcomeScreen(QDialog):
 		self.bt_disableBrake_on.clicked.connect(self.clicked_brakeOn)
 		self.bt_disableBrake_off.clicked.connect(self.clicked_brakeOff)
 
-		# --
+		# -- manual navigate agv
 		self.bt_forwards.clicked.connect(self.clicked_forwards)
 		self.bt_backwards.clicked.connect(self.clicked_backwards)
 		# -
@@ -237,13 +379,69 @@ class WelcomeScreen(QDialog):
 		self.bt_rotation_right.clicked.connect(self.clicked_rotation_right)
 		# -
 		self.bt_stop.clicked.connect(self.clicked_stop)
+
+		self.bt_tryTarget_goUp.clicked.connect(self.clicked_tryTarget_goUp)
+		self.bt_tryTarget_goDown.clicked.connect(self.clicked_tryTarget_goDown)
+		# -
+		self.bt_tryTarget_goLeft.clicked.connect(self.clicked_tryTarget_goLeft)
+		self.bt_tryTarget_goRight.clicked.connect(self.clicked_tryTarget_goRight)
+		# -
+		self.bt_tryTarget_goStop.clicked.connect(self.clicked_tryTarget_goStop)
+
+		self.bt_tryTarget_goUp2.clicked.connect(self.clicked_tryTarget_goUp)
+		self.bt_tryTarget_goDown2.clicked.connect(self.clicked_tryTarget_goDown)
+		# -
+		self.bt_tryTarget_goLeft2.clicked.connect(self.clicked_tryTarget_goLeft)
+		self.bt_tryTarget_goRight2.clicked.connect(self.clicked_tryTarget_goRight)
+		# -
+		self.bt_tryTarget_goStop2.clicked.connect(self.clicked_tryTarget_goStop)
+
+		self.bt_disableBrake1.clicked.connect(self.clicked_bt_disableBrake)
+		self.bt_disableBrake2.clicked.connect(self.clicked_bt_disableBrake)
+
+		# --
+		self.bt_refresh_reflectors.clicked.connect(self.clicked_tryTarget_goStop)
+		self.bt_zoomout.clicked.connect(self.clicked_bt_zoomout)
+		self.bt_zoomin.clicked.connect(self.clicked_bt_zoomin)
+
 		# -- Setting devices
 		self.bt_setting.pressed.connect(self.pressed_setting)
 		self.bt_setting.released.connect(self.released_setting)
+		self.bt_hideSetting1.clicked.connect(self.clicked_hideSetting)
+		self.bt_hideSetting2.clicked.connect(self.clicked_hideSetting)
+		self.bt_hideSetting3.clicked.connect(self.clicked_hideSetting)
+
 		self.setting_status = 0
 		self.timeSave_setting = rospy.Time.now()
-		# -
-		self.bt_hideSetting.clicked.connect(self.clicked_hideSetting)
+		self.isShow_setting = 0
+		self.status_show_setting = 0
+
+		# self.bt_checkDevice.clicked.connect(self.clicked_bt_checkDevice)
+		# self.status_checkDevice = 0
+
+		self.bt_page_reflectorCheck.clicked.connect(self.clicked_page_reflectorCheck)
+		self.bt_page_getPoint.clicked.connect(self.clicked_page_getPoint)
+		self.bt_page_editSpecialPoint.clicked.connect(self.clicked_page_editSpecialPoint)
+
+		self.bt_page_reflectorCheck2.clicked.connect(self.clicked_page_reflectorCheck)
+		self.bt_page_getPoint2.clicked.connect(self.clicked_page_getPoint)
+		self.bt_page_editSpecialPoint2.clicked.connect(self.clicked_page_editSpecialPoint)
+
+		# self.bt_EditSpecialPoint.clicked.connect(self.clicked_bt_EditSpecialPoint)
+		# self.bt_getWarehouse.clicked.connect(self.clicked_bt_getWarehouse)
+		# self.bt_getWarehouse.setStyleSheet("background-color: blue;")
+		self.fr_function_no = 0
+
+		# self.bt_refresh_showRelector.pressed.connect(self.pressed_refresh_showRelector)
+
+		# - Info
+		self.bt_info.pressed.connect(self.pressed_info)
+		self.bt_info.released.connect(self.released_info)
+		self.info_status = 0
+		self.timeSave_info = rospy.Time.now()
+		self.isShow_info = 0
+
+		self.bt_hideInfo.clicked.connect(self.clicked_hideInfo)
 		# -
 		self.bt_pw_cancel.clicked.connect(self.clicked_password_cancel)
 		self.bt_pw_agree.clicked.connect(self.clicked_password_agree)
@@ -263,9 +461,21 @@ class WelcomeScreen(QDialog):
 		self.bt_pw_delete.clicked.connect(self.clicked_password_delete)
 
 		# --
-		self.bt_lift_up.pressed.connect(self.pressed_liftUp)
-		self.bt_lift_down.pressed.connect(self.pressed_liftDown)
-		self.bt_lift_reset.pressed.connect(self.pressed_liftReset)
+		self.bt_lift_up.clicked.connect(self.clicked_liftUp)
+		self.bt_lift_down.clicked.connect(self.clicked_liftDown)
+		self.bt_lift_reset.clicked.connect(self.clicked_liftReset)
+
+		# self.bt_lift_up.released.connect(self.released_liftUp)
+		# self.bt_lift_down.released.connect(self.released_liftDown)
+		# self.bt_lift_reset.released.connect(self.released_liftReset)
+
+		self.bt_lift_up2.clicked.connect(self.clicked_liftUp)
+		self.bt_lift_down2.clicked.connect(self.clicked_liftDown)
+		self.bt_lift_reset2.clicked.connect(self.clicked_liftReset)
+
+		# self.bt_lift_up2.released.connect(self.released_liftUp)
+		# self.bt_lift_down2.released.connect(self.released_liftDown)
+		# self.bt_lift_reset2.released.connect(self.released_liftReset)
 
 		# --
 		self.bt_coorAverage.pressed.connect(self.pressed_bt_coorAverage)
@@ -273,27 +483,47 @@ class WelcomeScreen(QDialog):
 
 		self.bt_disPointA.clicked.connect(self.clicked_pointA)
 		self.bt_disPointB.clicked.connect(self.clicked_pointB)
+
 		# -- 
+        # -- combo Box of speaker
+		self.cb_listSpeak.addItem(" Tắt loa")
+		self.cb_listSpeak.addItem(" Âm 1 - Bình Thường")
+		self.cb_listSpeak.addItem(" Âm 2 - Cảnh báo")
+		self.cb_listSpeak.addItem(" Âm 3 - Lỗi")
+		
+		self.cb_listSpeak.setCurrentIndex(1)
+
+		self.cb_listLed.addItem(" Tắt led")
+		self.cb_listLed.addItem(" Led 1 - Lỗi")
+		self.cb_listLed.addItem(" Led 2 - Di Chuyển thường")
+		self.cb_listLed.addItem(" Led 3 - Di Chuyển đặc biệt")
+		self.cb_listLed.addItem(" Led 4 - Thao tác kệ")
+		self.cb_listLed.addItem(" Led 5 - Hoàn thành")
+		self.cb_listLed.addItem(" Led 6 - Lỗi vật cản")
+		
+		self.cb_listLed.setCurrentIndex(2)
 
 		# -- Set speed manual
 		self.bt_upSpeed.pressed.connect(self.pressed_upSpeed)
 		self.bt_reduceSpeed.pressed.connect(self.pressed_reduceSpeed)
 
+		self.bt_upSpeed1.pressed.connect(self.pressed_upSpeed)
+		self.bt_reduceSpeed1.pressed.connect(self.pressed_reduceSpeed)
+
+		self.bt_upSpeed2.pressed.connect(self.pressed_upSpeed)
+		self.bt_reduceSpeed2.pressed.connect(self.pressed_reduceSpeed)
+
 		# -- Reset FrameWork
 		self.bt_resetFrameWork.pressed.connect(self.pressed_resetFrameWork)
 		self.bt_resetFrameWork.released.connect(self.released_resetFrameWork)
-		# --
-		self.bt_reflectorCheck.pressed.connect(self.pressed_reflectorCheck)
 		# -
-		self.bt_hideNav350.pressed.connect(self.pressed_hideNav350)
-		self.bt_refresh_showRelector.pressed.connect(self.pressed_refresh_showRelector)
 		
 		# ------------------------
-		self.bt_tryTarget_show.pressed.connect(self.pressed_tryTarget)
-		self.bt_tryTarget_show.released.connect(self.released_tryTarget)
+		# self.bt_tryTarget_show.pressed.connect(self.pressed_tryTarget)
+		# self.bt_tryTarget_show.released.connect(self.released_tryTarget)
 		# -
-		self.bt_tryTarget_hide.pressed.connect(self.pressed_tryTarget_hide)
-		self.bt_tryTarget_hide.released.connect(self.released_tryTarget_hide)
+		# self.bt_tryTarget_hide.pressed.connect(self.pressed_tryTarget_hide)
+		# self.bt_tryTarget_hide.released.connect(self.released_tryTarget_hide)
 		# -
 		self.bt_tryTarget_up.pressed.connect(self.pressed_tryTarget_up)
 		self.bt_tryTarget_up.released.connect(self.released_tryTarget_up)
@@ -318,6 +548,47 @@ class WelcomeScreen(QDialog):
 		self.bt_tryTarget_r.pressed.connect(self.pressed_tryTarget_r)
 		# -
 		self.bt_tryTarget_d.pressed.connect(self.pressed_tryTarget_d)
+		# -
+		self.bt_tryTarget_id.pressed.connect(self.pressed_tryTarget_id)
+
+		#- 
+		self.bt_backWifi.clicked.connect(self.Back_AGVState)
+		self.bt_toWifi.clicked.connect(self.To_listWifi)
+		self.bt_autoConnectWifi_on.clicked.connect(self.clicked_bt_autoConnectWifi_on)
+		self.bt_autoConnectWifi_off.clicked.connect(self.clicked_bt_autoConnectWifi_off)
+		self.statusButton.bt_wifi = 1
+		self.bt_autoConnectWifi_on.setStyleSheet("background-color: blue;")
+		self.bt_autoConnectWifi_off.setStyleSheet("background-color: white;")
+
+		self.statusButton.bt_disableBrake = 0
+		self.bt_disableBrake_off.setStyleSheet("background-color: blue;")
+		self.bt_disableBrake_on.setStyleSheet("background-color: white;")
+
+		self.statusButton.bt_spk_on = 1
+		self.statusButton.bt_spk_off = 0
+		self.bt_speaker_on.setStyleSheet("background-color: blue;")
+		self.bt_speaker_off.setStyleSheet("background-color: white;")
+
+		self.statusButton.bt_chg_on = 0
+		self.statusButton.bt_chg_off = 1
+		self.bt_charger_off.setStyleSheet("background-color: blue;")
+		self.bt_charger_on.setStyleSheet("background-color: white;")
+							
+		# -- Allow remote AGV from keyboard
+		self.cb_remote.stateChanged.connect(self.checkbox_stateChanged)
+
+		# - 
+		self.chb_showDetail.stateChanged.connect(self.checkbox_showDetail_stateChanged)
+		self.is_showDetail = 1
+
+		self.bt_SaveSpecialPoint.clicked.connect(self.clicked_add_SpecialPoint)
+		self.bt_DeleteSpecialPoint.clicked.connect(self.clicked_delete_SpecialPoint)
+
+		self.flag_add_SpecialPoint = 0
+		self.flag_delete_SpecialPoint = 0
+
+		self.ck_linkCoor.stateChanged.connect(self.ck_linkCoor_stateChanged)				
+		self.ck_linkOffset.stateChanged.connect(self.ck_linkOffset_stateChanged)	
 
 		# -- -- -- Timer updata data
 		# -- Fast
@@ -329,9 +600,17 @@ class WelcomeScreen(QDialog):
 		timer_normal.timeout.connect(self.process_normal)
 		timer_normal.start(996)
 		# -- Slow
-		timer_slow = QTimer(self)
-		timer_slow.timeout.connect(self.process_slow)
-		timer_slow.start(3000)
+		# timer_slow = QTimer(self)
+		# timer_slow.timeout.connect(self.process_slow)
+		# timer_slow.start(3000)
+
+		# --
+		timer_superfast = QTimer(self)
+		timer_superfast.timeout.connect(self.process_superfast)
+		self.TIME_UNIT = 10
+		self.TIME_SUPERFAST = 1
+		timer_superfast.start(self.TIME_SUPERFAST * self.TIME_UNIT)
+
 		# --
 		self.modeRuning = 0
 		self.modeRun_launch = 0
@@ -347,9 +626,8 @@ class WelcomeScreen(QDialog):
 		self.timeSave_cancelMisson = rospy.Time.now()
 		self.cancelMission_status = 0
 		# -- 
-		self.isShow_setting = 0
-		self.isShow_reflectorCheck = 0
 		self.isShow_tryTarget = 0
+
 		# -
 		self.robotPoseNow = Pose()
 		self.pointA = Point()
@@ -362,40 +640,260 @@ class WelcomeScreen(QDialog):
 		self.total_y = 0.0
 		self.total_angle = 0.0
 		# - 
-		self.enable_showToyoWrite = 0
-		self.timeSave_showToyoWrite = rospy.Time.now()
-		# -
 		self.isShow_moveHand = 1
 		# - 
 		self.flag_updateShowReflector = 0
 		# self.show_reflector()
 
-		self.changeNow = 0
+		self.changeNow = 5
 		self.lbv_tryTarget_x.setText(str(self.valueLable.lbv_tryTarget_x))
 		self.lbv_tryTarget_y.setText(str(self.valueLable.lbv_tryTarget_y))
 		self.lbv_tryTarget_r.setText(str(self.valueLable.lbv_tryTarget_r))
 		self.lbv_tryTarget_d.setText(str(self.valueLable.lbv_tryTarget_d))
 
+		self.bt_lift_up.setStyleSheet("background-color: white;")
+		self.bt_lift_down.setStyleSheet("background-color: white;")
+		self.bt_lift_reset.setStyleSheet("background-color: blue;")
+
+		self.bt_lift_up2.setStyleSheet("background-color: white;")
+		self.bt_lift_down2.setStyleSheet("background-color: white;")
+		self.bt_lift_reset2.setStyleSheet("background-color: blue;")
+
+		self.fr_control.show()
+		self.fr_setting.hide()
+		self.fr_listTask.hide()
+		self.fr_nav350.hide()
+		self.fr_handMode_extend.hide()
+		self.fr_handMode_move.show()
+		self.fr_AGVanimation.hide()
+		self.fr_listPoint.show()
+
+		self.frame_AGVState.show()
+		self.frame_wifi.hide()
+		
+		self.bt_tryTarget_x.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_y.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_r.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_d.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_id.setStyleSheet("background-color: blue;")
+		self.show_combox_Interger()
+
+		# self.lb_agv_img.hide()
+		# -- 
+		# self.PATH_UNIT_WIDTH = 50
+		# self.PATH_UNIT_HEIGHT = 10
+
+		self.PATH_UNIT_WIDTH = 30
+		self.PATH_UNIT_HEIGHT = 5
+
+		self.FRAME_WIDTH = 571
+		self.FRAME_HEIGHT = 270
+
+		self.DELTA = 10
+		# self.D_X = 70
+		self.D_X = 40
+		self.NUMBER_UPDATE_POS = int(self.D_X/self.DELTA)
+		self.count_update = 0
+		self.number_angle = 1
+
+		self.ORIGIN_Y = 200
+		self.ORIGIN_X0 = -self.D_X - int(self.PATH_UNIT_WIDTH/2)    # -90
+		self.ORIGIN_X1 = self.ORIGIN_X0 + 1*self.D_X
+		self.ORIGIN_X2 = self.ORIGIN_X0 + 2*self.D_X
+		self.ORIGIN_X3 = self.ORIGIN_X0 + 3*self.D_X
+		self.ORIGIN_X4 = self.ORIGIN_X0 + 4*self.D_X
+		self.ORIGIN_X5 = self.ORIGIN_X0 + 5*self.D_X
+		self.ORIGIN_X6 = self.ORIGIN_X0 + 6*self.D_X
+		self.ORIGIN_X7 = self.ORIGIN_X0 + 7*self.D_X
+		self.ORIGIN_X8 = self.ORIGIN_X0 + 8*self.D_X
+		self.ORIGIN_X9 = self.ORIGIN_X0 + 9*self.D_X
+		self.ORIGIN_X10 = self.ORIGIN_X0 + 10*self.D_X
+
+		self.ORIGIN_X11 = self.ORIGIN_X0 + 11*self.D_X
+		self.ORIGIN_X12 = self.ORIGIN_X0 + 12*self.D_X
+		self.ORIGIN_X13 = self.ORIGIN_X0 + 13*self.D_X
+		self.ORIGIN_X14 = self.ORIGIN_X0 + 14*self.D_X
+		self.ORIGIN_X15 = self.ORIGIN_X0 + 15*self.D_X
+		self.ORIGIN_X16 = self.ORIGIN_X0 + 16*self.D_X
+		self.ORIGIN_X17 = self.ORIGIN_X0 + 17*self.D_X
+
+		self.origin_x = [self.ORIGIN_X0, self.ORIGIN_X1, self.ORIGIN_X2, self.ORIGIN_X3, self.ORIGIN_X4, self.ORIGIN_X5, self.ORIGIN_X6, self.ORIGIN_X7, self.ORIGIN_X8, self.ORIGIN_X9, self.ORIGIN_X10, self.ORIGIN_X11, self.ORIGIN_X12, self.ORIGIN_X13, self.ORIGIN_X14, self.ORIGIN_X15, self.ORIGIN_X16, self.ORIGIN_X17]
+		self.lb_path = ['lbv_path_0', 'lbv_path_1', 'lbv_path_2', 'lbv_path_3', 'lbv_path_4', 'lbv_path_5', 'lbv_path_6', 'lbv_path_7', 'lbv_path_8', 'lbv_path_9', 'lbv_path_10', 'lbv_path_11', 'lbv_path_12', 'lbv_path_13', 'lbv_path_14', 'lbv_path_15', 'lbv_path_16', 'lbv_path_17']
+
+		# self.origin_x = [self.ORIGIN_X0, self.ORIGIN_X1, self.ORIGIN_X2]
+		# self.lb_path = ['lbv_path_0', 'lbv_path_1', 'lbv_path_2']
+
+		# -- Create path unit
+		for i in range(0, len(self.origin_x)):
+			setattr(self, self.lb_path[i], self.create_label(self.fr_AGVanimation, self.origin_x[i], self.ORIGIN_Y, self.PATH_UNIT_WIDTH, self.PATH_UNIT_HEIGHT, "background-color: rgb(136, 138, 133);"))
+
+		# print(f"After addition: {getattr(self, self.lb_path[0])}")
+
+		self.TIME_FOR_UPDATEPATH_MIN = 5*self.TIME_SUPERFAST
+		self.TIME_FOR_UPDATEAGV_MIN = 15*self.TIME_SUPERFAST
+		self.ct_updatepath = 0
+		self.ct_updateagv = 0
+		self.pre_ratio_v = 0
+
+	def create_label(self, parent, x, y, width, height, stylesheet):
+		label = QLabel('', parent)
+		label.setGeometry(x, y, width, height)
+		label.setStyleSheet(stylesheet)
+		label.show()
+		return label
+
+	def delete_all_pathunit(self):
+		self.lbv_path_0.deleteLater()
+		self.lbv_path_0 = None
+		self.lbv_path_1.deleteLater()
+		self.lbv_path_1 = None
+		self.lbv_path_2.deleteLater()
+		self.lbv_path_2 = None
+		self.lbv_path_3.deleteLater()
+		self.lbv_path_3 = None
+		self.lbv_path_4.deleteLater()
+		self.lbv_path_4 = None
+		self.lbv_path_5.deleteLater()
+		self.lbv_path_5 = None
+		self.lbv_path_6.deleteLater()
+		self.lbv_path_6 = None
+		self.lbv_path_7.deleteLater()
+		self.lbv_path_7 = None
+		self.lbv_path_8.deleteLater()
+		self.lbv_path_8 = None
+		self.lbv_path_9.deleteLater()
+		self.lbv_path_9 = None
+		self.lbv_path_10.deleteLater()
+		self.lbv_path_10 = None
+
+		self.lbv_path_11.deleteLater()
+		self.lbv_path_11 = None
+		self.lbv_path_12.deleteLater()
+		self.lbv_path_12 = None
+		self.lbv_path_13.deleteLater()
+		self.lbv_path_13 = None
+		self.lbv_path_14.deleteLater()
+		self.lbv_path_14 = None
+
+		self.lbv_path_15.deleteLater()
+		self.lbv_path_15 = None
+		self.lbv_path_16.deleteLater()
+		self.lbv_path_16 = None
+		self.lbv_path_17.deleteLater()
+		self.lbv_path_17 = None
+
+	def update_path(self, num, delta):
+		self.delete_all_pathunit()
+		
+		for i in range(0, len(self.origin_x)):
+			delattr(self, self.lb_path[i])
+
+		try:
+			print(f"After deletion: {getattr(self, self.lb_path[0])}")
+		except AttributeError:
+			print("Attribute has been deleted.")
+		
+		for i in range(0, len(self.origin_x)):
+			setattr(self, self.lb_path[i], self.create_label(self.fr_AGVanimation, self.origin_x[i] - num*delta, self.ORIGIN_Y, self.PATH_UNIT_WIDTH, self.PATH_UNIT_HEIGHT, "background-color: rgb(136, 138, 133);"))
+		
+		print(f"After addition: {getattr(self, self.lb_path[0])}") 
+
+	def process_superfast(self):
+		
+		if self.pre_ratio_v != self.valueLable.ratio_v:
+			self.pre_ratio_v = self.valueLable.ratio_v
+
+			if self.valueLable.ratio_v == 0:
+				self.valueLable.ctrl_value = 2
+			else:
+				self.valueLable.ctrl_value = 3
+			
+			self.lbv_velocity.setText(self.valueLable.raw_vel)
+		# --
+		if self.valueLable.ctrl_value == 1:
+			self.valueLable.ctrl_value = 0
+			self.update_path(self.valueLable.num_val, self.DELTA)
+
+		elif self.valueLable.ctrl_value == 2:   # reset
+			self.update_path(0, 0)
+			self.valueLable.ctrl_value = 0
+			self.count_update = 0
+			self.lb_agv_img.setAngle(0)
+			self.lb_agv_img.updatePixmap(1)
+			self.lb_agv_img.setGeometry(self.AGV_IMG_X, self.AGV_IMG_Y, self.AGV_IMG_WIDTH_NORMAL, self.AGV_IMG_HEIGHT_NORMAL)
+			# self.lb_warehouse.raise_()
+			self.fr_AGVanimation.update()
+
+		elif self.valueLable.ctrl_value == 3:   # auto
+			# -- RUN path auto with t = ratio_v * self.TIME_FOR_UPDATEPATH
+			if self.ct_updatepath >= self.valueLable.ratio_v*self.TIME_FOR_UPDATEPATH_MIN:
+				if self.count_update <= self.NUMBER_UPDATE_POS - 1:
+					self.count_update += 1
+					print("Update path lan thu", self.count_update)
+
+				else:
+					# self.valueLable.ctrl_value = 2
+					print("Đã tới điểm chuyển vị trí")
+					self.lb_path.insert(len(self.origin_x), self.lb_path[0])
+					self.lb_path.pop(0)
+
+					print("list moiw la:", self.lb_path)
+					self.count_update = 0
+
+				self.update_path(self.count_update, self.DELTA)
+				self.ct_updatepath = 0
+			else:
+				self.ct_updatepath += 1
+
+			# -- RUN path auto with t = ratio_v * self.TIME_FOR_UPDATEAGV
+			if self.ct_updateagv >= self.valueLable.ratio_v * self.TIME_FOR_UPDATEAGV_MIN:
+				self.number_angle = not self.number_angle
+				self.lb_agv_img.setAngle(self.number_angle)
+				self.lb_agv_img.updatePixmap(1)
+				if self.number_angle == 0:
+					self.lb_agv_img.setGeometry(self.AGV_IMG_X, self.AGV_IMG_Y, self.AGV_IMG_WIDTH_NORMAL, self.AGV_IMG_HEIGHT_NORMAL)
+				else:
+					self.lb_agv_img.setGeometry(self.AGV_IMG_X, self.AGV_IMG_Y, self.AGV_IMG_WIDTH_ROTATED, self.AGV_IMG_HEIGHT_ROTATED)
+
+				self.fr_AGVanimation.update()
+				self.ct_updateagv = 0
+			else:
+				self.ct_updateagv += 1
+
 	def process_fast(self):
-		self.pb_qualityWifi.setValue(self.valueLable.lbv_qualityWifi)
 		self.pb_speed.setValue(self.statusButton.vs_speed)
+		self.pb_speed1.setValue(self.statusButton.vs_speed)
+		self.pb_speed2.setValue(self.statusButton.vs_speed)
 
 		# - combo box
-		if (self.valueLable.listError != self.valueLable.listError_pre):
-			self.valueLable.listError_pre = self.valueLable.listError
-			self.cb_status.clear()
-			lg = len(self.valueLable.listError) 
-			for i in range(lg):
-				self.cb_status.addItem(self.valueLable.listError[i])
+		lg = len(self.valueLable.listError)
+		if lg > 0:
+			if (self.valueLable.listError != self.valueLable.listError_pre):
+				self.valueLable.listError_pre = self.valueLable.listError
+				self.cb_status.clear()
+				print("Lỗi nhận được đã thay đổi => change hiển thị") 
+				for i in range(lg):
+					self.cb_status.addItem(self.valueLable.listError[i])
 		# -
 		if (self.valueLable.list_logError != self.valueLable.list_logError_pre):
 			self.valueLable.list_logError_pre = self.valueLable.list_logError
-			self.cb_logError.clear()
+			#self.cb_logError.clear()
 			lg = len(self.valueLable.list_logError) 
-			for i in range(lg):
-				self.cb_logError.addItem(self.valueLable.list_logError[i])
+			#for i in range(lg):
+				#self.cb_logError.addItem(self.valueLable.list_logError[i])
+		# -
+		if self.valueLable.isUpdateList_SpecialPoint == True:
+			# print("Update combo box")
+			self.valueLable.isUpdateList_SpecialPoint = False
+			self.cb_listSpecialPoint.clear()
+			self.cb_listSpecialPoint.addItems(self.valueLable.list_SpecialPoint)
+
 		# - 
-		self.statusButton.bt_setting = self.isShow_setting
+		if self.isShow_setting == 1 and self.status_show_setting == 1:
+			self.statusButton.bt_setting = 1
+		else:
+			self.statusButton.bt_setting = 0
+
 		# -- 
 		self.coorAverage_run()
 		# # --
@@ -411,12 +909,22 @@ class WelcomeScreen(QDialog):
 		if (self.setting_status == 1):
 			delta_t = rospy.Time.now() - self.timeSave_setting
 			# -- Chi kich hoat khi dang o che do Bang Tay.
-			if (delta_t.to_sec() > 1.5) and self.valueLable.modeRuning == 1:
+			if (delta_t.to_sec() > 1) and self.valueLable.modeRuning == 1:
 				self.isShow_setting = 1
-				self.isShow_reflectorCheck = 0
 				self.password_data = ""
+				self.flag_updateShowReflector = 1 
 		else:
 			self.timeSave_setting = rospy.Time.now()
+		
+		# -- show info page
+		if self.info_status == 1:
+			delta_t = rospy.Time.now() - self.timeSave_info
+
+			if delta_t.to_sec() > 1.5 and self.valueLable.modeRuning == 1:
+				self.isShow_info = 1
+				self.password_data = ""
+		else: 
+			self.timeSave_info = rospy.Time.now()
 
 		# -- add 21/01/2022 - show cancelMission
 		if (self.cancelMission_status == 1):
@@ -438,6 +946,62 @@ class WelcomeScreen(QDialog):
 			# print ("length: ", length)
 
 			self.show_reflector()
+			self.lb_nav350.angle = self.valueLable.nav_angle
+			self.lb_nav350.updatePixmap(2)
+			self.fr_showReflector.update()
+
+
+		# -- Reset lift Up/ Down button
+		if self.statusColor.lbc_liftUp == 1 and self.statusColor.lbc_liftDown == 0:
+			self.bt_lift_up.setStyleSheet("background-color: blue;")
+			self.bt_lift_down.setStyleSheet("background-color: white;")
+			self.bt_lift_reset.setStyleSheet("background-color: white;")
+
+			self.bt_lift_up2.setStyleSheet("background-color: blue;")
+			self.bt_lift_down2.setStyleSheet("background-color: white;")
+			self.bt_lift_reset2.setStyleSheet("background-color: white;")
+
+		elif self.statusColor.lbc_liftUp == 0 and self.statusColor.lbc_liftDown == 1:
+			self.bt_lift_up.setStyleSheet("background-color: white;")
+			self.bt_lift_down.setStyleSheet("background-color: blue;")
+			self.bt_lift_reset.setStyleSheet("background-color: white;")
+
+			self.bt_lift_up2.setStyleSheet("background-color: white;")
+			self.bt_lift_down2.setStyleSheet("background-color: blue;")
+			self.bt_lift_reset2.setStyleSheet("background-color: white;")
+
+		elif self.statusColor.lbc_liftUp == 0 and self.statusColor.lbc_liftDown == 0:
+			self.bt_lift_up.setStyleSheet("background-color: white;")
+			self.bt_lift_down.setStyleSheet("background-color: white;")
+			self.bt_lift_reset.setStyleSheet("background-color: blue;")
+
+			self.bt_lift_up2.setStyleSheet("background-color: white;")
+			self.bt_lift_down2.setStyleSheet("background-color: white;")
+			self.bt_lift_reset2.setStyleSheet("background-color: blue;")
+
+		elif self.statusColor.lbc_liftUp == 1 and self.statusColor.lbc_liftDown == 1:
+			self.bt_lift_up.setStyleSheet("background-color: white;")
+			self.bt_lift_down.setStyleSheet("background-color: white;")
+			self.bt_lift_reset.setStyleSheet("background-color: blue;")
+
+			self.bt_lift_up2.setStyleSheet("background-color: white;")
+			self.bt_lift_down2.setStyleSheet("background-color: white;")
+			self.bt_lift_reset2.setStyleSheet("background-color: blue;")
+
+		# - cb of list speak
+		self.statusButton.soundtype = self.cb_listSpeak.currentIndex()
+
+		# - cb of list led
+		self.statusButton.ledtype = self.cb_listLed.currentIndex()
+
+		# -
+		if self.statusButton.bt_disableBrake == 1:
+			self.bt_disableBrake1.setStyleSheet("background-color: blue;")
+			self.bt_disableBrake2.setStyleSheet("background-color: blue;")
+
+		else:
+			self.bt_disableBrake1.setStyleSheet("background-color: white;")
+			self.bt_disableBrake2.setStyleSheet("background-color: white;")
 	# -
 	def show_reflector(self):
 		# --
@@ -450,18 +1014,18 @@ class WelcomeScreen(QDialog):
 
 		self.valueLable.angleCompare = self.dial_angleCompare.value()
 		# --
-		self.lb_rf_0.move(0, 0)
-		self.lb_rf_1.move(0, 20)
-		self.lb_rf_2.move(0, 40)
-		self.lb_rf_3.move(0, 60)
-		self.lb_rf_4.move(0, 80)
-		self.lb_rf_5.move(0, 100)
-		self.lb_rf_6.move(0, 120)
-		self.lb_rf_7.move(0, 140)
-		self.lb_rf_8.move(0, 160)
-		self.lb_rf_9.move(0, 180)
-		self.lb_rf_10.move(0, 200)
-		self.lb_rf_11.move(0, 220)
+		self.lb_rf_0.move(-20, 0)
+		self.lb_rf_1.move(-20, 20)
+		self.lb_rf_2.move(-20, 40)
+		self.lb_rf_3.move(-20, 60)
+		self.lb_rf_4.move(-20, 80)
+		self.lb_rf_5.move(-20, 100)
+		self.lb_rf_6.move(-20, 120)
+		self.lb_rf_7.move(-20, 140)
+		self.lb_rf_8.move(-20, 160)
+		self.lb_rf_9.move(-20, 180)
+		self.lb_rf_10.move(-20, 200)
+		self.lb_rf_11.move(-20, 220)
 		# --
 
 		length = len(self.valueLable.arrReflector)
@@ -584,24 +1148,35 @@ class WelcomeScreen(QDialog):
 	def pressed_cancelMission(self):
 		self.bt_cancelMission.setStyleSheet("background-color: blue;")
 		self.cancelMission_status = 1
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
 
 	def released_cancelMission(self):
 		self.bt_cancelMission.setStyleSheet("background-color: white;")
 		self.cancelMission_status = 0
 		self.isShow_setting = 0
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
+
 	# -
 	def pressed_passHand(self):
 		self.statusButton.bt_passHand = 1
 		self.bt_passHand.setStyleSheet("background-color: blue;")
-		
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
+
 	def released_passHand(self):
 		self.statusButton.bt_passHand = 0
 		self.bt_passHand.setStyleSheet("background-color: white;")
 		self.isShow_setting = 0
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
+
 	# -
 	def pressed_passAuto(self):
 		self.statusButton.bt_passAuto = 1
 		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
 		# --
 		self.statusButton.bt_disableBrake = 0
 		self.bt_disableBrake_off.setStyleSheet("background-color: blue;")
@@ -610,6 +1185,8 @@ class WelcomeScreen(QDialog):
 	def released_passAuto(self):
 		self.statusButton.bt_passAuto = 0
 		self.isShow_setting = 0
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
 
 	# -
 	def pressed_clearError(self):
@@ -663,6 +1240,11 @@ class WelcomeScreen(QDialog):
 		self.bt_disableBrake_off.setStyleSheet("background-color: blue;")
 		self.bt_disableBrake_on.setStyleSheet("background-color: white;")
 		self.clicked_stop()
+
+	def clicked_bt_disableBrake(self):
+		self.statusButton.bt_disableBrake = not self.statusButton.bt_disableBrake
+		self.clicked_stop()
+
 	# --
 	def clicked_forwards(self):
 		self.statusButton.bt_forwards = 1
@@ -725,40 +1307,215 @@ class WelcomeScreen(QDialog):
 		self.bt_rotation_left.setStyleSheet("background-color: white;")
 		self.bt_stop.setStyleSheet("background-color: blue;")
 
+	def clicked_tryTarget_goUp(self):
+		self.statusButton.bt_forwards = 1
+		self.statusButton.bt_backwards = 0
+		self.statusButton.bt_rotation_left = 0
+		self.statusButton.bt_rotation_right = 0
+		self.statusButton.bt_stop = 0
+		self.bt_tryTarget_goUp.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_goDown.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goLeft.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goRight.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goStop.setStyleSheet("background-color: white;")
+
+		self.bt_tryTarget_goUp2.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_goDown2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goLeft2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goRight2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goStop2.setStyleSheet("background-color: white;")
+
+	# - 
+	def clicked_tryTarget_goDown(self):
+		self.statusButton.bt_backwards = 1
+		self.statusButton.bt_forwards = 0
+		self.statusButton.bt_rotation_left = 0
+		self.statusButton.bt_rotation_right = 0
+		self.statusButton.bt_stop = 0
+		self.bt_tryTarget_goUp.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goDown.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_goLeft.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goRight.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goStop.setStyleSheet("background-color: white;")
+
+		self.bt_tryTarget_goUp2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goDown2.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_goLeft2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goRight2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goStop2.setStyleSheet("background-color: white;")
+
+	# - 
+	def clicked_tryTarget_goLeft(self):
+		self.statusButton.bt_rotation_left = 1
+		self.statusButton.bt_forwards = 0
+		self.statusButton.bt_backwards = 0
+		self.statusButton.bt_rotation_right = 0
+		self.statusButton.bt_stop = 0
+		self.bt_tryTarget_goUp.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goDown.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goLeft.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_goRight.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goStop.setStyleSheet("background-color: white;")
+
+		self.bt_tryTarget_goUp2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goDown2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goLeft2.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_goRight2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goStop2.setStyleSheet("background-color: white;")
+
+	# - 
+	def clicked_tryTarget_goRight(self):
+		self.statusButton.bt_rotation_right = 1
+		self.statusButton.bt_forwards = 0
+		self.statusButton.bt_rotation_left = 0
+		self.statusButton.bt_backwards = 0
+		self.statusButton.bt_stop = 0
+		self.bt_tryTarget_goUp.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goDown.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goLeft.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goRight.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_goStop.setStyleSheet("background-color: white;")
+
+		self.bt_tryTarget_goUp2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goDown2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goLeft2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goRight2.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_goStop2.setStyleSheet("background-color: white;")
+
+	# - 
+	def clicked_tryTarget_goStop(self):
+		self.statusButton.bt_stop = 1
+		self.statusButton.bt_forwards = 0
+		self.statusButton.bt_rotation_left = 0
+		self.statusButton.bt_rotation_right = 0
+		self.statusButton.bt_backwards = 0
+  
+		self.bt_tryTarget_goUp.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goDown.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goLeft.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goRight.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goStop.setStyleSheet("background-color: blue;")
+
+		self.bt_tryTarget_goUp2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goDown2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goLeft2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goRight2.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_goStop2.setStyleSheet("background-color: blue;")
+		
+		self.flag_updateShowReflector = 1
+
+	def clicked_bt_zoomin(self):
+		self.valueLable.rate_reflector_map += 0.02
+		if self.valueLable.rate_reflector_map >= 0.5:
+			self.valueLable.rate_reflector_map = 0.5
+
+		self.valueLable.rate_nav_dp += 1
+		if self.valueLable.rate_nav_dp >= 5:
+			self.valueLable.rate_nav_dp = 5
+
+
+		self.flag_updateShowReflector = 1
+
+	def clicked_bt_zoomout(self):
+		self.valueLable.rate_reflector_map -= 0.02
+		if self.valueLable.rate_reflector_map <= 0.05:
+			self.valueLable.rate_reflector_map = 0.05
+
+		self.valueLable.rate_nav_dp -= 1
+		if self.valueLable.rate_nav_dp <= 1:
+			self.valueLable.rate_nav_dp = 1
+
+		self.flag_updateShowReflector = 1
+
+	def clicked_add_SpecialPoint(self):
+		self.flag_add_SpecialPoint = 1
+		self.bt_SaveSpecialPoint.setStyleSheet("background-color: blue;")
+
+	def clicked_delete_SpecialPoint(self):
+		self.flag_delete_SpecialPoint = 1
+		self.bt_DeleteSpecialPoint.setStyleSheet("background-color: blue;")
+
 	# --  --
 	def clicked_password_agree(self):
 		self.fr_agv.show()
 		self.fr_password.hide()
 		self.statusButton.bt_cancelMission = 1
 		self.password_data = ""
+		self.status_show_setting = 1
+		self.isShow_info = 0
 
 	def clicked_password_cancel(self):
 		self.fr_agv.show()
 		self.fr_password.hide()
 		self.password_data = ""
-
+		self.status_show_setting = 0
+		self.isShow_setting = 0
+		self.isShow_info = 0
+	
 	def process_normal(self):
 		self.set_dateTime()
-		self.lbv_ip.setText(self.valueLable.lbv_ip)
-		self.lbv_name_agv.setText(self.valueLable.lbv_name_agv)
-		self.lbv_mac.setText(self.valueLable.lbv_mac)
-		self.lbv_namePc.setText(self.valueLable.lbv_namePc)
+		# self.lbv_ip.setText(self.valueLable.lbv_ip)
+		# self.lbv_name_agv.setText(self.valueLable.lbv_name_agv)
+		# self.lbv_mac.setText(self.valueLable.lbv_mac)
+		# self.lbv_namePc.setText(self.valueLable.lbv_namePc)
 
-	def process_slow(self):
-		self.set_valueBattery(self.valueLable.lbv_battery)
-		
-	def clicked_hideSetting(self):
-		self.isShow_setting = 0
-		self.password_data = ""
-		self.enable_showToyoWrite = 0
+	# def process_slow(self):
+	# 	self.set_valueBattery(self.valueLable.lbv_battery)
 
 	def pressed_setting(self):
 		self.bt_setting.setStyleSheet("background-color: blue;")	
 		self.setting_status = 1
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
+
+		# self.info_status = 0
+		# self.isShow_info = 0
 
 	def released_setting(self):
 		self.bt_setting.setStyleSheet("background-color: white;")	
 		self.setting_status = 0
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
+
+		# self.info_status = 0
+		# self.isShow_info = 0
+
+	def clicked_hideSetting(self):
+		self.isShow_setting = 0
+		self.status_show_setting = 0
+		self.fr_function_no = 0
+
+	def clicked_page_getPoint(self):
+		self.fr_function_no = 0
+
+	def clicked_page_reflectorCheck(self):
+		self.fr_function_no = 1
+
+	def clicked_page_editSpecialPoint(self):
+		self.fr_function_no = 2
+
+	# def clicked_bt_checkDevice(self):
+	# 	self.status_checkDevice = not self.status_checkDevice
+	# 	if self.status_checkDevice == 1:
+	# 		self.bt_checkDevice.setStyleSheet("background-color: blue;")
+	# 	else:
+	# 		self.bt_checkDevice.setStyleSheet("background-color: white;")
+
+	def pressed_info(self):
+		self.bt_info.setStyleSheet("background-color: blue;")
+		self.info_status = 1
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
+
+	def released_info(self):
+		self.bt_info.setStyleSheet("background-color: white;")
+		self.info_status = 0
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
+
+	def clicked_hideInfo(self):
+		self.isShow_info = 0
+
 	# - 
 	def clicked_password_n0(self):
 		if (len(self.password_data) < 4):
@@ -835,7 +1592,7 @@ class WelcomeScreen(QDialog):
 		self.statusButton.bt_resetFrameWork = 1
 
 	def released_resetFrameWork(self):
-		self.bt_resetFrameWork.setStyleSheet("background-color: white;")
+		# self.bt_resetFrameWork.setStyleSheet("background-color: white;")
 		self.statusButton.bt_resetFrameWork = 0
 
 	def pressed_upSpeed(self):
@@ -848,63 +1605,64 @@ class WelcomeScreen(QDialog):
 		if self.statusButton.vs_speed < 5:
 			self.statusButton.vs_speed = 5
 
-	def pressed_liftUp(self):
-		self.bt_lift_up.setStyleSheet("background-color: blue;")
-		self.bt_lift_down.setStyleSheet("background-color: white;")
-		self.bt_lift_reset.setStyleSheet("background-color: white;")
-		self.statusButton.bt_lift_up = 1
-		self.statusButton.bt_lift_down = 0
+	def clicked_liftUp(self):
+		self.statusButton.bt_lift = 2
+		# self.statusButton.bt_lift_down = 0
 
-	def pressed_liftDown(self):
-		self.bt_lift_up.setStyleSheet("background-color: white;")
-		self.bt_lift_down.setStyleSheet("background-color: blue;")
-		self.bt_lift_reset.setStyleSheet("background-color: white;")
-		self.statusButton.bt_lift_up = 0
-		self.statusButton.bt_lift_down = 1
+	def clicked_liftDown(self):
+		self.statusButton.bt_lift = 1
+		# self.statusButton.bt_lift_down = 1
 
-	def pressed_liftReset(self):
-		self.bt_lift_up.setStyleSheet("background-color: white;")
-		self.bt_lift_down.setStyleSheet("background-color: white;")
-		self.bt_lift_reset.setStyleSheet("background-color: blue;")
-		self.statusButton.bt_lift_up = 0
-		self.statusButton.bt_lift_down = 0
+	def clicked_liftReset(self):
+		# self.bt_lift_up.setStyleSheet("background-color: white;")
+		# self.bt_lift_down.setStyleSheet("background-color: white;")
+		# self.bt_lift_reset.setStyleSheet("background-color: blue;")
+		self.statusButton.bt_lift = 0
 
-	def pressed_reflectorCheck(self):
-		self.isShow_reflectorCheck = 1
-		self.isShow_setting = 0
+	# -- update 29/05/2024
+	# def released_liftUp(self):
+	# 	# self.bt_lift_up.setStyleSheet("background-color: blue;")
+	# 	# self.bt_lift_down.setStyleSheet("background-color: white;")
+	# 	# self.bt_lift_reset.setStyleSheet("background-color: white;")
+	# 	self.statusButton.bt_lift_up = 0
 
-	def pressed_hideNav350(self):
-		self.isShow_reflectorCheck = 0
-		self.isShow_setting = 1
+	# def released_liftDown(self):
+	# 	# self.bt_lift_up.setStyleSheet("background-color: white;")
+	# 	# self.bt_lift_down.setStyleSheet("background-color: blue;")
+	# 	# self.bt_lift_reset.setStyleSheet("background-color: white;")
+	# 	self.statusButton.bt_lift_down = 0
 
-	def pressed_refresh_showRelector(self):
-		self.flag_updateShowReflector = 1
+	# def released_liftReset(self):
+	# 	self.statusButton.bt_lift_reset = 0
+
+	# def pressed_refresh_showRelector(self):
+	# 	self.flag_updateShowReflector = 1
 
 	# --
 	def pressed_tryTarget(self):
-		self.bt_tryTarget_show.setStyleSheet("background-color: blue;")
+		# self.bt_tryTarget_show.setStyleSheet("background-color: blue;")
 		self.isShow_tryTarget = 1
 		self.clicked_stop()
 
 	def released_tryTarget(self):
-		self.bt_tryTarget_show.setStyleSheet("background-color: white;")
+		# self.bt_tryTarget_show.setStyleSheet("background-color: white;")
 		self.clicked_stop()
 
 	# --
-	def pressed_tryTarget_hide(self):
-		self.bt_tryTarget_show.setStyleSheet("background-color: blue;")
-		self.clicked_stop()
+	# def pressed_tryTarget_hide(self):
+	# 	# self.bt_tryTarget_show.setStyleSheet("background-color: blue;")
+	# 	self.clicked_stop()
 
-	def released_tryTarget_hide(self):
-		self.bt_tryTarget_show.setStyleSheet("background-color: white;")
-		self.isShow_tryTarget = 0
-		self.clicked_stop()
-		self.statusButton.bt_tryTarget_start = 0
-		self.statusButton.bt_tryTarget_stop = 0
-		self.statusButton.bt_tryTarget_reset = 1
-		self.bt_tryTarget_reset.setStyleSheet("background-color: blue;")
-		self.bt_tryTarget_stop.setStyleSheet("background-color: white;")
-		self.bt_tryTarget_start.setStyleSheet("background-color: white;")
+	# def released_tryTarget_hide(self):
+	# 	# self.bt_tryTarget_show.setStyleSheet("background-color: white;")
+	# 	self.isShow_tryTarget = 0
+	# 	self.clicked_stop()
+	# 	self.statusButton.bt_tryTarget_start = 0
+	# 	self.statusButton.bt_tryTarget_stop = 0
+	# 	self.statusButton.bt_tryTarget_reset = 1
+	# 	self.bt_tryTarget_reset.setStyleSheet("background-color: blue;")
+	# 	self.bt_tryTarget_stop.setStyleSheet("background-color: white;")
+	# 	self.bt_tryTarget_start.setStyleSheet("background-color: white;")
 
 	# --
 	def pressed_tryTarget_up(self):
@@ -923,7 +1681,32 @@ class WelcomeScreen(QDialog):
 			# - D
 			if self.changeNow == 4:
 				self.valueLable.lbv_tryTarget_d += val_change
-			
+			# - ID
+			if self.changeNow == 5:
+				self.valueLable.lbv_tryTarget_id += val_change
+				self.valueLable.lbv_tryTarget_id = int(self.valueLable.lbv_tryTarget_id)			
+
+
+				############################## 03/10/2024
+
+	def Back_AGVState(self):
+		self.frame_AGVState.show()
+		self.frame_wifi.hide()
+
+
+	def To_listWifi(self):
+		self.frame_wifi.show()
+		self.frame_AGVState.hide()
+
+	def clicked_bt_autoConnectWifi_on(self):
+		self.statusButton.bt_wifi = 1
+		self.bt_autoConnectWifi_on.setStyleSheet("background-color: blue;")
+		self.bt_autoConnectWifi_off.setStyleSheet("background-color: white;")
+
+	def clicked_bt_autoConnectWifi_off(self):
+		self.statusButton.bt_wifi = 0
+		self.bt_autoConnectWifi_on.setStyleSheet("background-color: white;")
+		self.bt_autoConnectWifi_off.setStyleSheet("background-color: blue;")
 
 	def released_tryTarget_up(self):
 		self.bt_tryTarget_up.setStyleSheet("background-color: white;")
@@ -931,6 +1714,7 @@ class WelcomeScreen(QDialog):
 		self.lbv_tryTarget_y.setText(str(round(self.valueLable.lbv_tryTarget_y, 3)))
 		self.lbv_tryTarget_r.setText(str(round(self.valueLable.lbv_tryTarget_r, 3)))
 		self.lbv_tryTarget_d.setText(str(round(self.valueLable.lbv_tryTarget_d, 3)))
+		self.lbv_tryTarget_id.setText(str(self.valueLable.lbv_tryTarget_id))
 
 	# --
 	def pressed_tryTarget_down(self):
@@ -948,6 +1732,13 @@ class WelcomeScreen(QDialog):
 		# - D
 		if self.changeNow == 4:
 			self.valueLable.lbv_tryTarget_d -= val_change
+		# - ID
+		if self.changeNow == 5:
+			self.valueLable.lbv_tryTarget_id -= val_change
+			if self.valueLable.lbv_tryTarget_id <= 0:
+				self.valueLable.lbv_tryTarget_id = 0
+
+			self.valueLable.lbv_tryTarget_id = int(self.valueLable.lbv_tryTarget_id)
 
 	def released_tryTarget_down(self):
 		self.bt_tryTarget_down.setStyleSheet("background-color: white;")
@@ -955,6 +1746,7 @@ class WelcomeScreen(QDialog):
 		self.lbv_tryTarget_y.setText(str(round(self.valueLable.lbv_tryTarget_y, 3)))
 		self.lbv_tryTarget_r.setText(str(round(self.valueLable.lbv_tryTarget_r, 3)))
 		self.lbv_tryTarget_d.setText(str(round(self.valueLable.lbv_tryTarget_d, 3)))
+		self.lbv_tryTarget_id.setText(str(self.valueLable.lbv_tryTarget_id))
 
 	# --
 	def pressed_tryTarget_reset(self):
@@ -967,16 +1759,29 @@ class WelcomeScreen(QDialog):
 		self.statusButton.bt_tryTarget_start = 0
 		self.statusButton.bt_tryTarget_stop = 0
 
+		self.bt_tryTarget_goUp.setEnabled(True)
+		self.bt_tryTarget_goDown.setEnabled(True)
+		self.bt_tryTarget_goStop.setEnabled(True)
+		self.bt_tryTarget_goLeft.setEnabled(True)
+		self.bt_tryTarget_goRight.setEnabled(True)
+
 	# --
 	def pressed_tryTarget_start(self):
 		self.bt_tryTarget_start.setStyleSheet("background-color: blue;")
 		self.statusButton.bt_tryTarget_start = 1
+
 
 	def released_tryTarget_start(self):
 		self.bt_tryTarget_reset.setStyleSheet("background-color: white;")
 		self.bt_tryTarget_stop.setStyleSheet("background-color: white;")
 		self.statusButton.bt_tryTarget_reset = 0
 		self.statusButton.bt_tryTarget_stop = 0
+
+		self.bt_tryTarget_goUp.setEnabled(False)
+		self.bt_tryTarget_goDown.setEnabled(False)
+		self.bt_tryTarget_goStop.setEnabled(False)
+		self.bt_tryTarget_goLeft.setEnabled(False)
+		self.bt_tryTarget_goRight.setEnabled(False)
 
 	# --
 	def pressed_tryTarget_stop(self):
@@ -989,12 +1794,19 @@ class WelcomeScreen(QDialog):
 		self.statusButton.bt_tryTarget_reset = 0
 		self.statusButton.bt_tryTarget_start = 0
 
+		self.bt_tryTarget_goUp.setEnabled(False)
+		self.bt_tryTarget_goDown.setEnabled(False)
+		self.bt_tryTarget_goStop.setEnabled(False)
+		self.bt_tryTarget_goLeft.setEnabled(False)
+		self.bt_tryTarget_goRight.setEnabled(False)
+
 	# --
 	def pressed_tryTarget_x(self):
 		self.bt_tryTarget_x.setStyleSheet("background-color: blue;")
 		self.bt_tryTarget_y.setStyleSheet("background-color: white;")
 		self.bt_tryTarget_r.setStyleSheet("background-color: white;")
 		self.bt_tryTarget_d.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_id.setStyleSheet("background-color: white;")
 		self.show_combox_unitMeter()
 		self.changeNow = 1
 
@@ -1003,6 +1815,7 @@ class WelcomeScreen(QDialog):
 		self.bt_tryTarget_y.setStyleSheet("background-color: blue;")
 		self.bt_tryTarget_r.setStyleSheet("background-color: white;")
 		self.bt_tryTarget_d.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_id.setStyleSheet("background-color: white;")
 		self.show_combox_unitMeter()
 		self.changeNow = 2
 
@@ -1011,6 +1824,7 @@ class WelcomeScreen(QDialog):
 		self.bt_tryTarget_y.setStyleSheet("background-color: white;")
 		self.bt_tryTarget_r.setStyleSheet("background-color: blue;")
 		self.bt_tryTarget_d.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_id.setStyleSheet("background-color: white;")
 		self.show_combox_unitDegree()
 		self.changeNow = 3
 
@@ -1019,8 +1833,63 @@ class WelcomeScreen(QDialog):
 		self.bt_tryTarget_y.setStyleSheet("background-color: white;")
 		self.bt_tryTarget_r.setStyleSheet("background-color: white;")
 		self.bt_tryTarget_d.setStyleSheet("background-color: blue;")
+		self.bt_tryTarget_id.setStyleSheet("background-color: white;")
 		self.show_combox_unitMeter()
 		self.changeNow = 4
+
+	def pressed_tryTarget_id(self):
+		self.bt_tryTarget_x.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_y.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_r.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_d.setStyleSheet("background-color: white;")
+		self.bt_tryTarget_id.setStyleSheet("background-color: blue;")
+		self.show_combox_Interger()
+		self.changeNow = 5
+
+	# -
+	def checkbox_stateChanged(self):
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
+
+		if self.cb_remote.isChecked():
+			self.statusButton.bt_remote = 1
+			self.bt_forwards.setEnabled(False)
+			self.bt_rotation_left.setEnabled(False)
+			self.bt_rotation_right.setEnabled(False)
+			self.bt_backwards.setEnabled(False)
+			self.bt_stop.setEnabled(False)
+		else:
+			self.statusButton.bt_remote = 0
+
+			self.bt_forwards.setEnabled(True)
+			self.bt_rotation_left.setEnabled(True)
+			self.bt_rotation_right.setEnabled(True)
+			self.bt_backwards.setEnabled(True)
+			self.bt_stop.setEnabled(True)	
+	
+	def checkbox_showDetail_stateChanged(self):
+		if self.chb_showDetail.isChecked():
+			self.is_showDetail = 1
+		else:
+			self.is_showDetail = 0
+
+	def ck_linkOffset_stateChanged(self):
+		if self.ck_linkOffset.isChecked():
+			self.bt_disPointA.setEnabled(True)
+			self.lbv_deltaDistance.setEnabled(True)
+			self.bt_disPointB.setEnabled(True)
+		else:
+			self.bt_disPointA.setEnabled(False)
+			self.lbv_deltaDistance.setEnabled(False)
+			self.bt_disPointB.setEnabled(False)
+
+	def ck_linkCoor_stateChanged(self):
+		if self.ck_linkCoor.isChecked():
+			self.bt_coorAverage.setEnabled(True)
+			self.lbv_coorAverage_times.setEnabled(True)
+		else:
+			self.bt_coorAverage.setEnabled(False)
+			self.lbv_coorAverage_times.setEnabled(False)
 
 	def show_combox_unitMeter(self):
 		self.cb_unit.clear()
@@ -1045,9 +1914,18 @@ class WelcomeScreen(QDialog):
 		self.cb_unit.addItem("2")
 		self.cb_unit.addItem("5")
 
+	def show_combox_Interger(self):
+		self.cb_unit.clear()
+		self.lbv_unit.setText("")
+		self.cb_unit.addItem("1")
+		self.cb_unit.addItem("2")
+		self.cb_unit.addItem("5")
+
 	def out(self):
 		QApplication.quit()
 		print('out')
+		self.clicked_stop()
+		self.clicked_tryTarget_goStop()
 
 	def quaternion_to_euler(self, qua):
 		quat = (qua.x, qua.y, qua.z, qua.w )
@@ -1107,22 +1985,22 @@ class WelcomeScreen(QDialog):
 		# ---- Battery
 		if (self.statusColor.lbc_battery == 0):
 			self.lbv_battery.setStyleSheet("background-color: white; color: black;")
-			self.lb_v.setStyleSheet("color: black;")
+			# self.lb_v.setStyleSheet("color: black;")
 		elif (self.statusColor.lbc_battery == 1):
 			self.lbv_battery.setStyleSheet("background-color: green; color: white;")
-			self.lb_v.setStyleSheet("color: white;")
+			# self.lb_v.setStyleSheet("color: white;")
 		elif (self.statusColor.lbc_battery == 2):
 			self.lbv_battery.setStyleSheet("background-color: orange; color: black;")
-			self.lb_v.setStyleSheet("color: black;")
+			# self.lb_v.setStyleSheet("color: black;")
 		elif (self.statusColor.lbc_battery == 3):
 			self.lbv_battery.setStyleSheet("background-color: red; color: white;")
-			self.lb_v.setStyleSheet("color: white;")
+			# self.lb_v.setStyleSheet("color: white;")
 		elif (self.statusColor.lbc_battery == 4):
 			self.lbv_battery.setStyleSheet("background-color: yellow; color: black;")
-			self.lb_v.setStyleSheet("color: black;")
+			# self.lb_v.setStyleSheet("color: black;")
 		else: # -- charging
 			self.lbv_battery.setStyleSheet("background-color: white; color: black;")
-			self.lb_v.setStyleSheet("color: black;")
+			# self.lb_v.setStyleSheet("color: black;")
 
 		# ---- Thanh trang thai AGV
 		if (self.statusColor.cb_status == 0):
@@ -1148,27 +2026,43 @@ class WelcomeScreen(QDialog):
 
 		# -- Button Clear error
 		if (self.statusColor.lbc_button_clearError == 1):
-			self.lbc_button_clearError.setStyleSheet("background-color: blue;")
+			self.lbc_button_clearError.setStyleSheet("background-color: blue; color: white")
 		elif (self.statusColor.lbc_button_clearError == 0):
-			self.lbc_button_clearError.setStyleSheet("background-color: white;")
+			self.lbc_button_clearError.setStyleSheet("background-color: white; color: black")
 
 		# -- Button Power
 		if (self.statusColor.lbc_button_power == 1):
-			self.lbc_button_power.setStyleSheet("background-color: blue;")
+			self.lbc_button_power.setStyleSheet("background-color: blue; color: white")
 		elif (self.statusColor.lbc_button_power == 0):
-			self.lbc_button_power.setStyleSheet("background-color: white;")
+			self.lbc_button_power.setStyleSheet("background-color: white; color: black")
 
 		# -- Blsock
-		if (self.statusColor.lbc_blsock == 1):
-			self.lbc_blsock.setStyleSheet("background-color: blue;")
-		elif (self.statusColor.lbc_blsock == 0):
-			self.lbc_blsock.setStyleSheet("background-color: white;")
+		if (self.statusColor.lbc_blsock1 == 1):
+			self.lbc_blsock1.setStyleSheet("background-color: blue; color: white")
+		elif (self.statusColor.lbc_blsock1 == 0):
+			self.lbc_blsock1.setStyleSheet("background-color: white; color: black")
+
+		if (self.statusColor.lbc_blsock2 == 1):
+			self.lbc_blsock2.setStyleSheet("background-color: blue; color: white")
+		elif (self.statusColor.lbc_blsock2 == 0):
+			self.lbc_blsock2.setStyleSheet("background-color: white; color: black")
 
 		# -- EMG
-		if (self.statusColor.lbc_emg == 1):
-			self.lbc_emg.setStyleSheet("background-color: blue;")
-		elif (self.statusColor.lbc_emg == 0):
-			self.lbc_emg.setStyleSheet("background-color: white;")	
+		if (self.statusColor.lbc_emg1 == 1):
+			self.lbc_emg1.setStyleSheet("background-color: blue; color: white")
+		elif (self.statusColor.lbc_emg1 == 0):
+			self.lbc_emg1.setStyleSheet("background-color: white; color: black")	
+
+		if (self.statusColor.lbc_emg2 == 1):
+			self.lbc_emg2.setStyleSheet("background-color: blue; color: white")
+		elif (self.statusColor.lbc_emg2 == 0):
+			self.lbc_emg2.setStyleSheet("background-color: white; color: black")	
+
+		# - Safety Relay
+		if (self.statusColor.lbc_safety_relay == 1):
+			self.lbc_safetyRelay.setStyleSheet("background-color: blue; color: white")
+		elif (self.statusColor.lbc_safety_relay == 0):
+			self.lbc_safetyRelay.setStyleSheet("background-color: white; color: black")	
 
 		# -- Port: RTC Board
 		if (self.statusColor.lbc_port_rtc == 1):
@@ -1189,22 +2083,83 @@ class WelcomeScreen(QDialog):
 			self.lbc_port_nav350.setStyleSheet("background-color: red; color: white;")
 
 		# -- Sensor Up
-		if (self.statusColor.lbc_limit_up == 1):
-			self.lbc_limit_up.setStyleSheet("background-color: blue; color: white;")
-		elif (self.statusColor.lbc_limit_up == 0):
-			self.lbc_limit_up.setStyleSheet("background-color: white; color: black;")
+		if (self.statusColor.lbc_limitAbove == 1):
+			self.lbc_limitAbove.setStyleSheet("background-color: blue; color: white;")
+			self.lbc_limitAbove2.setStyleSheet("background-color: blue; color: white;")
+		elif (self.statusColor.lbc_limitAbove == 0):
+			self.lbc_limitAbove.setStyleSheet("background-color: white; color: black;")
+			self.lbc_limitAbove2.setStyleSheet("background-color: white; color: black;")
 
 		# -- Sensor Down
-		if (self.statusColor.lbc_limit_down == 1):
-			self.lbc_limit_down.setStyleSheet("background-color: blue; color: white;")
-		elif (self.statusColor.lbc_limit_down == 0):
-			self.lbc_limit_down.setStyleSheet("background-color: white; color: black;")
+		if (self.statusColor.lbc_limitBelow == 1):
+			self.lbc_limitBelow.setStyleSheet("background-color: blue; color: white;")
+			self.lbc_limitBelow2.setStyleSheet("background-color: blue; color: white;")
+		elif (self.statusColor.lbc_limitBelow == 0):
+			self.lbc_limitBelow.setStyleSheet("background-color: white; color: black;")
+			self.lbc_limitBelow2.setStyleSheet("background-color: white; color: black;")
 
 		# -- Sensor detect lift
-		if (self.statusColor.lbc_detect_lifter == 1):
-			self.lbc_detect_lifter.setStyleSheet("background-color: blue; color: white;")
-		elif (self.statusColor.lbc_detect_lifter == 0):
-			self.lbc_detect_lifter.setStyleSheet("background-color: white; color: black;")
+		if (self.statusColor.lbc_checkTray == 1):
+			self.lbc_checkTray.setStyleSheet("background-color: blue; color: white;")
+			self.lbc_checkTray2.setStyleSheet("background-color: blue; color: white;")
+
+		elif (self.statusColor.lbc_checkTray == 0):
+			self.lbc_checkTray.setStyleSheet("background-color: white; color: black;")
+			self.lbc_checkTray2.setStyleSheet("background-color: white; color: black;")
+
+		# -- CAN port
+		self.lbc_can_rtc.setStyleSheet("background-color: blue; color: white")
+
+		if (self.statusColor.lbc_can_psu == 1):
+			self.lbc_can_psu.setStyleSheet("background-color: blue; color: white")
+		elif (self.statusColor.lbc_can_psu == 0):
+			self.lbc_can_psu.setStyleSheet("background-color: red; color: white;")
+
+		if (self.statusColor.lbc_can_mcu == 1):
+			self.lbc_can_mcu.setStyleSheet("background-color: blue; color: white")
+		elif (self.statusColor.lbc_can_mcu == 0):
+			self.lbc_can_mcu.setStyleSheet("background-color: red; color: white;")
+
+		if (self.statusColor.lbc_can_hcu == 1):
+			self.lbc_can_hcu.setStyleSheet("background-color: blue; color: white")
+		elif (self.statusColor.lbc_can_hcu == 0):
+			self.lbc_can_hcu.setStyleSheet("background-color: red; color: white;")
+
+		if (self.statusColor.lbc_can_oc == 1):
+			self.lbc_can_oc.setStyleSheet("background-color: blue; color: white")
+		elif (self.statusColor.lbc_can_oc == 0):
+			self.lbc_can_oc.setStyleSheet("background-color: red; color: white;")
+
+		# - 
+		if self.statusColor.lbc_tryTarget_status == 0:
+			self.lbc_tryTarget_StopState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_MoveState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_DownState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_completed.setStyleSheet("background-color: white;")
+
+		elif self.statusColor.lbc_tryTarget_status == 1:
+			self.lbc_tryTarget_StopState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_MoveState.setStyleSheet("background-color: blue;")
+			self.lbc_tryTarget_DownState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_completed.setStyleSheet("background-color: white;")
+
+		elif self.statusColor.lbc_tryTarget_status == 2:
+			self.lbc_tryTarget_StopState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_MoveState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_DownState.setStyleSheet("background-color: blue;")
+			self.lbc_tryTarget_completed.setStyleSheet("background-color: white;")
+
+		elif self.statusColor.lbc_tryTarget_status == 3:
+			self.lbc_tryTarget_StopState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_MoveState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_DownState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_completed.setStyleSheet("background-color: blue;")
+
+		elif self.statusColor.lbc_tryTarget_status == 4:
+			self.lbc_tryTarget_StopState.setStyleSheet("background-color: blue;")
+			self.lbc_tryTarget_MoveState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_DownState.setStyleSheet("background-color: white;")
+			self.lbc_tryTarget_completed.setStyleSheet("background-color: white;")
 
 	def set_labelValue(self): # App_lbv()
 		self.lbv_angleCompare.setText(str(self.dial_angleCompare.value()))
@@ -1219,9 +2174,11 @@ class WelcomeScreen(QDialog):
 		self.lbv_coordinates_y1.setText(self.valueLable.lbv_coordinates_y)
 		self.lbv_coordinates_r1.setText(self.valueLable.lbv_coordinates_r)
 
-		self.lbv_numberReflector.setText(self.valueLable.lbv_numbeReflector)
+		self.lbv_coordinates_x2.setText(self.valueLable.lbv_coordinates_x + "/" + self.valueLable.lbv_coordinates_y + "/" + self.valueLable.lbv_coordinates_r)
+		# self.lbv_coordinates_y2.setText(self.valueLable.lbv_coordinates_y)
+		# self.lbv_coordinates_r2.setText(self.valueLable.lbv_coordinates_r)
 
-		self.lbv_pingServer.setText(self.valueLable.lbv_pingServer)
+		self.lbv_numberReflector.setText(self.valueLable.lbv_numbeReflector)
 
 		self.lbv_route_target.setText(self.valueLable.lbv_route_target)
 		self.lbv_jobRuning.setText(self.valueLable.lbv_jobRuning)
@@ -1255,7 +2212,34 @@ class WelcomeScreen(QDialog):
 		self.lbv_reflectorDetect_1.setText(self.valueLable.lbv_reflectorDetect)
 		# self..setText(self.valueLable.)
 
-		
+		# -
+		self.lbv_temp.setText(self.valueLable.lbv_temp)
+
+		# - 
+		self.lbv_voltage.setText(self.valueLable.lbv_voltage)
+
+		# - nuc info
+		self.lbv_mac.setText(self.valueLable.lbv_mac)
+		self.lbv_namePc.setText(self.valueLable.lbv_namePc)
+		self.lbv_ipEthernet.setText(self.valueLable.lbv_ipEthernet)
+		self.lbv_ip.setText(self.valueLable.lbv_ipWifi)
+		self.lbv_cpu.setText(self.valueLable.lbv_cpu_usage)
+		self.lbv_cpu2.setText(self.valueLable.lbv_cpu_usage)
+		self.lbv_tempCpu.setText(self.valueLable.lbv_cpu_temp)
+
+		self.lbv_ram.setText(self.valueLable.lbv_ram)
+		self.lbv_runtime.setText(self.valueLable.lbv_runtime)
+		self.lbv_QualityWifi.setText(self.valueLable.lbv_wifiQuality)
+		self.lbv_SignalWifi.setText(self.valueLable.lbv_wifiSignal)
+		self.lbv_SignalWifi2.setText(self.valueLable.lbv_wifiSignal)
+
+		self.lbv_pingServer.setText(self.valueLable.lbv_pingServer)		
+		self.lbv_pingServer2.setText(self.valueLable.lbv_pingServer)
+
+		self.lbv_ap_ssid.setText(self.valueLable.lbv_ap_ssid)
+		self.lbv_ap_mac.setText(self.valueLable.lbv_ap_mac)
+		self.lbv_ap_signal.setText(str(self.valueLable.lbv_ap_signal))
+
 	def controlShow_followMode(self):		
 		if (self.valueLable.modeRuning == self.modeRun_launch):
 			self.modeRuning = self.modeRun_launch
@@ -1279,54 +2263,73 @@ class WelcomeScreen(QDialog):
 			if (self.modeRuning == self.modeRun_auto): # -- Tu dong
 				self.fr_control.show()
 				self.fr_setting.hide()
-				self.fr_handMode_conveyor.hide()
+				self.fr_handMode_extend.hide()
 				self.fr_handMode_move.hide()
 				self.fr_listTask.show()
-				self.fr_tryTarget.hide()
 				self.isShow_moveHand = 1
 
-			elif (self.modeRuning == self.modeRun_byhand):
-				# - Hiển thị cài đặt chung. 
-				if self.isShow_setting == 1:
-					self.fr_control.hide()
-					self.fr_setting.show()
-					self.fr_listTask.hide()
-					self.fr_nav350.hide()
-
-				# - Hiển thị kiểm tra gương.
-				elif self.isShow_reflectorCheck == 1:
-					self.fr_control.hide()
-					self.fr_setting.hide()
-					self.fr_listTask.hide()
-					self.fr_nav350.show()
-
-				# - Hiển thị thử nghiệm điểm.
-				elif (self.isShow_tryTarget == 1):
-					self.fr_control.show()
-					self.fr_setting.hide()
-					self.fr_listTask.hide()
-					self.fr_nav350.hide()
-
-					self.fr_handMode_move.hide()
-					self.fr_handMode_conveyor.hide()
-					self.fr_tryTarget.show()
-
-				# - Hiển thị chức năng điều khiển tay.
+				if self.is_showDetail == 1:
+					self.fr_AGVanimation.hide()
+					self.fr_listPoint.show()
 				else:
+					self.fr_AGVanimation.show()
+					self.fr_listPoint.hide()
+
+			elif (self.modeRuning == self.modeRun_byhand):
+				if self.isShow_setting == 1 and self.status_show_setting == 1:
+					self.fr_control.hide()
+					self.fr_info.hide()
+					self.fr_setting.show()
+
+					if self.fr_function_no == 0:
+						self.fr_getWarehouse.show()
+						self.fr_SpecialPoint.hide()
+						self.fr_nav350.hide()
+
+					elif self.fr_function_no == 1:
+						self.fr_getWarehouse.hide()
+						self.fr_SpecialPoint.hide()
+						self.fr_nav350.show()
+
+					elif self.fr_function_no == 2:
+						self.fr_getWarehouse.hide()
+						self.fr_SpecialPoint.show()
+						self.fr_nav350.hide()
+
+				elif self.isShow_setting == 1 and self.status_show_setting == 0:
 					self.fr_control.show()
+					self.fr_info.hide()
 					self.fr_setting.hide()
-					self.fr_listTask.hide()
-					self.fr_nav350.hide()
-					if (self.isShow_moveHand == 1):
-						self.fr_handMode_conveyor.hide()
-						self.fr_handMode_move.show()
-						self.fr_tryTarget.hide()
+
+					self.fr_agv.hide()
+					self.fr_password.show()
+					# self.fr_info.hide()
+					# self.fr_setting.hide()
+					self.fr_handMode_extend.hide()
+					self.fr_handMode_move.show()
+					self.fr_handMode_move.setEnabled(False)
+
+				else:
+					self.fr_handMode_move.setEnabled(True)
+					# - Hiển thị màn hình thông tin
+					if self.isShow_info == 1:
+						self.fr_control.hide()
+						self.fr_info.show()
+						self.fr_setting.hide()
+
+					# - Hiển thị chức năng điều khiển tay.
 					else:
-						self.fr_handMode_conveyor.show()
-						self.fr_handMode_move.hide()
-						self.fr_tryTarget.hide()
+						self.fr_control.show()
+						self.fr_setting.hide()
+						self.fr_info.hide()
+						self.fr_listTask.hide()
 
-
+						if (self.isShow_moveHand == 1):
+							self.fr_handMode_extend.hide()
+							self.fr_handMode_move.show()
+						else:
+							self.fr_handMode_extend.show()
+							self.fr_handMode_move.hide()
 
 	def coorAverage_run(self):
 		if (self.bt_coorAverage_status == 1):
@@ -1343,11 +2346,13 @@ class WelcomeScreen(QDialog):
 				d_y = self.total_y/self.countTime_coorAverage
 				d_a = self.total_angle/self.countTime_coorAverage
 				d_degree = degrees(d_a)
+				if d_degree < 0:
+					d_degree = 360 + d_degree
 
 				self.lbv_coorAverage_times.setText(str(self.countTime_coorAverage))
-				self.lbv_coorAverage_x.setText(str(round(d_x, 3)))
-				self.lbv_coorAverage_y.setText(str(round(d_y, 3)))
-				self.lbv_coorAverage_r.setText(str(round(d_degree, 2)))
+				# self.lbv_coorAverage_x.setText(str(round(d_x, 3)))
+				# self.lbv_coorAverage_y.setText(str(round(d_y, 3)))
+				# self.lbv_coorAverage_r.setText(str(round(d_degree, 2)))
 
 				if self.ck_linkCoor.isChecked() == 1:
 					self.valueLable.lbv_tryTarget_x = d_x
@@ -1355,7 +2360,7 @@ class WelcomeScreen(QDialog):
 					self.valueLable.lbv_tryTarget_r = d_degree
 					self.lbv_tryTarget_x.setText(str(round(self.valueLable.lbv_tryTarget_x, 3)))
 					self.lbv_tryTarget_y.setText(str(round(self.valueLable.lbv_tryTarget_y, 3)))
-					self.lbv_tryTarget_r.setText(str(round(self.valueLable.lbv_tryTarget_r, 3)))
+					self.lbv_tryTarget_r.setText(str(round(self.valueLable.lbv_tryTarget_r, 2)))
 
 			self.countTime_coorAverage = 0
 			self.total_x = 0.0
@@ -1401,10 +2406,16 @@ class WelcomeScreen(QDialog):
 			data += "*"
 		
 		self.lbv_pw_data.setText(data)
-
-		if (self.password_data == self.password_right):
-			self.bt_pw_agree.setEnabled(True)
+		
+		if self.isShow_setting == 0:
+			if (self.password_data == self.password_right):
+				self.bt_pw_agree.setEnabled(True)
+			else:
+				self.bt_pw_agree.setEnabled(False)
 		else:
-			self.bt_pw_agree.setEnabled(False)
+			if (self.password_data == '1222'):
+				self.bt_pw_agree.setEnabled(True)
+			else:
+				self.bt_pw_agree.setEnabled(False)			
 
 	# def control_tryTarget(self):

@@ -1,0 +1,3 @@
+/home/stivietnam/catkin_ws/src/R2000-master/build/CMakeFiles/edit_cache.dir
+/home/stivietnam/catkin_ws/src/R2000-master/build/CMakeFiles/rebuild_cache.dir
+/home/stivietnam/catkin_ws/src/R2000-master/build/CMakeFiles/AcquireScan.dir

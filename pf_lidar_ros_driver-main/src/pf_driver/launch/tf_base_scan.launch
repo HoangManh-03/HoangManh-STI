@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- tf from frame_robot to scanner_link -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_r2000_linker" args="-0.41 0.0 -1 0.02 0 0 scanner_link frame_robot"/>
+
+</launch>

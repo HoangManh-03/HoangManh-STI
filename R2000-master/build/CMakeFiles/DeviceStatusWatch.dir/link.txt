@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG   CMakeFiles/DeviceStatusWatch.dir/src/R2000.cpp.o CMakeFiles/DeviceStatusWatch.dir/src/StatusWatcher.cpp.o CMakeFiles/DeviceStatusWatch.dir/examples/WatchDeviceStatus.cpp.o  -o DeviceStatusWatch  -ldl -pthread 

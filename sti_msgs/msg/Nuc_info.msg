@@ -1,0 +1,14 @@
+string nuc_mac
+string nuc_name
+string nuc_ipWifi
+string nuc_ipEthernet
+float64 cpu_usage
+float64 cpu_temp
+float64 ram_usage
+float64 ram_total
+float64 ram_percent
+string ping_server
+int32 wifi_quality
+int32 wifi_signal
+string ap_mac
+string uptime

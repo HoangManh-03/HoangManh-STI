@@ -1,0 +1,20 @@
+<launch>
+	<!-- show map reflector -->
+	<include file="$(find navigation_reflector)/launch/show_mapReflector.launch"/>
+
+    <!-- TF -->
+	<include file="$(find navigation_reflector)/launch/tf_staticfull.launch"/>
+
+	<!-- Scan -->
+	<include file="$(find pf_driver)/launch/r2000.launch"/>
+
+    <!-- Detect reflector -->
+	<include file="$(find navigation_reflector)/launch/detect_reflector.launch"/>
+
+    <!-- Navigation  -->
+	<!-- <include file="$(find navigation_reflector)/launch/navigation_reflector.launch"/> -->
+
+    <!-- Rviz  -->
+	<include file="$(find navigation_reflector)/launch/display_rviz.launch"/>
+
+</launch>

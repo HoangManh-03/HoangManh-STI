@@ -1,0 +1,14 @@
+############################### run lagvdemo by myself ####################
+-------Test move cure --------------------
+
+1. Kill các node đang chạy liên quan đến điều khiển vận tốc 
+rosnode kill /stiClient /stiControl /goal_controlNav_v9 /parkingAGV /makePathParkingV2 /reconnectBase
+
+2. Bỏ check lỗi  
+roslaunch stitest_control stiControl.launch 
+
+3. Rum robot in curve
+roslaunch test_agvreal launchAll.launch
+
+4. launch rviz in NUC AGV
+rosrun rviz rviz -d /home/stivietnam/catkin_ws/src/test_pkg/test_agvreal/config/rvizconfig.rviz

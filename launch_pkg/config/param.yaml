@@ -9,9 +9,23 @@ port_oc     : stibase_oc82
 port_imu    : stibase_imu
 port_driverAll  : stibase_motor
 port_loadcell : stibase_loadcell
+port_rtc    : stibase_rtc
+
+#------ NEW PORT ------#
+port_Lidar_1  : 192.168.100.2
+port_Lidar_2  : 0
+name_card     : wlo2
+name_eth      : eno1
+SSID_wifi          : STI_VietNam_No8
+PASS_wifi          : 66668888
+ip_address    : 192.168.1.103
+port_driverAll: stibase_motor
+port_RTC      : stibase_rtc
+
 #------ File launch Path ------#
 path_firstWork  : /home/stivietnam/catkin_ws/src/launch_pkg/launch/kickoff/firstWork.launch # clean log.
 path_checkPort    : /home/stivietnam/catkin_ws/src/launch_pkg/launch/kickoff/checkPhysical.launch
+path_nuc    : /home/stivietnam/catkin_ws/src/launch_pkg/launch/kickoff/checknuc.launch
 path_reconnectBase : /home/stivietnam/catkin_ws/src/launch_pkg/launch/kickoff/reconnectBase.launch
 path_reconnectDriver : /home/stivietnam/catkin_ws/src/launch_pkg/launch/kickoff/reconnectDriver.launch
 path_appLaunch       : /home/stivietnam/catkin_ws/src/app_ros/launch/app_launch.launch
@@ -19,6 +33,7 @@ path_appLaunch       : /home/stivietnam/catkin_ws/src/app_ros/launch/app_launch.
 path_main       : /home/stivietnam/catkin_ws/src/launch_pkg/launch/board/POWER.launch
 path_oc         : /home/stivietnam/catkin_ws/src/launch_pkg/launch/board/OC.launch
 path_hc         : /home/stivietnam/catkin_ws/src/launch_pkg/launch/board/HC.launch
+path_rtc         : /home/stivietnam/catkin_ws/src/launch_pkg/launch/board/RTC.launch
 path_imu        : /home/stivietnam/catkin_ws/src/ros_imu_bno055/launch/imu.launch
 path_loadcell   : /home/stivietnam/catkin_ws/src/sti_module/launch/loadCell.launch
 # -
@@ -26,6 +41,8 @@ path_driverAll  : /home/stivietnam/catkin_ws/src/base_pkg/launch/drivers.launch 
 path_driverReconnect  : /home/stivietnam/catkin_ws/src/base_pkg/launch/reconnectDriverELD2.launch # -
 # -
 path_nav350     : /home/stivietnam/catkin_ws/src/sicknav350/launch/sicknav350.launch
+path_r2000_navigation: /home/stivietnam/catkin_ws/src/navigation_reflector/launch/navigation_all.launch
+path_r2000     : /home/stivietnam/catkin_ws/src/pf_lidar_ros_driver-main/src/pf_driver/launch/r2000.launch
 # --
 path_tf         : /home/stivietnam/catkin_ws/src/launch_pkg/launch/tf/tf_full.launch
 # -- 
@@ -48,7 +65,10 @@ path_parkingControl: /home/stivietnam/catkin_ws/src/sti_module/launch/parkingCon
 path_dataApp      : /home/stivietnam/catkin_ws/src/app_ros/launch/app_ros.launch # data_synthesis.launch
 # --
 path_posePublisher: /home/stivietnam/catkin_ws/src/pose_publisher/launch/robot_pose.launch
-
+# --
+path_convertCAN   : /home/stivietnam/catkin_ws/src/ros_canBus/launch/convertCAN_ROS.launch
+# --
+path_ps3          : /home/stivietnam/catkin_ws/src/ps3joy/launch/controlPS3.launch
 
 # -----------------------------for C++ scripts ---------------------------------------------------
 #--

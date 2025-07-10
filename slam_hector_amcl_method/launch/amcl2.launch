@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Node map_server để load bản đồ -->
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find slam_hector_amcl_method)/maps/map.yaml" output="screen"/>
+
+    <!-- Các tham số cấu hình -->
+    <arg name="robot_namespace" default="robot"/>
+    <arg name="start_ns" default="false" />
+    <arg name="robot_x" default="0.0"/>
+    <arg name="robot_y" default="0.0"/>
+    <arg name="robot_z" default="0.0"/>
+
+    <!-- Node AMCL -->
+    <node pkg="amcl" type="amcl" name="amcl">
+        <rosparam file="$(find slam_hector_amcl_method)/config/amcl_params.yaml" command="load" />
+        <param name="tf_buffer_length" type="double" value="10.0" />  <!-- Thay đổi giá trị tùy theo nhu cầu -->
+
+        <!-- Các tham số cho AMCL -->
+        <param name="initial_pose_x" value="$(arg robot_x)"/>
+        <param name="initial_pose_y" value="$(arg robot_y)"/>
+        <param name="initial_pose_a" value="$(arg robot_z)"/>
+        <param name="scan_topic" value="$(arg scan_topic)"/>
+        <param name="odom_frame_id" value="odom"/>
+        <param name="base_frame_id" value="base_link"/>
+        <param name="global_frame_id" value="map"/>
+    </node>
+
+    <!-- Các node static_transform_publisher -->
+    <node pkg="tf" type="static_transform_publisher" name="laser_baselaser" args="0 0 0 0 0 0 1 base_laser laser 100"/>
+    <node pkg="tf" type="static_transform_publisher" name="laser_layer_0_first_echo_base_laser" args="0 0 0 0 0 0 1 base_laser laser_POS_000_DIST1 100"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_laser_to_base_link" args="0 0 0 0 0 0 1 base_link base_laser 100"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_base_footprint" args="0 0 0 0 0 0 1 base_footprint base_link 100"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_odom" args="0 0 0 0 0 0 1 odom base_footprint 100"/>
+    <node pkg="tf" type="static_transform_publisher" name="cloud_to_baselink" args="0 0 0 0 0 0 1 base_link cloud 100"/>
+    <node name="static_tf_publisher" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map odom"/>
+
+</launch>

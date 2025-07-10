@@ -82,7 +82,7 @@ class goalControl():
         self.odom_rb = Odometry()
 
         rospy.Subscriber('/safety_NAV', Int8, self.cbZoneNAV, queue_size = 1)
-        self.is_ZoneNav = False
+        self.is_ZoneNav = True
         self.dataZoneNav = Int8()
 
         self.pub_respond = rospy.Publisher("/respond_move", Move_respond, queue_size= 20)
@@ -772,6 +772,7 @@ class goalControl():
             return -10
 
     def check_safetyNAV(self, timeRecieve, timeCheck):
+        return 0
         t = time.time() - timeRecieve
         if t >= timeCheck:
             return -1
@@ -781,6 +782,8 @@ class goalControl():
 
 
     def check_safetyTIM(self, timeRecieve, timeCheck):
+        return 0
+    
         t = time.time() - timeRecieve
         if t >= timeCheck:
             self.timeZone3TIM = 0

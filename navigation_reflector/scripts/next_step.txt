@@ -1,0 +1,3 @@
+1. Viết các log file để debug dạng đồ thị check status hệ thống => số lượng lần khởi tạo lại
+2. Viết chương trình ghi lại vết di chuyển trên map và vết di chuyển thực tế của AGV.
+3. Xây dựng chương trình add gương mới vào map gốc

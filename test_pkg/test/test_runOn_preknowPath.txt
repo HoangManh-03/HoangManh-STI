@@ -1,0 +1,3 @@
+Run robot in Pre-knowed Tranjectory 
+1. rosnode kill /stiClient
+2. rosrun sticplus_control stiClient_fake.py

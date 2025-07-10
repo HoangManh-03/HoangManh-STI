@@ -1,6 +1,7 @@
 <launch>
 	<!-- Set parameters -->
-	<param name="port" value="/dev/stibase_motor" />
+	<!-- <param name="port" value="/dev/stibase_motor" /> -->
+	<param name="port" value="/dev/ttyUSB1" />
 	<param name="baudrate" value="57600" />
 	<param name="maxRPM" value="3800" />
 
@@ -20,4 +21,5 @@
 
 	<!-- <node pkg="base_pkg" type="driverControlAll.py" name="driver_node" output="screen"> </node> -->
 	<node pkg="base_pkg" type="driverControl_ELD2.py" name="driverELD2_node" output="screen"> </node>
+	
 </launch>

@@ -1,3 +1,6 @@
 <launch>
-	<include file="$(find launch_pkg)/launch/kickoff/launchAll.launch"/>
+	<!-- old -->
+	<!-- <include file="$(find launch_pkg)/launch/kickoff/launchAll.launch"/> -->
+	<!-- hoang them test board -->
+	<include file="$(find launch_pkg)/launch/kickoff/launchAllBN.launch"/>
 </launch>

@@ -7,6 +7,19 @@ Company: STI Viet Nam
 Date  : 12/06/2023
 Update: 
 - Thêm chế độ thực nghiệm điểm thao tác.
+
+Update 2/5/2024 by Phùng Quý Dương
+ - Thêm chương trình AGV di chuyển vào các điểm đặc biệt
+
+Update 29/5/2024 by Phùng Quý Dương
+ - Khi chuyển chế độ từ tự động -> bằng tay, AGV mặc định ở chế độ hạ kệ
+
+update 22/10/2024: 
+	- Dừng AGV báo lỗi khi AGV ko tìm kiếm được Wifi nào: OK
+	- Dừng trước khi thực hiện chuyển giữa các chế dộ: OK
+	- Báo lỗi khi đang chờ lệnh nhưng AGV bị chuyển sang vị trí khác: OK
+	- AGV dưng khi app bị tắt : OK
+
 """
 import roslib
 
@@ -31,7 +44,9 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16, Int8, Bool
 from message_pkg.msg import *
 from sensor_msgs.msg import Imu
+from navigation_reflector.msg import *
 from math import sin , cos , pi , atan2, radians, sqrt, pow, degrees
+
 #--------------------------------------------------------------------------------- ROS
 class ros_control():
 	def __init__(self):
@@ -80,6 +95,7 @@ class ros_control():
 		# -- App
 		rospy.Subscriber("/app_button", App_button, self.callback_appButton) # lay thong tin trang thai nut nhan tren man hinh HMI.
 		self.app_button = App_button()
+		self.timeStampe_app = rospy.Time.now()
 
 		# -- data safety NAV
 		rospy.Subscriber("/safety_NAV", Int8, self.safety_NAV_callback) 
@@ -88,6 +104,13 @@ class ros_control():
 		# -- data nav
 		rospy.Subscriber("/nav350_data", Nav350_data, self.nav350_callback) 
 		self.nav350_data = Nav350_data()
+
+		rospy.Subscriber("/r2000_data", R2000_data, self.r2000_callback) 
+		self.r2000_data = R2000_data()
+
+		# -- wifi respond
+		rospy.Subscriber("/wifi_respond", Wifi_info, self.WifiInfo_callback) 
+		self.data_wifiInfo = Wifi_info()
 
 		# -------------- Cac node thuat toan dieu khien.
 
@@ -164,6 +187,10 @@ class ros_control():
 		self.pub_disableBrake = rospy.Publisher("/disable_brake", Bool, queue_size= 20)
 		self.disable_brake = Bool()
 
+		# -- ps3
+		self.pub_controlPs3 = rospy.Publisher("/control_ps3", Int8, queue_size= 20)
+		self.enb_ps3 = Int8()
+
 		# debug
 		# self.pub_debug = rospy.Publisher("/debug_control", Debug_control, queue_size=100)
 		# self.debug_control = Debug_control()	
@@ -197,6 +224,7 @@ class ros_control():
 		self.flag_afterChager = 0
 		self.flag_checkLiftError = 0 # cờ báo ko có kệ khi nâng. 
 		self.flag_Auto_to_Byhand = 0
+		self.flag_Byhand_to_Auto = 0
 		self.enb_move = 0                    # cho phep navi di chuyen
 		self.flag_read_client = 0
 		self.flag_error = 0
@@ -238,12 +266,13 @@ class ros_control():
 		self.EMC_write = self.EMC_writeOff
 		# -- Led
 		self.led = 0
-		self.led_error = 1 			# 1
-		self.led_simpleRun = 2 		# 2
-		self.led_specialRun = 3 	# 3
-		self.led_perform = 4 		# 4
-		self.led_completed = 5  	# 5	
-		self.led_stopBarrier = 6  	# 6
+		self.led_off = 0
+		self.led_error = 1 			# 1 |
+		self.led_simpleRun = 2 		# 2 |
+		self.led_specialRun = 3 	# 3 |
+		self.led_perform = 4 		# 4 |
+		self.led_completed = 5  	# 5	|
+		self.led_stopBarrier = 6  	# 6 |
 		# -- Mission server
 		self.statusTask_liftError = 64 # trang thái nâng kệ nhueng ko có kệ.
 		self.serverMission_liftUp = 65 # 1 65
@@ -264,11 +293,11 @@ class ros_control():
 		# -- Speaker
 		self.speaker = 0
 		self.speaker_requir = 0 # luu trang thai cua loa
-		self.spk_error = 3
-		self.spk_move = 1
-		self.spk_warn = 2
+		self.SPK_ERROR = 3
+		self.SPK_MOVE = 1
+		self.SPK_WARN = 2
 		self.spk_not = 4		
-		self.spk_off = 0
+		self.SPK_OFF = 0
 		self.enb_spk = 1
 		# -- Charger
 		self.charger_on = 1
@@ -296,7 +325,7 @@ class ros_control():
 		self.numberError = 0
 		self.lastTime_checkLift = 0.0
 		# -- add new
-		self.enb_debug = 0
+		self.enb_debug = 1
 		# --
 		self.listError = []
 		self.job_doing = 0
@@ -333,14 +362,50 @@ class ros_control():
 		# --
 		self.step_tryTarget = 0
 
+		# --
+		self.TARGET_SPECIAL_X1 = 6.084
+		self.TARGET_SPECIAL_Y1 = -3.158
+		self.TARGET_SPECIAL_Z1 = 0.0
+		self.TARGET_SPECIAL_OFFSET1 = 1.31
+
+		self.flag_liftUp = 0
+		self.flag_liftDown = 0
+
+		self.flag_spk = 0
+		self.flag_led = 0
+		self.flag_lift = 0
+
+		self.pre_spk_val = 0
+		self.pre_lift_val = 0
+		self.pre_led_val = 0
+		self.flagInfo_resetFramework = 0
+		self.ct_resetFramework = rospy.get_time()
+
+		# -- 
+		self.time_clearBT = rospy.get_time()
+		self.flagInfo_clearBT = 0
+
+		# -- add 17/10/2024
+		self.flag_errChangePosition = 0
+		# -- 
+		self.flag_remote = 0
+		self.pre_remote_val = self.flag_remote
+		self.time_pubvel_manual = rospy.get_time()
+
 	def callback_imu(self, data):
 		self.imu_data = data
 
 	def nav350_callback(self, data):
 		self.nav350_data = data
 
+	def r2000_callback(self, data):
+		self.r2000_data = data
+
 	def safety_NAV_callback(self, data):
 		self.safety_NAV = data
+
+	def WifiInfo_callback(self, data):
+		self.data_wifiInfo = data
 
 	def callback_goalControl(self, data):
 		self.status_goalControl = data
@@ -375,6 +440,7 @@ class ros_control():
 
 	def callback_appButton(self, dat):
 		self.app_button = dat
+		self.timeStampe_app = rospy.Time.now()
 
 	def callback_cmdRequest(self, dat):
 		self.NN_cmdRequest = dat
@@ -609,6 +675,8 @@ class ros_control():
 		if (self.safety_NAV.data == 1):
 			cmd_vel = Twist()
 
+		# print(cmd_vel)
+
 		return cmd_vel
 
 	def quaternion_to_euler(self, qua):
@@ -634,6 +702,12 @@ class ros_control():
 	def detectLost_goalControl(self):
 		delta_t = rospy.Time.now() - self.timeStampe_statusGoalControl
 		if (delta_t.to_sec() > 1.4):
+			return 1
+		return 0
+
+	def detectLost_app(self):
+		delta_t = rospy.Time.now() - self.timeStampe_app
+		if (delta_t.to_sec() > 1.0):
 			return 1
 		return 0
 
@@ -663,15 +737,27 @@ class ros_control():
 
 	def detectLost_nav(self):
 		delta_t = rospy.Time.now() - self.nav350_data.header.stamp
-		if (delta_t.to_sec() > 0.4):
+		if (delta_t.to_sec() > 0.1):
 			return 1
 		return 0
 
+	# def detectLost_r2000(self):
+	# 	delta_t = rospy.Time.now() - self.r2000_data.header.stamp
+	# 	if (delta_t.to_sec() > 0.4):
+	# 		return 1
+	# 	return 0
+
 	def detectLost_poseRobot(self):
-		delta_t = rospy.Time.now() - self.robotPose_nav.header.stamp
-		if (delta_t.to_sec() > 0.5):
-			return 1
-		return 0
+		if self.job_doing == 6:
+			delta_t = rospy.Time.now() - self.robotPose_nav.header.stamp
+			if (delta_t.to_sec() > 0.5):
+				return 1
+			return 0
+		else:
+			delta_t = rospy.Time.now() - self.robotPose_nav.header.stamp
+			if (delta_t.to_sec() > 2):
+				return 1
+			return 0			
 
 	def detectLost_Imu(self):
 		delta_t = rospy.Time.now() - self.imu_data.header.stamp
@@ -724,9 +810,19 @@ class ros_control():
 			return 1
 		return 0
 
+	# def detectLost_reflectors(self):
+	# 	# -- so luong guong
+	# 	if (self.nav350_data.number_reflectors >= 3): # loi mat guong
+	# 		self.timeStampe_reflectors = rospy.Time.now()
+
+	# 	delta_t = rospy.Time.now() - self.timeStampe_reflectors
+	# 	if (delta_t.to_sec() > 1.2):
+	# 		return 1
+	# 	return 0
+
 	def detectLost_reflectors(self):
 		# -- so luong guong
-		if (self.nav350_data.number_reflectors >= 3): # loi mat guong
+		if (self.r2000_data.number_reflectors >= 3): # loi mat guong
 			self.timeStampe_reflectors = rospy.Time.now()
 
 		delta_t = rospy.Time.now() - self.timeStampe_reflectors
@@ -765,6 +861,10 @@ class ros_control():
 		if self.detectLost_goalControl() == 1:
 			listError_now.append(282)
 
+		# -- App
+		if self.detectLost_app() == 1:
+			listError_now.append(283)
+
 		# -- EMG
 		if self.main_info.EMC_status == 1:
 			listError_now.append(121)
@@ -774,34 +874,38 @@ class ros_control():
 			listError_now.append(122)
 
 		# -- lost HC
-		if (self.detectLost_hc() == 1):
-			listError_now.append(351)
+		# if (self.detectLost_hc() == 1):
+		# 	listError_now.append(351)
 
 		# -- lost CAN HC
 		if (self.HC_info.status == -1):
 			listError_now.append(352)
 
 		# -- OC: ket noi
-		if (self.detectLost_oc() == 1):
-			listError_now.append(341)
+		# if (self.detectLost_oc() == 1):
+		# 	listError_now.append(341)
 
 		# -- OC-CAN
 		if (self.lift_status.status.data == -2):
 			listError_now.append(343)
 
 		# -- MAIN: CAN ket noi 
-		if (self.main_info.CAN_status == 0):
-			listError_now.append(323)
+		# if (self.main_info.CAN_status == 0):
+		# 	listError_now.append(323)
 
 		# -- lost Main
-		if (self.detectLost_main() == 1):
-			listError_now.append(321)
+		# if (self.detectLost_main() == 1):
+		# 	listError_now.append(321)
 
 		# -- lost Nav
-		if (self.detectLost_nav() == 1):
-			listError_now.append(221)
+		# if (self.detectLost_nav() == 1):
+		# 	listError_now.append(221)
 
-		# -- lost pose robot
+		# -- lost Nav
+		# if (self.detectLost_r2000() == 1):
+		# 	listError_now.append(223)
+
+		#-- lost pose robot
 		if (self.detectLost_poseRobot() == 1):
 			listError_now.append(222)
 
@@ -809,7 +913,7 @@ class ros_control():
 		if self.detectLost_driver() == 1: 
 			listError_now.append(251)
 
-		# -- Error Driver 1
+		# -- Error Driver 1`
 		summation1 = self.driver1_respond.alarm_all + self.driver1_respond.alarm_overload + self.driver1_respond.warning
 		if (summation1 != 0):
 			listError_now.append(252)
@@ -871,6 +975,20 @@ class ros_control():
 		if (self.flag_listPointEmpty == 1):
 			listError_now.append(442)
 
+		# -- add 22/10/2024 - Lỗi ko tìm thấy wifi nào
+		if self.data_wifiInfo.err == 1:
+			listError_now.append(333)
+
+		# -- Đang chờ lệnh mới nhưng AGV bị di chuyển sang vị trí khác
+		if self.flag_errChangePosition == 1:
+			listError_now.append(443)
+
+		if self.flagInfo_resetFramework == 1:
+			listError_now.append(2)
+
+		if self.flagInfo_clearBT == 1:
+			listError_now.append(3)
+
 		return listError_now
 
 	def tryTarget_run(self):
@@ -891,53 +1009,61 @@ class ros_control():
 			self.step_tryTarget = 0
 			self.enb_move = 0
 			self.enb_parking = 0
+			self.job_doing = 14
 
 		if self.app_button.bt_tryTarget_stop == 1:
 			self.enb_move = 0
 			self.enb_parking = 0
-		
-		if self.step_tryTarget == 0:
-			self.enb_move = 0
-			self.enb_parking = 0
+			self.job_doing = 14
 
-		elif self.step_tryTarget == 1: # - Di chuyển đến vị trí.
-			self.move_req.mission = 0
-			if self.app_button.bt_tryTarget_stop == 1:
-				self.enb_move = 0 # -
-			else:
-				self.enb_move = 3 # -
-
-			if self.status_goalControl.complete_misson == 1:  # Hoan thanh di chuyen.
-				self.step_tryTarget = 2
+		else:
+			if self.step_tryTarget == 0:
 				self.enb_move = 0
-
-		elif self.step_tryTarget == 2: # - Đi vào điểm thao tác
-			if self.app_button.bt_tryTarget_stop == 1:
 				self.enb_parking = 0
-			else:
-				if self.app_button.ck_tryTarget_safety == 1:
-					self.enb_parking = 1
+				self.job_doing = 10
+
+			elif self.step_tryTarget == 1: # - Di chuyển đến vị trí.
+				self.move_req.mission = 0
+				if self.app_button.bt_tryTarget_stop == 1:
+					self.enb_move = 0 # -
 				else:
-					self.enb_parking = 2
+					self.enb_move = 3 # -
 
-			self.parking_offset = self.move_req.offset
-			# -
-			self.parking_poseBefore.position.x = self.move_req.target_x
-			self.parking_poseBefore.position.y = self.move_req.target_y
-			self.parking_poseBefore.orientation = self.euler_to_quaternion(self.move_req.target_z)
-			self.parking_poseTarget = self.getPose_from_offset(self.parking_poseBefore, self.move_req.offset)
+				if self.status_goalControl.complete_misson == 1:  # Hoan thanh di chuyen.
+					self.step_tryTarget = 2
+					self.enb_move = 0
+				
+				self.job_doing = 11
 
-			if self.parking_status.status == 51:
+			elif self.step_tryTarget == 2: # - Đi vào điểm thao tác
+				self.job_doing = 12
+				if self.app_button.bt_tryTarget_stop == 1:
+					self.enb_parking = 0
+				else:
+					if self.app_button.ck_tryTarget_safety == 1:
+						self.enb_parking = 1
+					else:
+						self.enb_parking = 2
+
+				self.parking_offset = self.move_req.offset
+				# -
+				self.parking_poseBefore.position.x = self.move_req.target_x
+				self.parking_poseBefore.position.y = self.move_req.target_y
+				self.parking_poseBefore.orientation = self.euler_to_quaternion(self.move_req.target_z)
+				self.parking_poseTarget = self.getPose_from_offset(self.parking_poseBefore, self.move_req.offset)
+
+				if self.parking_status.status == 51:    # agv di chuyển lùi hoàn thành
+					self.enb_parking = 0
+					self.step_tryTarget = 3
+
+				if self.move_req.offset <= 0:
+					self.enb_parking = 0
+					self.step_tryTarget = 3
+
+			elif self.step_tryTarget == 3:
 				self.enb_parking = 0
-				self.step_tryTarget = 3
-
-			if self.move_req.offset <= 0:
-				self.enb_parking = 0
-				self.step_tryTarget = 3
-
-		elif self.step_tryTarget == 3:
-			self.enb_parking = 0
-			self.enb_move = 0
+				self.enb_move = 0
+				self.job_doing = 13
 
 	def resetAll_variable(self):
 		self.enb_move = 0
@@ -974,9 +1100,14 @@ class ros_control():
 		self.target_tag = self.NN_cmdRequest.tag
 		self.before_mission = self.NN_cmdRequest.before_mission
 		self.after_mission = self.NN_cmdRequest.after_mission
+
+		# - add 4/3/2025
+		self.parking_offset = self.NN_cmdRequest.offset
+
 		# -- add 12/11/2021
 		self.flag_resetFramework = 0
 		self.flag_Auto_to_Byhand = 0
+		self.flag_errChangePosition = 0
 		# -- add 30/03/2022 : co bao loi qua tai dong co.
 		# self.flagError_overLoad = 0
 		# -- add 15/04/2022
@@ -988,7 +1119,7 @@ class ros_control():
 			time.sleep(0.2)
 			self.mode_operate = self.mode_by_hand
 			self.led = 0
-			self.speaker_requir = self.spk_warn
+			self.speaker_requir = self.SPK_MOVE
 			self.process = 0
 			self.enb_parking = 0
 
@@ -1017,9 +1148,9 @@ class ros_control():
 			count_error = 0
 			count_warning = 0
 			for i in range(lenght):
-				if (self.listError[i] < 400):
+				if (self.listError[i] < 400 and self.listError[i] > 100):
 					count_error += 1
-				else:
+				elif self.listError[i] >= 400:
 					count_warning += 1
 					
 			# -- add 30/03/2022 : co bao loi qua tai dong co.
@@ -1071,6 +1202,10 @@ class ros_control():
 					self.liftReset = self.liftResetOn
 				else:
 					self.liftReset = self.liftResetOff
+				
+				self.time_clearBT = rospy.get_time()
+				self.flagInfo_clearBT = 1
+
 			else:
 				self.task_driver.data = self.taskDriver_Read
 				self.EMC_reset = self.EMC_resetOff
@@ -1086,16 +1221,27 @@ class ros_control():
 			# if (self.error_device != 0 or self.error_perform != 0 or self.error_move != 0):
 			# 	self.flag_error = 1	
 
+			# -- Xóa lỗi sau khi thao tác nút nhấn
+			d = (rospy.get_time() - self.time_clearBT)
+			if (d > 2): # 
+				self.time_clearBT = rospy.get_time()
+				self.flagInfo_clearBT = 0
+
 			self.process = 3
 
 		elif self.process == 3: # read app
 			if self.app_button.bt_passHand == 1:
 				if self.mode_operate == self.mode_auto: # keo co bao dang o tu dong -> chuyen sang bang tay.
 					self.flag_Auto_to_Byhand = 1
+					self.flag_lift = 0
+					self.flag_spk = 0  # phát loa và led ở âm mặc định
+					self.flag_led = 0
 				self.mode_operate = self.mode_by_hand
 
 			if self.app_button.bt_passAuto == 1:
 				self.mode_operate = self.mode_auto
+				self.liftTask = self.liftStop
+				self.pub_vel.publish(Twist())
 
 			if self.mode_operate == self.mode_by_hand:
 				self.process = 30
@@ -1103,6 +1249,7 @@ class ros_control():
 			elif self.mode_operate == self.mode_auto:
 				self.process = 40
 				self.disable_brake.data = 0
+				self.enb_ps3.data = 0
 	# ------------------------------------------------------------------------------------
 	# -- BY HAND:
 		elif self.process == 30:
@@ -1112,13 +1259,36 @@ class ros_control():
 			if self.parking_status.status != 0:
 				self.enb_parking = 0
 
-			if self.step_tryTarget == 0:
+			# -- add 29/05/2024
+			if self.pre_spk_val != self.app_button.soundtype:
+				self.pre_spk_val = self.app_button.soundtype
+				self.flag_spk = 1
+			
+			if self.pre_led_val != self.app_button.ledtype:
+				self.pre_led_val = self.app_button.ledtype
+				self.flag_led = 1
+			
+			if self.pre_lift_val != self.app_button.bt_lift:
+				self.pre_lift_val = self.app_button.bt_lift
+				self.flag_lift = 1
+
+			if self.pre_remote_val != self.app_button.bt_remote:
+				self.pre_remote_val = self.app_button.bt_remote
+				self.flag_remote = 1
+				self.time_pubvel_manual = rospy.get_time()
+
+			if self.step_tryTarget == 0 or self.step_tryTarget == 3:
 				# ------------------------------------------------------------
 				if self.flag_error == 0:
 				# -- Send vel
 					if self.lift_status.status.data == 0 or self.lift_status.status.data >= 3:  # Đang thực hiện nhiệm vụ ở chế độ auto -> ko cho phép di chuyển.
 						# -- Move
-						self.pub_cmdVel(self.run_maunal(), self.rate_cmdvel, rospy.get_time())
+						if self.app_button.bt_remote == 0:
+							self.enb_ps3.data = 0
+							self.pub_cmdVel(self.run_maunal(), self.rate_cmdvel, rospy.get_time())
+							
+						else:
+							self.enb_ps3.data = 1
 					else:
 						self.pub_cmdVel(Twist(), self.rate_cmdvel, rospy.get_time())
 
@@ -1126,19 +1296,29 @@ class ros_control():
 					self.pub_cmdVel(Twist(), self.rate_cmdvel, rospy.get_time())
 
 				# ------------------------------------------------------------
-				# -- Lift
-				if self.app_button.bt_lift_up == True:
-					self.liftTask_byHand = self.liftUp
-					self.flag_commandLift = 1
+				if self.flag_remote == 1:
+					if rospy.get_time() - self.time_pubvel_manual < 0.5:
+						self.pub_cmdVel(Twist(), self.rate_cmdvel, rospy.get_time())
+					
+					else:
+						self.flag_remote = 0
 
-				elif self.app_button.bt_lift_down == True:
+				# ------------------------------------------------------------
+				# -- Lift - update 
+				if self.flag_lift:
+					if self.app_button.bt_lift == 1:
+						self.liftTask_byHand = self.liftDown
+						self.flag_commandLift = 1
+
+					elif self.app_button.bt_lift == 2:
+						self.liftTask_byHand = self.liftUp
+						self.flag_commandLift = 1
+					else:
+						self.liftTask_byHand = self.liftStop
+						self.flag_commandLift = 0
+				else:
 					self.liftTask_byHand = self.liftDown
 					self.flag_commandLift = 1
-
-				if self.app_button.bt_lift_up == False and self.app_button.bt_lift_down == False:
-					self.liftTask_byHand = self.liftStop
-					self.flag_commandLift = 0
-					self.liftTask = self.liftTask_byHand
 
 				if self.flag_commandLift == 1:
 					self.liftTask = self.liftTask_byHand
@@ -1148,12 +1328,44 @@ class ros_control():
 					self.liftTask = self.liftStop
 
 				# -- Speaker
+				# -- Speaker
 				if self.app_button.bt_spk_on == True:
 					self.enb_spk = 1
+					
+					if self.flag_spk:
+						if self.app_button.soundtype == 0:
+							self.speaker_requir = self.SPK_OFF
+						elif self.app_button.soundtype == 1:
+							self.speaker_requir = self.SPK_MOVE
+						elif self.app_button.soundtype == 2:
+							self.speaker_requir = self.SPK_WARN
+						elif self.app_button.soundtype == 3:
+							self.speaker_requir = self.SPK_ERROR
+					else:
+						self.speaker_requir = self.SPK_MOVE
 
 				elif self.app_button.bt_spk_off == True:
 					self.enb_spk = 0
+					self.speaker_requir = self.SPK_OFF
 
+				# led
+				if self.flag_led:
+					if self.app_button.ledtype == 0:
+						self.led = self.led_off
+					elif self.app_button.ledtype == 1:
+						self.led = self.led_error
+					elif self.app_button.ledtype == 2:
+						self.led = self.led_simpleRun
+					elif self.app_button.ledtype == 3:
+						self.led = self.led_specialRun
+					elif self.app_button.ledtype == 4:
+						self.led = self.led_perform
+					elif self.app_button.ledtype == 5:
+						self.led = self.led_completed
+					elif self.app_button.ledtype == 6:
+						self.led = self.led_stopBarrier
+				else:
+					self.led = self.led_simpleRun
 				# -- Charger
 				if self.app_button.bt_chg_on == True:
 					self.charger_requir = self.charger_on
@@ -1173,13 +1385,23 @@ class ros_control():
 			# --
 			if self.app_button.bt_resetFrameWork == 1:
 				self.resetAll_variable()
+				self.job_doing = 15
+				self.flagInfo_resetFramework = 1
+				self.ct_resetFramework = rospy.get_time()
+			
+			if rospy.get_time() - self.ct_resetFramework > 2:
+				self.flagInfo_resetFramework = 0
+
+			if self.flag_Byhand_to_Auto == 1:
+				self.flag_listPointEmpty = 0
+
 			# ------------------------------------------------------------
 			
-
 			self.process = 2
 
 	# -- RUN AUTO:
 		elif self.process == 40: # -- kiem tra loi
+			self.flag_Byhand_to_Auto = 1
 			if self.flag_error == 1: # thay doi != 0
 				self.job_doing = 30
 				self.enb_move = 0
@@ -1204,7 +1426,7 @@ class ros_control():
 						a1 = 1
 
 					# - Đang đi vào điểm thao tác.
-					if self.parking_status.status == 41 or self.parking_status.status == 51:
+					if self.parking_status.status == 41:
 						a2 = 1
 
 					# - Đang đi ra khỏi điểm thao tác.
@@ -1214,8 +1436,9 @@ class ros_control():
 					if a1 == 1 or a2 == 1:
 						self.job_doing = 9
 						self.log_mess("warn", "Have new target but must Waiting perform done ....", 0)
-						self.process = 42
+						self.process = 2
 					else:
+						print("Chuyển sang nhiệm vụ tiêp theo")
 						self.resetAll_variable()
 						self.process = 42
 				else:
@@ -1226,31 +1449,42 @@ class ros_control():
 			else:
 				# - Nếu target ko đổi mà nhiện vụ muốn thay đổi (lấy hoặc trả hàng luôn tại đó).
 				if self.completed_after_mission == 1:
-					if self.after_mission != self.NN_cmdRequest.after_mission:
+					if self.after_mission != self.NN_cmdRequest.after_mission or self.parking_offset != self.NN_cmdRequest.offset:
 						self.completed_after_mission = 0
 						self.log_mess("info", "After mission change to ", self.NN_cmdRequest.after_mission)
 						self.after_mission = self.NN_cmdRequest.after_mission
 
+						# - Cho phép tiếp tục lùi khi đổi nhiệm vụ sau
+						self.completed_moveSpecial = 0
+						self.parking_offset = self.NN_cmdRequest.offset
+
 				self.process = 42
 
-		elif self.process == 42: 
+		elif self.process == 42:
+			# print("thực hiện nhiêm vu khi chuyen tu tụ dong sang bang tay")
 			if self.flag_Auto_to_Byhand == 1: 
 				# -- add 12/11/2021 : Chay lai quy trinh Vao Sac khi Chuuyen che do.
-				if self.completed_after_mission == 1:
+				if self.completed_after_mission == 1:      # Đang đợi lệnh mới => người dùng chuyên bằng tay và lái đi vị trí khác
 					if self.after_mission == self.serverMission_liftDown_charger or self.after_mission == self.serverMission_charger: #
 						delta_distance = self.calculate_distance(self.robotPose_nav.pose.position, self.poseWait.position)
 						if (delta_distance > self.distance_resetMission):
 							self.resetAll_variable()
 							self.completed_backward = 1
-				else:
-					# -- add 23/12/2021: Xu ly loi Dang Parking thi bi chuyen che do -> AGV van parking.
-					if self.completed_before_mission == 1 and self.completed_moveSimple == 1 and self.completed_moveSpecial == 0:
-						delta_distance = self.calculate_distance(self.robotPose_nav.pose.position, self.pose_parkingRuning.position)
-						# -- phien ban 2: Xac dinh do lech giua goc cua AGV voi goc cua diem vao Tag
-						delta_angle = self.calculate_angle(self.robotPose_nav.pose.orientation, self.parking_poseTarget.orientation)
 
-						if (delta_distance > 0.2 or abs(delta_angle) > radians(20)):
-							self.completed_moveSimple = 0
+					elif self.after_mission == self.serverMission_liftUp or self.after_mission == self.serverMission_liftDown:
+						delta_distance = self.calculate_distance(self.robotPose_nav.pose.position, self.poseWait.position)
+						if (delta_distance > self.distance_resetMission):
+							self.flag_errChangePosition = 1
+
+				else:                                     # Lệnh chưa hoàn thành mà bị lái sang vị trí khác
+					# -- add 23/12/2021: Xu ly loi Dang Parking/ di chuyẻn/ hoặc di chuyển xong thi bi di chuyển ra chỗ khác -> AGV di chuyển và parking lại					
+					delta_distance = self.calculate_distance(self.robotPose_nav.pose.position, self.pose_parkingRuning.position)
+					# -- phien ban 2: Xac dinh do lech giua goc cua AGV voi goc cua diem vao Tag
+					delta_angle = self.calculate_angle(self.robotPose_nav.pose.orientation, self.parking_poseTarget.orientation)
+
+					if (delta_distance > 0.2 or abs(delta_angle) > radians(20)):
+						self.completed_moveSimple = 0
+						self.completed_moveSpecial = 0
 
 				# -- add 27/12/2021: Sua loi cu di thang ra sau khi parking
 				if self.completed_before_mission == 1 and self.completed_checkLift == 1 and self.completed_backward == 0:
@@ -1314,7 +1548,6 @@ class ros_control():
 					# elif self.after_mission == self.serverMission_charger: # Sac
 					# 	self.charger_requir = self.charger_on
 					# 	self.flag_Auto_to_Byhand = 0
-
 					else: 
 						self.flag_Auto_to_Byhand = 0
 
@@ -1322,13 +1555,15 @@ class ros_control():
 				else:
 					self.flag_Auto_to_Byhand = 0
 
-				self.process = 2
+				self.process = 43      ## chang here 2
 			else:
 				self.process = 43
 		
 		elif self.process == 43: 	# Thực hiện nhiệm vụ trước.
+			self.completed_before_mission = 1
+			# print("thực hiện nhiêm vu truoc")
 			if self.completed_before_mission == 0: # chua thuc hien
-				
+				print("thực hiện nhiêm vu truoc")
 				self.job_doing = 2 
 				if self.before_mission == 0:
 					self.charger_requir = self.charger_off
@@ -1361,6 +1596,8 @@ class ros_control():
 				self.process = 44
 
 		elif self.process == 44:	# Thuc hien kiểm tra kệ có trên bàn nâng ko.
+			self.completed_checkLift = 1
+			# print("check ke ")
 			if self.completed_checkLift == 0:
 				self.job_doing = 3
 				if self.before_mission == self.serverMission_liftUp or self.before_mission == 1: # Nâng
@@ -1379,7 +1616,8 @@ class ros_control():
 			else:
 				self.process = 45
 
-		elif self.process == 45:	# Thuc hien di chuyen lui.
+		elif self.process == 45:	# Thuc hien di chuyển thẳng từ điểm thao tác ra lộ trình
+			# print("di thang ra diem lo trinh")
 			if self.completed_backward == 1:
 				self.process = 46
 				# -- add 15/04/2022
@@ -1388,7 +1626,7 @@ class ros_control():
 				self.job_doing = 4
 				# -- add 15/04/2022
 				if self.check_listPoints(self.NN_cmdRequest.list_id) == 1:
-						
+					print("di thang ra diem lo trinh")	
 					if self.flag_requirBackward == 1:
 						self.move_req.target_x = self.backward_x
 						self.move_req.target_y = self.backward_y
@@ -1415,11 +1653,13 @@ class ros_control():
 					self.process = 2
 
 		elif self.process == 46:	# Thuc hien di chuyen diem thuong.
+			# print("di chuyen diem thuong")
 			if self.completed_moveSimple == 1:      # 
 				self.process = 47
 				self.enb_move = 0
 			else:
 				self.job_doing = 5
+				print("di chuyen diem thuong")
 				if (len(self.NN_cmdRequest.list_x) != 0) and (len(self.NN_cmdRequest.list_y) != 0) and (self.target_x < 500) and (self.target_y < 500):
 					self.move_req.target_x = self.target_x
 					self.move_req.target_y = self.target_y
@@ -1457,8 +1697,10 @@ class ros_control():
 				self.process = 2
 
 	 	# -- Parking	
+		
 		elif self.process == 47:   #  
 		  	# print "46 --"
+			# self.completed_moveSpecial = 1                           # change here
 			if self.completed_moveSpecial == 1:
 				self.completed_move = 1
 				self.process = 34
@@ -1500,10 +1742,21 @@ class ros_control():
 				self.process = 2
 
 		elif self.process == 50: 	# Yêu cầu di chuyển.
-			if self.after_mission == self.serverMission_liftDown_charger or self.after_mission == self.serverMission_charger:
+			# print("parking")
+			a = self.find_element(self.target_x, self.app_button.list_special_x)
+			b = self.find_element(self.target_y, self.app_button.list_special_y)
+			c = self.find_element(self.target_z, self.app_button.list_special_z)
+
+			if a == 1 and b == 1 and c == 1:
+			# add 2/5/2024
+			# if self.target_x == self.TARGET_SPECIAL_X1 and self.target_y == self.TARGET_SPECIAL_Y1 and self.target_z == self.TARGET_SPECIAL_Z1:
 				self.enb_parking = 2
+				rospy.loginfo("AGV move to special point, pass safety behind zone ")
 			else:
-				self.enb_parking = 1
+				if self.after_mission == self.serverMission_liftDown_charger or self.after_mission == self.serverMission_charger:
+					self.enb_parking = 2
+				else:
+					self.enb_parking = 1
 
 			self.parking_offset = self.NN_cmdRequest.offset
 			# -
@@ -1516,6 +1769,8 @@ class ros_control():
 			self.process = 2
 	# ------------------------------------------------------------------------------------
 		elif self.process == 34:	# -- Thực hiện nhiệm vụ sau.
+			# print("thực hiện nhiêm vu sau")
+			self.completed_after_mission = 1
 			if self.completed_after_mission == 0: # chua thuc hien
 				self.job_doing = 7
 				if self.after_mission == 0:
@@ -1550,6 +1805,7 @@ class ros_control():
 						self.charger_requir = self.charger_on # turn on charger				
 
 				self.process = 2
+
 			else:
 				self.process = 35
 
@@ -1557,7 +1813,12 @@ class ros_control():
 			self.job_doing = 8
 			self.process = 2
 			self.log_mess("warn", "Wating new Target ...", 0)
-			
+
+			# Đang chờ lệnh mới mà agv bị kéo sang vị trí khác.
+			delta_distance = self.calculate_distance(self.robotPose_nav.pose.position, self.poseWait.position)
+			if (delta_distance > self.distance_resetMission):
+				self.flag_errChangePosition = 1
+
 		# -- Tag + Offset:
 		if self.mode_operate == self.mode_auto:
 			if self.completed_move == 1:
@@ -1569,8 +1830,10 @@ class ros_control():
 
 			if self.completed_before_mission == 1 and self.completed_after_mission == 0 and self.flag_checkLiftError == 0:
 				self.NN_infoRespond.task_status = self.before_mission
+
 			elif self.completed_before_mission == 1 and self.completed_after_mission == 0 and self.flag_checkLiftError == 1:
 				self.NN_infoRespond.task_status = self.statusTask_liftError
+
 			if self.completed_before_mission == 1 and self.completed_after_mission == 1:
 				self.NN_infoRespond.task_status = self.after_mission
 
@@ -1602,61 +1865,62 @@ class ros_control():
 		self.pub_move_req(self.enb_move, self.move_req)  # Pub Navigation
 
 		# -- Speaker
-		if self.flag_error == 1 and self.flag_warning == 1:
-			self.speaker_requir = self.spk_error
-		elif self.flag_error == 1 and self.flag_warning == 0:
-			self.speaker_requir = self.spk_error
-		elif self.flag_error == 0 and self.flag_warning == 1:
-			self.speaker_requir = self.spk_warn			
-		else:
-			if self.completed_backward == 0 and self.completed_before_mission == 0 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
-				self.speaker_requir = self.spk_move
-			elif self.completed_backward == 1 and self.completed_before_mission == 0 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
-				self.speaker_requir = self.spk_move
-			elif self.completed_backward == 1 and self.completed_before_mission == 1 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
-				self.speaker_requir = self.spk_move
-			elif self.completed_backward == 1 and self.completed_before_mission == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:	
-				self.speaker_requir = self.spk_move
-			elif self.completed_backward == 1 and self.completed_before_mission == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 1 and self.completed_after_mission == 0:	
-				self.speaker_requir = self.spk_move
-			elif self.completed_backward == 1 and self.completed_before_mission == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 1 and self.completed_after_mission == 1:
-				self.speaker_requir = self.spk_move
+		if self.mode_operate == self.mode_auto:
+			if self.flag_error == 1 and self.flag_warning == 1:
+				self.speaker_requir = self.SPK_ERROR
+			elif self.flag_error == 1 and self.flag_warning == 0:
+				self.speaker_requir = self.SPK_ERROR
+			elif self.flag_error == 0 and self.flag_warning == 1:
+				self.speaker_requir = self.SPK_WARN			
 			else:
-				self.speaker_requir = self.spk_move
+				if self.completed_backward == 0 and self.completed_before_mission == 0 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
+					self.speaker_requir = self.SPK_MOVE
+				elif self.completed_backward == 1 and self.completed_before_mission == 0 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
+					self.speaker_requir = self.SPK_MOVE
+				elif self.completed_backward == 1 and self.completed_before_mission == 1 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
+					self.speaker_requir = self.SPK_MOVE
+				elif self.completed_backward == 1 and self.completed_before_mission == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:	
+					self.speaker_requir = self.SPK_MOVE
+				elif self.completed_backward == 1 and self.completed_before_mission == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 1 and self.completed_after_mission == 0:	
+					self.speaker_requir = self.SPK_MOVE
+				elif self.completed_backward == 1 and self.completed_before_mission == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 1 and self.completed_after_mission == 1:
+					self.speaker_requir = self.SPK_MOVE
+				else:
+					self.speaker_requir = self.SPK_MOVE
 
-		# -- LED
-		if self.flag_error == 1:
-			self.led = self.led_error
-		else:
-			if self.completed_before_mission == 0 and self.completed_backward == 0 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
-				self.led = self.led_perform
+			# -- LED
+			if self.flag_error == 1:
+				self.led = self.led_error
+			else:
+				if self.completed_before_mission == 0 and self.completed_backward == 0 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
+					self.led = self.led_perform
 
-			elif self.completed_before_mission == 1 and self.completed_backward == 0 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
-				if (self.status_goalControl.safety == 1):
-					self.led = self.led_stopBarrier
+				elif self.completed_before_mission == 1 and self.completed_backward == 0 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
+					if (self.status_goalControl.safety == 1):
+						self.led = self.led_stopBarrier
+					else:
+						self.led = self.led_simpleRun
+
+				elif self.completed_before_mission == 1 and self.completed_backward == 1 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
+					if (self.status_goalControl.safety == 1):
+						self.led = self.led_stopBarrier
+					else:
+						self.led = self.led_simpleRun
+
+				elif self.completed_before_mission == 1 and self.completed_backward == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:	
+					if (self.parking_status.warning == 1):
+						self.led = self.led_stopBarrier
+					else:
+						self.led = self.led_specialRun
+					
+				elif self.completed_before_mission == 1 and self.completed_backward == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 1 and self.completed_after_mission == 0:	
+					self.led = self.led_perform
+
+				elif self.completed_before_mission == 1 and self.completed_backward == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 1 and self.completed_after_mission == 1:
+					self.led = self.led_completed
+
 				else:
 					self.led = self.led_simpleRun
-
-			elif self.completed_before_mission == 1 and self.completed_backward == 1 and self.completed_moveSimple == 0 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:
-				if (self.status_goalControl.safety == 1):
-					self.led = self.led_stopBarrier
-				else:
-					self.led = self.led_simpleRun
-
-			elif self.completed_before_mission == 1 and self.completed_backward == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 0 and self.completed_after_mission == 0:	
-				if (self.parking_status.warning == 1):
-					self.led = self.led_stopBarrier
-				else:
-					self.led = self.led_specialRun
-				
-			elif self.completed_before_mission == 1 and self.completed_backward == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 1 and self.completed_after_mission == 0:	
-				self.led = self.led_perform
-
-			elif self.completed_before_mission == 1 and self.completed_backward == 1  and self.completed_moveSimple == 1 and self.completed_moveSpecial == 1 and self.completed_after_mission == 1:
-				self.led = self.led_completed
-
-			else:
-				self.led = self.led_simpleRun
 				
 		# -- -- -- pub Board
 		time_curr = rospy.get_time()
@@ -1672,11 +1936,11 @@ class ros_control():
 			if self.enb_spk == 1:
 				# tat Loa khi sac thanh cong!
 				if self.charger_write == self.charger_on and self.main_info.charge_current >= self.charger_valueOrigin and self.flag_error == 0:
-					self.speaker = self.spk_off
+					self.speaker = self.SPK_OFF
 				else:
 					self.speaker = self.speaker_requir
 			else:
-				self.speaker = self.spk_off
+				self.speaker = self.SPK_OFF
 
 			self.Main_pub(self.charger_write, self.speaker, self.EMC_write, self.EMC_reset)  # MISSION
 
@@ -1687,7 +1951,7 @@ class ros_control():
 			# else:
 				# self.HC_request.RBG1 = self.led
 
-			self.HC_request.RBG2 = 0
+			self.HC_request.RBG2 = self.led 
 			self.pub_HC.publish(self.HC_request)
 
 			# -- Request task Driver:
@@ -1708,6 +1972,9 @@ class ros_control():
 		self.pub_cancelMission.publish(self.cancelMission_status)
 		
 		self.pub_park(self.enb_parking, self.parking_poseBefore, self.parking_poseTarget, self.parking_offset)
+
+		# -- ps3
+		self.pub_controlPs3.publish(self.enb_ps3)
 		self.rate.sleep()
 
 def main():

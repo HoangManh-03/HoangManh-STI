@@ -1,0 +1,15 @@
+std_msgs/Header header
+int32 status
+float64[] rmse
+float64[] weight
+int32[] calagain_momatch
+int32[] calagain_samematch
+int32[] calagain_highrmse
+float64 x
+float64 y
+float64 phi
+float64 w
+int32[] localID
+int32[] globalID
+int32 process
+int32 number_reflectors

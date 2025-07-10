@@ -40,7 +40,7 @@ class SafetyZone{
 int main(int argc, char **argv){
     cout << "Program start!";
 
-    ros::init(argc, argv, "Program_launch");
+    ros::init(argc, argv, "AcquireScan");
     ros::NodeHandle n;
     ros::Rate loop_rate(50);
 

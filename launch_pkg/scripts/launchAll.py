@@ -55,10 +55,10 @@ class Launch:
         elif (self.process == 2): # - Wait
             return 1
 
-class scanMap():
+class launcher():
     def __init__(self):
         print("ROS Initial!")
-        rospy.init_node('scanMap_launch', anonymous=False)
+        rospy.init_node('launcher', anonymous=False)
         self.rate = rospy.Rate(10)
 
         self.count_node = 0
@@ -79,8 +79,16 @@ class scanMap():
         # -- module - checkPort.
         self.path_checkPort = rospy.get_param('path_checkPort', '')
         self.launch_checkPort = Launch(self.path_checkPort)
+        # rospy.Subscriber('/port_status_v2', Port_status_v2, self.callBack_checkPort)
         rospy.Subscriber('/status_port', Status_port, self.callBack_checkPort)
         self.is_checkPort = 0
+        self.count_node += 1
+
+        # -- module - Nuc info.
+        self.path_nuc = rospy.get_param('path_nuc', '')
+        self.launch_nuc = Launch(self.path_nuc)
+        rospy.Subscriber('/nuc_info', Nuc_info, self.callBack_nuc)
+        self.is_nuc = 0
         self.count_node += 1
 
         # -- module - reconnectBase.
@@ -105,8 +113,8 @@ class scanMap():
         self.count_node += 1
 
         # -- module - driverAll.
-        self.path_driverReconnect = rospy.get_param('path_driverReconnect', '')
-        self.launch_driverReconnect = Launch(self.path_driverReconnect)
+        self.path_driverAll = rospy.get_param('path_driverAll', '')
+        self.launch_driverAll = Launch(self.path_driverAll)
         rospy.Subscriber('/driver1_respond', Driver_respond, self.callBack_driverLeft)
         rospy.Subscriber('/driver2_respond', Driver_respond, self.callBack_driverRight)
         self.is_driverLeft = 0
@@ -116,7 +124,7 @@ class scanMap():
         # -- module - nav350.
         self.path_nav350 = rospy.get_param('path_nav350', '')
         self.launch_nav350 = Launch(self.path_nav350)
-        rospy.Subscriber('/scan', LaserScan, self.callBack_nav350)
+        rospy.Subscriber('/scan', Nav350_data, self.callBack_nav350)
         self.is_nav350 = 0
         self.count_node += 1
 
@@ -231,6 +239,9 @@ class scanMap():
     def callBack_checkPort(self, data):
         self.is_checkPort = 1
 
+    def callBack_nuc(self, data):
+        self.is_nuc = 1
+
     def callBack_reconnectBase(self, data):
         self.is_reconnectBase = 1
 
@@ -313,8 +324,16 @@ class scanMap():
                     self.step += 1
                     time.sleep(self.timeWait)
 
-            # -- reconnectBase
+            # -- nuc
             elif (self.step == 2):
+                self.notification = 'launch_nucInfo'
+                self.launch_nuc.start()
+                if (self.is_nuc == 1):
+                    self.step += 1
+                    time.sleep(self.timeWait)
+
+            # -- reconnectBase
+            elif (self.step == 3):
                 self.notification = 'launch_reconnectBase'
                 self.launch_reconnectBase.start()
                 if (self.is_reconnectBase == 1):
@@ -322,42 +341,37 @@ class scanMap():
                     time.sleep(self.timeWait)
 
             # -- reconnectDriver
-            elif (self.step == 3):
-                self.notification = 'launch_reconnectDriver'
-                self.step += 1
-                # self.launch_reconnectDriver.start()
-                # if (self.is_reconnectDriver == 1):
-                #     self.step += 1
-                #     time.sleep(self.timeWait)
-
-            # -- data APP
             elif (self.step == 4):
-                self.notification = 'launch_dataApp'
-                self.step = 5
-                # try:
-                #     sts = self.launch_dataApp.start_and_wait(2.)
-                #     if (sts == 1):
-                #         self.step += 1
-                #         time.sleep(self.timeWait)
-                # except:
-                #     self.step += 1
-
-            # -- main
-            elif (self.step == 5):
-                self.notification = 'launch_main'
-                self.launch_main.start()
-                if (self.is_main == 1):
+                self.notification = 'launch_reconnectDriver'
+                self.launch_reconnectDriver.start()
+                if (self.is_reconnectDriver == 1):
                     self.step += 1
                     time.sleep(self.timeWait)
 
-            # -- hc
+            # -- data APP
+            elif (self.step == 5):
+                self.notification = 'launch_dataApp'
+                sts = self.launch_dataApp.start_and_wait(3.)
+                if (sts == 1):
+                    self.step += 1
+                    time.sleep(self.timeWait)
+
+            # -- main
             elif (self.step == 6):
-                self.notification = 'launch_hc'
-                self.step = 7
-                # self.launch_hc.start()
-                # if (self.is_hc == 1):
-                #     self.step += 1
-                #     time.sleep(self.timeWait)
+                self.notification = 'launch_main'
+                self.launch_main.start()
+                if (self.is_main == 1):
+                    # self.step += 1
+                    self.step = 9
+                    time.sleep(self.timeWait)
+
+            # -- hc
+            # elif (self.step == 6):
+            #     self.notification = 'launch_hc'
+            #     self.launch_hc.start()
+            #     if (self.is_hc == 1):
+            #         self.step += 1
+            #         time.sleep(self.timeWait)
 
             # -- oc
             # elif (self.step == 7):
@@ -368,60 +382,47 @@ class scanMap():
             #         time.sleep(self.timeWait)
 
             # -- imu
-            elif (self.step == 7):
-                self.notification = 'launch_imu'
-                self.step = 8
-                # self.launch_imu.start()
-                # if (self.is_imu == 1):
-                #     self.step += 1
-                #     time.sleep(self.timeWait)
-
-            # -- loadcell
-            # elif (self.step == 9):
-            #     self.notification = 'launch_loadcell'
-            #     self.launch_loadcell.start()
-            #     if (self.is_loadcell == 1):
+            # elif (self.step == 8):
+            #     self.notification = 'launch_imu'
+            #     self.launch_imu.start()
+            #     if (self.is_imu == 1):
             #         self.step += 1
             #         time.sleep(self.timeWait)
 
+            # -- loadcell
+            elif (self.step == 9):
+                 self.notification = 'launch_loadcell'
+                 self.launch_loadcell.start()
+                 if (self.is_loadcell == 1):
+                     self.step += 1
+                     time.sleep(self.timeWait)
+
             # -- driverAll
-            elif (self.step == 8):
-                self.notification = 'launch_driverReconnect'
-                sts = self.launch_driverReconnect.start_and_wait(3.)
-                if sts == 1:
+            elif (self.step == 10):
+                self.notification = 'launch_driverAll'
+                self.launch_driverAll.start()
+                if (self.is_driverLeft == 1 and self.is_driverRight == 1):
                     self.step += 1
                     time.sleep(self.timeWait)
 
             # -- nav350
-            elif (self.step == 9):
+            elif (self.step == 11):
                 self.notification = 'launch_nav350'
                 self.launch_nav350.start()
                 if (self.is_nav350 == 1):
-                    self.step += 1
+                    self.step = 13
                     time.sleep(self.timeWait)
 
             # -- imuFilter
-            # elif (self.step == 10):
+            # elif (self.step == 12):
             #     self.notification = 'launch_imuFilter'
-            #     self.step = 11
-                # self.launch_imuFilter.start()
-                # if (self.is_imuFilter == 1):
-                #     self.step += 1
-                #     time.sleep(self.timeWait)
+            #     self.launch_imuFilter.start()
+            #     if (self.is_imuFilter == 1):
+            #         self.step += 1
+            #         time.sleep(self.timeWait)
 
-            # -- data APP
-            elif (self.step == 10):
-                self.notification = 'launch_dataApp'
-                try:
-                    sts = self.launch_dataApp.start_and_wait(2.)
-                    if (sts == 1):
-                        self.step += 1
-                        time.sleep(self.timeWait)
-                except:
-                    self.step += 1
-                    
             # -- kinematic
-            elif (self.step == 11):
+            elif (self.step == 13):
                 self.notification = 'launch_kinematic'
                 self.launch_kinematic.start()
                 if (self.is_kinematic == 1):
@@ -429,7 +430,7 @@ class scanMap():
                     time.sleep(self.timeWait)
 
             # -- get pose robot from nav.
-            elif (self.step == 12):
+            elif (self.step == 14):
                 self.notification = 'launch_robotPoseNav'
                 self.launch_robotPoseNav.start()
                 if (self.is_robotPoseNav == 1):
@@ -437,15 +438,15 @@ class scanMap():
                     time.sleep(self.timeWait)
 
             # -- ekf
-            elif (self.step == 13):
+            elif (self.step == 15):
                 self.notification = 'launch_ekf'
-                sts = self.launch_ekf.start_and_wait(3.)
-                if self.is_ekf == 1 or sts == 1:
+                self.launch_ekf.start()
+                if (self.is_ekf == 1):
                     self.step += 1
                     time.sleep(self.timeWait)
 
             # -- safety zone Nav350
-            elif (self.step == 14):
+            elif (self.step == 16):
                 self.notification = 'launch_safetyNav350'
                 self.launch_safetyNav350.start()
                 if (self.is_safetyNav350 == 1):
@@ -453,7 +454,7 @@ class scanMap():
                     time.sleep(self.timeWait)
 
             # -- goal control
-            elif (self.step == 15):
+            elif (self.step == 17):
                 self.notification = 'launch_goalControl'
                 self.launch_goalControl.start()
                 if (self.is_goalControl == 1):
@@ -461,7 +462,7 @@ class scanMap():
                     time.sleep(self.timeWait)
 
             # -- parking control
-            elif (self.step == 16):
+            elif (self.step == 18):
                 self.notification = 'launch_parkingControl'
                 self.launch_parkingControl.start()
                 if (self.is_parkingControl == 1):
@@ -469,7 +470,7 @@ class scanMap():
                     time.sleep(self.timeWait)
 
             # -- client
-            elif (self.step == 17):
+            elif (self.step == 19):
                 self.notification = 'launch_StiClient'
                 sts = self.launch_client.start_and_wait(3.)
                 if (self.is_client == 1 or sts == 1):
@@ -477,7 +478,7 @@ class scanMap():
                     time.sleep(self.timeWait)
 
             # -- control
-            elif (self.step == 18):
+            elif (self.step == 20):
                 self.notification = 'launch_StiControl'
                 self.launch_control.start()
                 if (self.is_control == 1):
@@ -493,12 +494,12 @@ class scanMap():
             # 		time.sleep(self.timeWait)
 
             # -- Completed
-            elif (self.step == 19):
+            elif (self.step == 21):
                 self.notification = 'Completed!'
 
             # -- -- PUBLISH STATUS
             # self.stausLaunch.persent = int((self.step/self.count_node)*100.)
-            self.stausLaunch.persent = int((self.step/19)*100.)
+            self.stausLaunch.persent = int((self.step/21)*100.)
             self.stausLaunch.position = self.step
             self.stausLaunch.notification = self.notification
             self.pub_stausLaunch.publish(self.stausLaunch)
@@ -508,7 +509,7 @@ class scanMap():
 def main():
     print('Program starting')
     try:
-        program = scanMap()
+        program = launcher()
         program.run()
     except rospy.ROSInterruptException:
         pass

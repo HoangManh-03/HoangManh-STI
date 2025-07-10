@@ -69,19 +69,22 @@ install(TARGETS sicknav350_node sicknav_node sicknav350_oldNode
 install(DIRECTORY launch 
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 # -- 
-add_executable(robotPose_nav src/robotPose_nav.cpp)
+add_executable(robotPose_nav src/robotPose_NavFix.cpp)
 target_link_libraries(robotPose_nav ${catkin_LIBRARIES})
+
+add_executable(datest src/datest.cpp)
+target_link_libraries(datest ${catkin_LIBRARIES})
 
 install(TARGETS robotPose_nav
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 # -- 
-add_executable(robotPose_navfix src/robotPose_NavFix.cpp)
-target_link_libraries(robotPose_navfix ${catkin_LIBRARIES})
+# add_executable(robotPose_navfix src/robotPose_NavFix.cpp)
+# target_link_libraries(robotPose_navfix ${catkin_LIBRARIES})
 
-install(TARGETS robotPose_navfix
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(TARGETS robotPose_navfix
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 # -- 
 add_executable(sicknav350_nodeReflector src/sicknav350_nodeReflector.cpp)
 target_link_libraries(sicknav350_nodeReflector ${catkin_LIBRARIES})

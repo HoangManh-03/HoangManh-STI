@@ -1,0 +1,7 @@
+<launch>
+      <!-- vung lidar  -->
+      <arg name="node_namespace" default="AcquireScan" />
+      <node pkg="r2000_driver" name="$(arg node_namespace)" type="$(arg node_namespace)" output="screen">
+            <param name="deviceAddress" value="169.254.32.205" />
+      </node>
+</launch>

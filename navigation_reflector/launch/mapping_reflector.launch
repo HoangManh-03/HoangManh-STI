@@ -1,0 +1,5 @@
+<launch>
+	<node pkg="navigation_reflector" name="mapping_reflector" type="crud_refmap.py" output="screen" > 
+		<param name="dir_mapReflector" value="/home/stivietnam/catkin_ws/src/navigation_reflector/data_new/map_reflector_05042025.json"/> 	
+	</node>
+</launch>

@@ -1,0 +1,25 @@
+Lịch sử test AGV với pepperl lidar
+*** map gương tham chiếu 5 gương:
+1. Sử dụng thuật toán khớp hình học (x, y), chưa có thuật toán bù chuyển đông
+    + Tốc độ: max 0.53 m/s. 0.4 rad/s 
+    + Lộ trình di chuyển: Theo đường thẳng
+    + Video: 10h49, thứ 5 ngày 27/2/2025
+    
+    + Tốc độ di chuyển 0.8 m/s 0.5 rad/s
+    + Lộ trình di chuyển: Theo đường thẳng
+    + Video: 11h18, thứ 5 ngày 27/2/2025    
+
+
+2. Sử dụng thuật toán khớp hình học (d, theta), và thuật toán bù chuyển động
+    + Tốc độ: max 0.53 m/s
+    + Đánh giá Lộ trình di chuyển: Theo đường thẳng
+    + Sai số vị trí: 
+    + 
+
+    + Tốc độ: max 0.8 m/s
+    + Đánh giá Lộ trình di chuyển: Theo đường thẳng
+    + Sai số vị trí: 
+    +     
+    
+**** Map gương tham chiếu full map
+3. Giống số 2, thêm giới hạn khoảng cách d_near, d_far

@@ -39,6 +39,12 @@ add_message_files(
 
   Reflector_data.msg
   Reflector_array.msg
+
+  CAN_received.msg
+  CAN_send.msg
+  CAN_status.msg
+  
+  Keyboard_command.msg
 )
 
 ## Specify additional locations of header files

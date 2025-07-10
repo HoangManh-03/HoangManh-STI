@@ -16,5 +16,5 @@
 	<param name="topicControl_driverRight" value="/driver2_query" />
 	<param name="topicControl_vel" value="/cmd_vel" />
 	<param name="frame_id" value="frame_robot1" />
-	<node pkg="base_pkg" type="kinematic.py" name="kinematic_node" output="screen">	</node>
+	<node pkg="base_pkg" type="kinematic_v2.py" name="kinematic_node" output="screen">	</node>
 </launch>

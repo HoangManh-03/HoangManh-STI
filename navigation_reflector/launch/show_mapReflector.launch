@@ -1,0 +1,10 @@
+<launch>
+	<node pkg="navigation_reflector" name="r2000_referenceRef_map" type="show_refmap.py" output="screen" > 
+		<param name="dir_map" value='/home/stivietnam/catkin_ws/src/navigation_reflector/data_new/data_v2/fake_data/map_reflector_sti_170.json'/>
+		<param name="case" value="1"/>         <!-- 0: pub data in no type/ 1: pub data in increment distance type/ 2: pub data in increment angle type -->
+		<param name="pub_segment" value="0"/>
+		<param name="start_id" value="0"/>
+		<param name="end_id" value="-1"/>
+	</node>
+	
+</launch>

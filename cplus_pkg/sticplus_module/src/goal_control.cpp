@@ -65,167 +65,209 @@ class goalControl{
     double khoang_offset;
     double distance_goArc;
     bool needRotatyFinish;
-    bool need_check_goal;
+    bool need_check_goal = false;
 
     ros::Subscriber sub_request_move;
     sti_msgs::Move_request req_move;
-    bool is_request_move;
+    bool is_request_move = false;
 
     ros::Subscriber sub_robotPose;
-    bool is_pose_robot;
-    double theta_rb_ht;
+    bool is_pose_robot = false;
+    double theta_rb_ht = 0.0;
     geometry_msgs::Pose poseRbMa;
 
     ros::Subscriber sub_GetRobotOdom;
-    bool is_odom_rb;
+    bool is_odom_rb = false;
     nav_msgs::Odometry odom_rb;
 
     ros::Subscriber sub_HCinfo;
     sti_msgs::HC_info zone_lidar;
-    bool is_check_zone;
+    bool is_check_zone = false;
 
     ros::Subscriber sub_rawvel;
-    bool is_raw_vel;
+    bool is_raw_vel = false;
     geometry_msgs::TwistWithCovarianceStamped vel_raw;
 
     ros::Subscriber sub_safetyNav;
-    bool is_ZoneNav;
+    bool is_ZoneNav = false;
     std_msgs::Int8 dataZoneNav;
 
     ros::Publisher pub_respond;
     sti_msgs::Move_respond pub_move;
 
     ros::Publisher pub_requestFields;
-    uint8_t oldselectfield;
+    uint8_t oldselectfield = 0;
 
     ros::Publisher pub_stt_goal;
     ros::Publisher pub_path_local;
     ros::Publisher pub_path_global;
     ros::Publisher pub_cmd_vel;
 
-    uint8_t auto_reset;
-    bool is_slowly;
-    uint8_t check_goArc;
+    uint8_t auto_reset = 0;
+    bool is_slowly = false;
+    uint8_t check_goArc = 0;
 
     // cac bien khac
-    int process;
+    int process = 0;
     string pre_mess = "";      // cout<< just one time.
-    uint8_t war_agv; // 0: agv di chuyen binh thuong | 1: agv gap vat can
+    uint8_t war_agv = 0; // 0: agv di chuyen binh thuong | 1: agv gap vat can
 
-    double coordinate_unknown;
-    vector<double> list_unknow;
-    bool is_target_change;
+    double coordinate_unknown = 500.0;
+    vector<double> list_unknow {0.0, 0.0, 0.0, 0.0, 0.0};
+    bool is_target_change = false;
 
-    double target_x;
-    double target_y;
-    double target_z;
+    double target_x = coordinate_unknown;
+    double target_y = coordinate_unknown;
+    double target_z = 0;
     int32_t tag;
     double offset;
-    vector<double> list_x;
-    vector<double> list_y;
-    vector<int32_t> list_id;
-    vector<double> list_vel;
-    vector<double> old_list_x;
-    vector<double> old_list_y;
-    double old_target_x;
-    double old_target_y;
-    int32_t old_id_follow;
-    int32_t mission;
+    vector<double> list_x {0.0, 0.0, 0.0, 0.0, 0.0};
+    vector<double> list_y {0.0, 0.0, 0.0, 0.0, 0.0};
+    vector<int32_t> list_id {0, 0, 0, 0, 0};
+    vector<double> list_vel {0.0, 0.0, 0.0, 0.0, 0.0};
+    vector<double> old_list_x = list_unknow;
+    vector<double> old_list_y = list_unknow;
+    double old_target_x = coordinate_unknown;
+    double old_target_y = coordinate_unknown;
+    int32_t old_id_follow = 0.0;
+    int32_t mission = 0;
 
-    uint8_t completed_simple;      // bao da den dich.
-    uint8_t completed_backward;     // bao da den aruco.
-    uint8_t completed_all;
-    uint8_t completed_list;
-    uint8_t completed_reset;
-    uint8_t stt_agv;
-    uint8_t error;
+    uint8_t completed_simple = 0;      // bao da den dich.
+    uint8_t completed_backward = 0;     // bao da den aruco.
+    uint8_t completed_all = 0;
+    uint8_t completed_list = 0;
+    uint8_t completed_reset = 0;
+    uint8_t stt_agv = 0;
+    uint8_t error = 0;
 
-    bool end_of_list;
+    bool end_of_list = false;
 
-    double cur_goal_x;
-    double cur_goal_y;
+    double cur_goal_x = 0.0;
+    double cur_goal_y = 0.0;
 
-    double point_goal_start_x;
-    double point_goal_start_y;
+    double point_goal_start_x = 0.0;
+    double point_goal_start_y = 0.0;
 
-    bool is_need_turn_step1;
-    bool is_need_pttt;
-    bool is_pre_pttt;
-    double x_td_goal;
-    double y_td_goal;
-    float dis_hc;
+    bool is_need_turn_step1 = 0;
+    bool is_need_pttt = 0;
+    bool is_pre_pttt = 0;
+    double x_td_goal = 0.0;
+    double y_td_goal = 0.0;
+    float dis_hc = 0.0;
 
-    uint8_t cur_goal_is; //1: diem thuong, 2: diem dac biet, 3: diem dich
+    uint8_t cur_goal_is = 0; //1: diem thuong, 2: diem dac biet, 3: diem dich
 
-    double distance_goal;
+    double distance_goal = 0.0;
 
-    double tol_simple;      // do chinh xac theo truc x,y
-    double tol_target;
-    double ss_luivsnextGoal;
+    double tol_simple = 0.04;      // do chinh xac theo truc x,y
+    double tol_target = 0.01;
+    double ss_luivsnextGoal = 0.15;
 
-    float vel_x_now;
+    float vel_x_now = 0.0;
 
-    float vel_x_control;   // toc do theo truc x
-    double theta_max;
+    float vel_x_control = 0.0;   // toc do theo truc x
+    double theta_max = 0.6;
 
-    float vel_x1;		// level 1 slowless
-    double theta_max_1;
+    float vel_x1 = 0.45;		// level 1 slowless
+    double theta_max_1 = 0.4;
 
-    float vel_x2;  		// level 2 
-    double theta_max_2;
+    float vel_x2 = 0.55;  		// level 2 
+    double theta_max_2 = 0.5;
 
-    float vel_x3;  		// level 3 fastless
-    double theta_max_3;
+    float vel_x3 = 0.65;  		// level 3 fastless
+    double theta_max_3 = 0.6;
 
-    float min_vel_x;
+    float min_vel_x = 0.04;
 
-    double odom_x_ht;
-    double odom_y_ht;
-    float kc_backward;
+    double odom_x_ht = 0.0;
+    double odom_y_ht = 0.0;
+    float kc_backward = 0.0;
 
-    double XRobotStart;
-    double YRobotStart;
+    double XRobotStart = 0.0;
+    double YRobotStart = 0.0;
 
-    float min_vel_x_gh;
-    double theta;
+    float min_vel_x_gh = 0.2;
+    double theta = 0.0;
 
-    double angle_find_vel;
-    double time_start_navi;
+    double angle_find_vel = 25.0*M_PI/180.0;
+    double time_start_navi = ros::Time::now().toSec();
 
-    double angle_giam_toc;
+    double angle_giam_toc = 45.0*M_PI/180.0;
 
-    float dis_gt;
-    float dis_gt_khilui;
-    float kc_con_lai;
-    float kc_qd;
-    bool is_over_goal;
+    float dis_gt = 1.15;
+    float dis_gt_khilui = 0.3;
+    float kc_con_lai = 0.0;
+    float kc_qd = 0.0;
+    bool is_over_goal = false;
 
-    double X_n;
-    double Y_n;
-    double a_qd;
-    double b_qd;
-    double c_qd;
+    double X_n = 0.0;
+    double Y_n = 0.0;
+    double a_qd = 0.0;
+    double b_qd = 0.0;
+    double c_qd = 0.0;
 
-    int32_t id_fl;
-    float vel_fl;
+    int32_t id_fl = 0;
+    float vel_fl = 0.0;
 
-    uint8_t rate_cmdvel;
-    double time_tr;
+    uint8_t rate_cmdvel = 30;
+    double time_tr = ros::Time::now().toSec();
 
     nav_msgs::Path path_plan;
 
-    double timeRecieveNAV;
-    double timeRecieveTIM;
+    double timeRecieveNAV = ros::Time::now().toSec();
+    double timeRecieveTIM = ros::Time::now().toSec();
 
-    uint8_t timeZone3TIM;
-    uint8_t timeZone2TIM;
+    uint8_t timeZone3TIM = 0;
+    uint8_t timeZone2TIM = 0;
 
-    float timeWaitTIM;
-    float timeWaitNAV;
+    float timeWaitTIM = 0.1;
+    float timeWaitNAV = 0.5;
 
-    uint8_t oldzone;
+    uint8_t oldzone = 0;
     
-    uint8_t is_target;
+    uint8_t is_target = 0;
+
+    goalControl(ros::NodeHandle *nh, ros::NodeHandle *npr){
+        ros::param::get("~vel_x_max", vel_x_max);
+        ros::param::get("~vel_x_min", vel_x_min);
+        ros::param::get("~vel_theta_max", vel_theta_max);
+        ros::param::get("~vel_theta_min", vel_theta_min);
+        ros::param::get("~tolerance_xy_max", tolerance_xy_max);
+        ros::param::get("~tolerance_xy_min", tolerance_xy_min);
+        ros::param::get("~tolerance_theta_max", tolerance_theta_max);
+        ros::param::get("~tolerance_theta_min", tolerance_theta_min);
+        ros::param::get("~tolerance_theta", tolerance_theta);
+        ros::param::get("~tolerance_rot_step1", tolerance_rot_step1);
+        ros::param::get("~vel_rot_step1", vel_rot_step1);
+        ros::param::get("~vel_rot_step_f", vel_rot_step_f);
+        ros::param::get("~gioihan_lui", gioihan_lui);
+        ros::param::get("~he_so", K_x);
+        ros::param::get("~khoang_nhin_truoc_max", dist_ahead_max);
+        ros::param::get("~khoang_nhin_truoc_min", dist_ahead_min);
+        ros::param::get("~khoang_offset", khoang_offset);
+        ros::param::get("~distance_goArc", distance_goArc);
+        
+        // subscriber
+        sub_request_move = nh->subscribe("/request_move", 100, &goalControl::move_callback, this);
+        sub_robotPose = nh->subscribe("/robotPose_nav", 20, &goalControl::getPose, this);
+        sub_GetRobotOdom = nh->subscribe("/odometry", 10, &goalControl::cbGetRobotOdom, this);
+        sub_HCinfo = nh->subscribe("/HC_info", 1000, &goalControl::zone_callback, this);
+        sub_rawvel = nh->subscribe("/raw_vel", 100, &goalControl::rawvel_callback, this);
+        sub_safetyNav = nh->subscribe("/safety_NAV", 100, &goalControl::cbZoneNAV, this);   
+
+        // publisher
+        pub_respond = nh->advertise<sti_msgs::Move_respond>("/respond_move", 20);
+        pub_requestFields = nh->advertise<std_msgs::Int8>("/HC_fieldRequest", 20);
+        pub_stt_goal = nh->advertise<sti_msgs::Status_goal_control>("/status_goal_control", 10);
+        pub_path_local = nh->advertise<nav_msgs::Path>("/path_plan_local", 20);
+        pub_path_global = nh->advertise<nav_msgs::Path>("/path_plan_global", 20);
+        pub_cmd_vel = nh->advertise<geometry_msgs::Twist>("/cmd_vel", 20);
+
+        path_plan.header.frame_id = "frame_map_nav350";
+        path_plan.header.stamp = ros::Time::now();
+    }
+
+    ~goalControl(){}
 
 	geometry_msgs::Quaternion euler_to_quaternion(double euler){
 		geometry_msgs::Quaternion quat;
@@ -248,18 +290,18 @@ class goalControl{
 		return yaw;
     }
 
-    void move_callback(const sti_msgs::Move_request data){
+    void move_callback(const sti_msgs::Move_request& data){
         req_move = data;
         is_request_move = true;
     }
 
-    void getPose(const geometry_msgs::PoseStamped data){
+    void getPose(const geometry_msgs::PoseStamped& data){
         is_pose_robot = true;
         poseRbMa = data.pose;
         theta_rb_ht = quaternion_to_euler(poseRbMa.orientation);
     }
 
-    void zone_callback(const sti_msgs::HC_info data){
+    void zone_callback(const sti_msgs::HC_info& data){
         zone_lidar = data;
         is_check_zone = true;
         // timeRecieveTIM = time(NULL);
@@ -267,17 +309,17 @@ class goalControl{
         timeRecieveTIM = ros::Time::now().toSec();
     }
 
-    void rawvel_callback(const geometry_msgs::TwistWithCovarianceStamped data){
+    void rawvel_callback(const geometry_msgs::TwistWithCovarianceStamped& data){
         vel_raw = data;
         is_raw_vel = true;
     }
 
-    void cbGetRobotOdom(const nav_msgs::Odometry data){
+    void cbGetRobotOdom(const nav_msgs::Odometry& data){
         odom_rb = data;
         is_odom_rb = true;
     }
 
-    void cbZoneNAV(const std_msgs::Int8 data){
+    void cbZoneNAV(const std_msgs::Int8& data){
         dataZoneNav = data;
         is_ZoneNav = true;
         // auto timeRecieveNAV = chrono::high_resolution_clock::now();
@@ -491,7 +533,7 @@ class goalControl{
             return 2;
         }
     }
-        
+
     void reset_all(){
         completed_all = 0;
         completed_simple = 0;
@@ -546,7 +588,7 @@ class goalControl{
         //pt duong thang hinh chieu
         // a_hc = b_qd
         // b_hc = -a_qd
-        // c_hc = -self.poseRbMa.position.x*a_hc -self.poseRbMa.position.y*b_hc
+        // c_hc = -poseRbMa.position.x*a_hc -poseRbMa.position.y*b_hc
         // diem hinh chieu
         if (poseRbMa.position.x == X_s && poseRbMa.position.y == Y_s){
             // cout<<('VAO DAY ROI')
@@ -824,10 +866,10 @@ class goalControl{
 
                 // vel_th = fabs(theta) + 0.1
                 // if vel_th > vel_rot : vel_th = vel_rot
-                return vel_th;
+                // return vel_th;
             }
 
-            if (theta < 0){ //quay phai , vel_z < 0
+            else if (theta < 0){ //quay phai , vel_z < 0
                 // cout<< "a"
                 cout<< "Im here! ---------------------------AGV thuc hien quay phai -----------------" << endl;
                 if (fabs(theta) <= angle_giam_toc){
@@ -843,15 +885,16 @@ class goalControl{
 
                 // vel_th = -fabs(theta) - 0.1
                 // if vel_th < -vel_rot : vel_th = -vel_rot
-                return vel_th;
+                // return vel_th;
                 // buoc = 1
             }
         }
 
         else{
-            return -10;
+            vel_th = -10;
+            // return -10;
         }
-        // return vel_th;
+        return vel_th;
     }
 
     int8_t check_safetyNAV(double timeRecieve, float timeCheck){
@@ -1048,235 +1091,38 @@ class goalControl{
         bool id_bool = (getIndex(list_id, id) == (listIDValid.size() - 1))? true : false;
         return make_tuple(id, id_bool);
     }
-};
 
-int main(int argc, char **argv)
-{
-    cout << "Program start!";
-
-    ros::init(argc, argv, "goalControl_cpp");
-    ros::NodeHandle n;
-    ros::Rate loop_rate(50);
-
-    goalControl self;
-
-    ros::param::get("~vel_x_max", self.vel_x_max);
-    ros::param::get("~vel_x_min", self.vel_x_min);
-    ros::param::get("~vel_theta_max", self.vel_theta_max);
-    ros::param::get("~vel_theta_min", self.vel_theta_min);
-    ros::param::get("~tolerance_xy_max", self.tolerance_xy_max);
-    ros::param::get("~tolerance_xy_min", self.tolerance_xy_min);
-    ros::param::get("~tolerance_theta_max", self.tolerance_theta_max);
-    ros::param::get("~tolerance_theta_min", self.tolerance_theta_min);
-    ros::param::get("~tolerance_theta", self.tolerance_theta);
-    ros::param::get("~tolerance_rot_step1", self.tolerance_rot_step1);
-    ros::param::get("~vel_rot_step1", self.vel_rot_step1);
-    ros::param::get("~vel_rot_step_f", self.vel_rot_step_f);
-    ros::param::get("~gioihan_lui", self.gioihan_lui);
-    ros::param::get("~he_so", self.K_x);
-    ros::param::get("~khoang_nhin_truoc_max", self.dist_ahead_max);
-    ros::param::get("~khoang_nhin_truoc_min", self.dist_ahead_min);
-    ros::param::get("~khoang_offset", self.khoang_offset);
-    ros::param::get("~distance_goArc", self.distance_goArc);
-    self.needRotatyFinish = 1;
-
-    self.need_check_goal = false;
-    
-    // subcribe topic
-    self.sub_request_move = n.subscribe("/request_move", 100, &goalControl::move_callback, &self);
-    self.is_request_move = false;
-
-    self.sub_robotPose = n.subscribe("/robotPose_nav", 20, &goalControl::getPose, &self);
-    self.is_pose_robot = false;
-    self.theta_rb_ht = 0.0;
-
-    self.sub_GetRobotOdom = n.subscribe("/odometry", 10, &goalControl::cbGetRobotOdom, &self);
-    self.is_odom_rb = false;
-
-    self.sub_HCinfo = n.subscribe("/HC_info", 1000, &goalControl::zone_callback, &self);   
-    self.is_check_zone = false;
-
-    self.sub_rawvel = n.subscribe("/raw_vel", 100, &goalControl::rawvel_callback, &self);
-    self.is_raw_vel = false;
-
-
-    self.sub_safetyNav = n.subscribe("/safety_NAV", 100, &goalControl::cbZoneNAV, &self);
-    self.is_ZoneNav = false;
-
-    //pusblish topic
-    self.pub_respond = n.advertise<sti_msgs::Move_respond>("/respond_move", 20);
-
-    self.pub_requestFields = n.advertise<std_msgs::Int8>("/HC_fieldRequest", 20);
-    self.oldselectfield = 0;
-
-    self.pub_stt_goal = n.advertise<sti_msgs::Status_goal_control>("/status_goal_control", 10);
-    self.pub_path_local = n.advertise<nav_msgs::Path>("/path_plan_local", 20);
-    self.pub_path_global = n.advertise<nav_msgs::Path>("/path_plan_global", 20);
-    self.pub_cmd_vel = n.advertise<geometry_msgs::Twist>("/cmd_vel", 20);
-
-    self.auto_reset = 0;
-    self.is_slowly = false;
-    self.check_goArc = 0;
-
-    // cac bien khac
-    self.process = 0;
-    self.pre_mess = "";      // cout<< just one time.
-    self.war_agv = 0; // 0: agv di chuyen binh thuong | 1: agv gap vat can
-
-    self.coordinate_unknown = 500.0;
-    for(int i = 0; i < 5; i++){
-        self.list_unknow.push_back(0.0);
-    }
-    self.is_target_change = false;
-
-    self.target_x = self.coordinate_unknown;
-    self.target_y = self.coordinate_unknown;
-    self.target_z = 0.0;
-    self.tag = 0;
-    self.offset = 0.0;
-    for(int i = 0; i < 5; i++){
-        self.list_x.push_back(0.0);
-        self.list_y.push_back(0.0);
-        self.list_id.push_back(0.0);
-        self.list_vel.push_back(0.0);
-    }
-
-    self.old_list_x = self.list_unknow;
-    self.old_list_y = self.list_unknow;
-    self.old_target_x = self.coordinate_unknown;
-    self.old_target_y = self.coordinate_unknown;
-    self.old_id_follow = 0.0;
-    self.mission = 0;
-
-    self.completed_simple = 0;      // bao da den dich.
-    self.completed_backward = 0;    // bao da den aruco.
-    self.completed_all = 0;
-    self.completed_list = 0;
-    self.completed_reset = 0;
-    self.stt_agv = 0;
-    self.error = 0;
-
-    self.end_of_list = false;
-
-    self.cur_goal_x = 0.0;
-    self.cur_goal_y = 0.0;
-
-    self.point_goal_start_x = 0.0;
-    self.point_goal_start_y = 0.0;
-
-    self.is_need_turn_step1 = 0;
-    self.is_need_pttt = 0;
-    self.is_pre_pttt = 0;
-    self.x_td_goal = 0.0;
-    self.y_td_goal = 0.0;
-    self.dis_hc = 0.0;
-
-    self.cur_goal_is = 0; // 1: diem thuong, 2: diem dac biet, 3: diem dich
-
-    self.distance_goal = 0.0;
-
-    self.tol_simple = 0.04;      // do chinh xac theo truc x,y
-    self.tol_target = 0.01;
-    self.ss_luivsnextGoal = 0.15;
-
-    self.vel_x_now = 0.0;
-
-    self.vel_x_control = 0.0;    // toc do theo truc x
-    self.theta_max = 0.6;
-
-    self.vel_x1 = 0.45; 		// level 1 slowless
-    self.theta_max_1 = 0.4; 
-
-    self.vel_x2 = 0.55;   		// level 2 
-    self.theta_max_2 = 0.5;
-
-    self.vel_x3 = 0.65;    		// level 3 fastless
-    self.theta_max_3 = 0.6;
-
-    self.min_vel_x = 0.04;
-
-
-    self.odom_x_ht = 0.0;
-    self.odom_y_ht = 0.0;
-    self.kc_backward = 0.0;
-
-    self.XRobotStart = 0.0;
-    self.YRobotStart = 0.0;
-    self.min_vel_x_gh = 0.2;
-    self.theta = 0.0;
-
-    self.angle_find_vel = 25.0*M_PI/180.0;
-    self.time_start_navi = ros::Time::now().toSec();
-
-    self.angle_giam_toc = 45.0*M_PI/180.0;
-
-    self.dis_gt = 1.15;
-    self.dis_gt_khilui = 0.3;
-    self.kc_con_lai = 0.0;
-    self.kc_qd = 0.0;
-    self.is_over_goal = false;
-
-    self.X_n = 0.0;
-    self.Y_n = 0.0;
-    self.a_qd = 0.0;
-    self.b_qd = 0.0;
-    self.c_qd = 0.0;
-
-    self.id_fl = 0.0;
-    self.vel_fl = 0.0;
-
-    self.rate_cmdvel = 30;
-    self.time_tr = ros::Time::now().toSec();
-
-    self.path_plan.header.frame_id = "frame_map_nav350";
-    self.path_plan.header.stamp = ros::Time::now();
-
-    self.timeRecieveNAV = ros::Time::now().toSec();
-    self.timeRecieveTIM = ros::Time::now().toSec();
-
-    self.timeZone3TIM = 0;
-    self.timeZone2TIM = 0;
-
-    self.timeWaitTIM = 0.1;
-    self.timeWaitNAV = 0.5;
-
-    self.oldzone = 0;
-    
-    self.is_target = 0;
-
-    while(ros::ok()){
-        // cout<<('hhh')
-        // khoi tao
-        if (self.process == 0){
+    void run(){
+        if (process == 0){
             ROS_INFO(".......... Start STI Navigation .........");
-            // zonetim = self.check_safetyTIM(self.timeRecieveTIM, self.timeWaitTIM)
+            // zonetim = check_safetyTIM(timeRecieveTIM, timeWaitTIM)
             // cout<<(zonetim)
-            self.process = 1;
-            self.reset_all();
+            process = 1;
+            reset_all();
         }
 
         // kiem tra du lieu dau vao
-        else if (self.process == 1){
+        else if (process == 1){
             uint8_t c_k = 0;
-            if (self.is_request_move == true)
+            if (is_request_move == true)
                 c_k = c_k + 1;
             else{
                 cout<<"Wait command from STI_Control" << c_k << endl;
             }
 
-            if (self.is_pose_robot == true)
+            if (is_pose_robot == true)
                 c_k = c_k + 1;
             else{
                 cout<<"Wait data from STI_Getpose" << c_k << endl;
             }
 
-            if (self.is_check_zone == true)
+            if (is_check_zone == true)
                 c_k = c_k + 1;
             else{
                 cout<<"Wait data from STI_Zone_lidar" << c_k << endl;
             }
 
-            if (self.is_ZoneNav == true)
+            if (is_ZoneNav == true)
                 c_k = c_k + 1;
             else{
                 cout<<"Wait data from STI_Zone_Nav" << c_k << endl;
@@ -1284,131 +1130,131 @@ int main(int argc, char **argv)
 
             if (c_k == 4){
                 ROS_INFO("Completed wakeup ('_')");
-                self.process = 2;
+                process = 2;
             }
         }
-            // self.process = 2
+            // process = 2
         // -- RUN main
-        else if (self.process == 2){  // kiem tra udp client co cho phep di chuyen.
-            if (self.req_move.enable == 0){ // reset all
+        else if (process == 2){  // kiem tra udp client co cho phep di chuyen.
+            if (req_move.enable == 0){ // reset all
                 cout << "I'm here!----------------reset all ----------------" << endl;
-                self.process = -3;
-                self.mission = 0;
+                process = -3;
+                mission = 0;
             }
 
-            else if (self.req_move.enable == 1 || self.req_move.enable == 3){ // run
-                if (self.req_move.enable == 1){
-                    self.mission = 1;
-                    self.selectfield(0);
+            else if (req_move.enable == 1 || req_move.enable == 3){ // run
+                if (req_move.enable == 1){
+                    mission = 1;
+                    selectfield(0);
                 }
                 else{
                     // cout << "I'm here!--------------enable = 3 / process = 2---------------------" << endl;
-                    self.mission = 3;
-                    self.selectfield(1);
+                    mission = 3;
+                    selectfield(1);
                 }
                 // cout << "I'm here!-----------------------------------" << endl;    
-                self.process = 3;
+                process = 3;
             }
                 
-            else if (self.req_move.enable == 2){ //yeu cau lui
-                self.process = 50;
-                self.mission = 2;
+            else if (req_move.enable == 2){ //yeu cau lui
+                process = 50;
+                mission = 2;
             }
         }
 
-        else if (self.process == 3){
-            // cout << "request move message " << self.req_move.target_x << " " << self.req_move.target_y << endl;
-            // cout << "target msg " << self.target_x << " " << self.target_y << endl;
-            if(self.req_move.target_x < 500.0 && self.req_move.target_y < 500.0){
+        else if (process == 3){
+            // cout << "request move message " << req_move.target_x << " " << req_move.target_y << endl;
+            // cout << "target msg " << target_x << " " << target_y << endl;
+            if(req_move.target_x < 500.0 && req_move.target_y < 500.0){
                 
-                if (( self.round_3decimal(self.req_move.target_x) != self.round_3decimal(self.target_x) ) || ( self.round_3decimal(self.req_move.target_y) != self.round_3decimal(self.target_y) )){ // neu co thay doi diem dich
-                    self.stop();
-                    uint8_t dk = self.update_all();
+                if (( round_3decimal(req_move.target_x) != round_3decimal(target_x) ) || ( round_3decimal(req_move.target_y) != round_3decimal(target_y) )){ // neu co thay doi diem dich
+                    stop();
+                    uint8_t dk = update_all();
                     if (dk == 1){
-                        // ROS_INFO("Change target from: X = %s |Y = %s to: X = %s |Y = %s ", self.target_x, self.target_y ,self.req_move.target_x, self.req_move.target_y)
-                        // cout << "Change target from: X = "<< self.target_x << " |Y= " << self.target_y << " to: X = " << self.req_move.target_x << " |Y = " << self.req_move.target_y << endl;
-                        self.process = 4;
+                        // ROS_INFO("Change target from: X = %s |Y = %s to: X = %s |Y = %s ", target_x, target_y ,req_move.target_x, req_move.target_y)
+                        // cout << "Change target from: X = "<< target_x << " |Y= " << target_y << " to: X = " << req_move.target_x << " |Y = " << req_move.target_y << endl;
+                        process = 4;
                     }
                     else{
                         ROS_INFO("Something Wrong!, wait the update Target");
-                        self.process = 2;
+                        process = 2;
                     }
                 }
 
                 else{
-                    self.is_target_change = false;
-                    self.process = 4;
+                    is_target_change = false;
+                    process = 4;
                 }
             }
                 
             else{
-                if (self.stt_agv == 0){
-                    self.error = 1;
+                if (stt_agv == 0){
+                    error = 1;
                     ROS_INFO("Target = 0.0, wait the update Target");
-                    self.process = 2;
+                    process = 2;
                 }
 
                 else{
-                    self.process = 4;
+                    process = 4;
                 }
             }
         }
 
-        else if (self.process == 4){
-            if (self.completed_all != 1){ // agv da di den dich cuoi.
-                self.error = 0;
-                if (self.completed_simple != 1){   // chua hoan thanh di chuyen diem thuong
-                    self.process = 5;      // simple point
+        else if (process == 4){
+            if (completed_all != 1){ // agv da di den dich cuoi.
+                error = 0;
+                if (completed_simple != 1){   // chua hoan thanh di chuyen diem thuong
+                    process = 5;      // simple point
                 }
 
                 else{
-                    self.process = 8;
+                    process = 8;
                     cout<< "hoan thanh di chuyen diem thuong, dap ung goc cuoi 0" << endl;
                 }
             }
 
             else{
-                self.error = 0;
-                self.stt_agv = 0;
+                error = 0;
+                stt_agv = 0;
                 cout<< "Wait new target" + to_string(0) << endl;
-                self.process = 2;
+                process = 2;
             }
         }
 
         // tim ra current goal, next goal
-        else if (self.process == 5){
+        else if (process == 5){
             // update list x,y
-            if (self.req_move.list_x.size() == 5 && self.req_move.list_y.size() == 5 && self.req_move.list_id.size() == 5 && self.req_move.list_speed.size() == 5){
+            if (req_move.list_x.size() == 5 && req_move.list_y.size() == 5 && req_move.list_id.size() == 5 && req_move.list_speed.size() == 5){
                 try{
-                    if (((self.list_x != self.req_move.list_x) || (self.list_y != self.req_move.list_y) || (self.list_id != self.req_move.list_id)) && self.req_move.list_id[0] != 0.0){
-                        self.list_x = self.req_move.list_x;
-                        self.list_y = self.req_move.list_y;
-                        // cout<<(self.list_x)
-                        self.list_id = self.req_move.list_id;
-                        self.list_vel = self.req_move.list_speed;
-                        self.end_of_list = false;
+                    if (((list_x != req_move.list_x) || (list_y != req_move.list_y) || (list_id != req_move.list_id)) && req_move.list_id[0] != 0.0){
+                        list_x = req_move.list_x;
+                        list_y = req_move.list_y;
+                        // cout<<(list_x)
+                        list_id = req_move.list_id;
+                        list_vel = req_move.list_speed;
+                        end_of_list = false;
 
-                        self.path_plan.poses.empty();
-                        self.path_plan.poses.push_back(self.point_path(self.poseRbMa.position.x, self.poseRbMa.position.y));
+                        path_plan.poses.empty();
+                        path_plan.poses.push_back(point_path(poseRbMa.position.x, poseRbMa.position.y));
 
-                        for (int i = 0; i < self.list_x.size(); i++){
-                            if (self.list_id[i] != 0.0){
+                        for (int i = 0; i < list_x.size(); i++){
+                            if (list_id[i] != 0.0){
                                 geometry_msgs::PoseStamped point;
                                 point.header.frame_id = "frame_map_nav350";
                                 point.header.stamp = ros::Time::now();
-                                point.pose.position.x = self.list_x[i];
-                                point.pose.position.y = self.list_y[i];
+                                point.pose.position.x = list_x[i];
+                                point.pose.position.y = list_y[i];
                                 point.pose.position.z = -1.0;
                                 point.pose.orientation.w = 1.0;
                                 // cout<<(point)
-                                self.path_plan.poses.push_back(point);
+                                path_plan.poses.push_back(point);
                             }
                             else{
                                 break;
                             }
                         }
 
-                        self.pub_path_global.publish(self.path_plan);
+                        pub_path_global.publish(path_plan);
                     }
                 }
                 catch(...){
@@ -1421,40 +1267,40 @@ int main(int argc, char **argv)
             }
 
 
-            if (self.stt_agv == 0 ){ // AGV tinh goal tiep theo sau khi dung
+            if (stt_agv == 0 ){ // AGV tinh goal tiep theo sau khi dung
                 // cout<<("vao day nay")
 
-                if (self.end_of_list == true){
+                if (end_of_list == true){
                     // cout<<("aaaaaaaaaaaaaaaaaaaaaa")
-                    self.process = 2;
+                    process = 2;
                 }
 
                 else{
-                    if (self.is_target_change == true){
-                        self.is_target_change = false;
+                    if (is_target_change == true){
+                        is_target_change = false;
                         ROS_INFO("kiem tra bat dau");
-                        if (self.id_fl != 0.0){   
+                        if (id_fl != 0.0){   
                             // --- Them vao ngay 12/4/2023 fix loi quay dau
                             int32_t idFollowValid;
                             bool isIDEndList;
-                            tie(idFollowValid, isIDEndList) = self.findGoalValidVS3(self.list_x, self.list_y, self.list_id, self.poseRbMa.position.x, self.poseRbMa.position.y);
+                            tie(idFollowValid, isIDEndList) = findGoalValidVS3(list_x, list_y, list_id, poseRbMa.position.x, poseRbMa.position.y);
                             cout<< "ID follow is " << idFollowValid << " | is ID END: " << isIDEndList << endl;
-                            int8_t indexOfId = self.getIndex(self.list_id, idFollowValid);
-                            self.cur_goal_x = self.req_move.list_x[indexOfId];
-                            self.cur_goal_y = self.req_move.list_y[indexOfId];
-                            self.id_fl = self.req_move.list_id[indexOfId];
-                            self.vel_fl = self.req_move.list_speed[indexOfId];
+                            int8_t indexOfId = getIndex(list_id, idFollowValid);
+                            cur_goal_x = req_move.list_x[indexOfId];
+                            cur_goal_y = req_move.list_y[indexOfId];
+                            id_fl = req_move.list_id[indexOfId];
+                            vel_fl = req_move.list_speed[indexOfId];
 
-                            double dist_debug = self.fnCalcDistPoints(self.poseRbMa.position.x, self.cur_goal_x, self.poseRbMa.position.y, self.cur_goal_y);
-                            // cout << "Khoang cach dist_debug is " << dist_debug << "  " << self.ss_luivsnextGoal << endl;
-                            cout << "robot x is " << self.poseRbMa.position.x << " robot y is " << self.poseRbMa.position.y << endl;
-                            cout << "current goal x is " << self.cur_goal_x << " curr goal is " << self.cur_goal_y << endl;
-                            if (self.fnCalcDistPoints(self.poseRbMa.position.x, self.cur_goal_x, self.poseRbMa.position.y, self.cur_goal_y) > self.ss_luivsnextGoal){
-                                self.is_need_turn_step1 = 1;
-                                self.is_need_pttt = 1;
-                                self.point_goal_start_x = self.poseRbMa.position.x;
-                                self.point_goal_start_y = self.poseRbMa.position.y;
-                                self.process = 6;
+                            double dist_debug = fnCalcDistPoints(poseRbMa.position.x, cur_goal_x, poseRbMa.position.y, cur_goal_y);
+                            // cout << "Khoang cach dist_debug is " << dist_debug << "  " << ss_luivsnextGoal << endl;
+                            cout << "robot x is " << poseRbMa.position.x << " robot y is " << poseRbMa.position.y << endl;
+                            cout << "current goal x is " << cur_goal_x << " curr goal is " << cur_goal_y << endl;
+                            if (fnCalcDistPoints(poseRbMa.position.x, cur_goal_x, poseRbMa.position.y, cur_goal_y) > ss_luivsnextGoal){
+                                is_need_turn_step1 = 1;
+                                is_need_pttt = 1;
+                                point_goal_start_x = poseRbMa.position.x;
+                                point_goal_start_y = poseRbMa.position.y;
+                                process = 6;
 
                                 // cout << "Im here! -------------------process = 5 number 1---------------" << endl;
                             }
@@ -1462,84 +1308,84 @@ int main(int argc, char **argv)
                             else{
                                 ROS_INFO("chon goal tiep theo lam cur goal");
                                 
-                                if (self.round_3decimal(self.cur_goal_x) == self.round_3decimal(self.target_x) && self.round_3decimal(self.cur_goal_y) == self.round_3decimal(self.target_y)){
-                                    if (self.need_check_goal == true){
-                                        self.is_need_turn_step1 = 1;
-                                        self.is_need_pttt = 1;
-                                        self.point_goal_start_x = self.poseRbMa.position.x;
-                                        self.point_goal_start_y = self.poseRbMa.position.y;
-                                        self.process = 6;
+                                if (round_3decimal(cur_goal_x) == round_3decimal(target_x) && round_3decimal(cur_goal_y) == round_3decimal(target_y)){
+                                    if (need_check_goal == true){
+                                        is_need_turn_step1 = 1;
+                                        is_need_pttt = 1;
+                                        point_goal_start_x = poseRbMa.position.x;
+                                        point_goal_start_y = poseRbMa.position.y;
+                                        process = 6;
                                         // cout << "Im here! -------------------process = 5 number 2---------------" << endl;
                                     }
                                     
                                     else{
                                         //----- them xoay dap ung goc cuoi
-                                        self.is_over_goal = false;
-                                        self.is_need_pttt = 0;
-                                        self.is_pre_pttt = 0;
+                                        is_over_goal = false;
+                                        is_need_pttt = 0;
+                                        is_pre_pttt = 0;
                                         ROS_INFO("da den goal cuoi roi roi!!!!!!");
-                                        self.stop();
-                                        self.completed_simple = 1;
-                                        self.process = 8;
+                                        stop();
+                                        completed_simple = 1;
+                                        process = 8;
                                     }
                                 }
                                         
                                 else{	
                                     if (!isIDEndList){ 
-                                    // if self.list_id[1] != 0.0){
-                                        self.is_need_turn_step1 = 1;
+                                    // if list_id[1] != 0.0){
+                                        is_need_turn_step1 = 1;
                                         // cout << "Im here! -------------------process = 5 number 3---------------" << endl;
-                                        self.is_need_pttt = 1;
-                                        self.point_goal_start_x = self.poseRbMa.position.x;
-                                        self.point_goal_start_y = self.poseRbMa.position.y;
-                                        // self.point_goal_start_x = self.list_x[0]
-                                        // self.point_goal_start_y = self.list_y[0]
-                                        self.cur_goal_x = self.list_x[indexOfId+1];
-                                        self.cur_goal_y = self.list_y[indexOfId+1];
-                                        self.id_fl = self.list_id[indexOfId+1];
-                                        self.vel_fl = self.list_vel[indexOfId+1];
-                                        self.process = 6;
+                                        is_need_pttt = 1;
+                                        point_goal_start_x = poseRbMa.position.x;
+                                        point_goal_start_y = poseRbMa.position.y;
+                                        // point_goal_start_x = list_x[0]
+                                        // point_goal_start_y = list_y[0]
+                                        cur_goal_x = list_x[indexOfId+1];
+                                        cur_goal_y = list_y[indexOfId+1];
+                                        id_fl = list_id[indexOfId+1];
+                                        vel_fl = list_vel[indexOfId+1];
+                                        process = 6;
                                     }
                                     
                                     else{
-                                        self.end_of_list = true;
-                                        self.process = 2;
+                                        end_of_list = true;
+                                        process = 2;
                                     }
                                 }
                             }
                         }
 
                         else{
-                            self.end_of_list = true;
-                            self.process = 2;
+                            end_of_list = true;
+                            process = 2;
                         }
 
                     }
                         
                                                 
                     else{
-                        int f = self.find_xy(self.cur_goal_x, self.cur_goal_y, self.list_x, self.list_y);
-                        // cout<<(f,self.cur_goal_x,self.cur_goal_y,self.list_x,self.list_y)   
+                        int f = find_xy(cur_goal_x, cur_goal_y, list_x, list_y);
+                        // cout<<(f,cur_goal_x,cur_goal_y,list_x,list_y)   
                         if (f == -1){
                             // cout<<('aaa')
-                            if (self.list_id[0] != 0.0){
-                                self.is_need_turn_step1 = 1;
-                                self.is_need_pttt = 1;
-                                self.point_goal_start_x = self.poseRbMa.position.x;
-                                self.point_goal_start_y = self.poseRbMa.position.y;
+                            if (list_id[0] != 0.0){
+                                is_need_turn_step1 = 1;
+                                is_need_pttt = 1;
+                                point_goal_start_x = poseRbMa.position.x;
+                                point_goal_start_y = poseRbMa.position.y;
 
-                                self.cur_goal_x = self.list_x[0];
-                                self.cur_goal_y = self.list_y[0];
-                                self.id_fl = self.list_id[0];
-                                self.vel_fl = self.list_vel[0];
+                                cur_goal_x = list_x[0];
+                                cur_goal_y = list_y[0];
+                                id_fl = list_id[0];
+                                vel_fl = list_vel[0];
                                 // cout << "Im here! -------------------process = 5 number 4---------------" << endl;
                                 
-                                self.process = 6;
+                                process = 6;
                             }
 
                             else{
-                                self.end_of_list = true;
-                                self.process = 2;
+                                end_of_list = true;
+                                process = 2;
                             }
                         }
 
@@ -1549,76 +1395,76 @@ int main(int argc, char **argv)
                                 f_next = 4;
                             }
 
-                            if (self.list_id[f_next] != 0.0){
-                                self.is_need_turn_step1 = 1;
-                                self.is_need_pttt = 1;
-                                self.point_goal_start_x = self.poseRbMa.position.x;
-                                self.point_goal_start_y = self.poseRbMa.position.y;
+                            if (list_id[f_next] != 0.0){
+                                is_need_turn_step1 = 1;
+                                is_need_pttt = 1;
+                                point_goal_start_x = poseRbMa.position.x;
+                                point_goal_start_y = poseRbMa.position.y;
 
-                                self.cur_goal_x = self.list_x[f_next];
-                                self.cur_goal_y = self.list_y[f_next];
-                                self.id_fl = self.list_id[f_next];
-                                self.vel_fl = self.list_vel[f_next];
+                                cur_goal_x = list_x[f_next];
+                                cur_goal_y = list_y[f_next];
+                                id_fl = list_id[f_next];
+                                vel_fl = list_vel[f_next];
                                 // cout << "Im here! -------------------process = 5 number 5---------------" << endl;
-                                self.process = 6;
+                                process = 6;
                             }
 
                             else{
-                                self.end_of_list = true;
-                                self.process = 2;
+                                end_of_list = true;
+                                process = 2;
                             }
                         }
                     }
                 }
             }
 
-            else if (self.stt_agv == 1){
+            else if (stt_agv == 1){
                 
-                double kc = self.fnCalcDistPoints(self.poseRbMa.position.x,self.cur_goal_x,self.poseRbMa.position.y,self.cur_goal_y);
+                double kc = fnCalcDistPoints(poseRbMa.position.x,cur_goal_x,poseRbMa.position.y,cur_goal_y);
                 // cout<<('aaa')  
-                // if kc > self.distance_goArc){
-                if (kc > self.distance_goArc){
-                    self.check_goArc = 1;
+                // if kc > distance_goArc){
+                if (kc > distance_goArc){
+                    check_goArc = 1;
                 }   
                     
-                if ((kc < self.khoang_offset || (kc < self.distance_goArc && self.check_goArc == 1)) && self.cur_goal_is != 2 ){
-                    if ((self.round_3decimal(self.cur_goal_x) == self.round_3decimal(self.target_x)) && (self.round_3decimal(self.cur_goal_y) == self.round_3decimal(self.target_y))){
-                        self.cur_goal_is = 3;
+                if ((kc < khoang_offset || (kc < distance_goArc && check_goArc == 1)) && cur_goal_is != 2 ){
+                    if ((round_3decimal(cur_goal_x) == round_3decimal(target_x)) && (round_3decimal(cur_goal_y) == round_3decimal(target_y))){
+                        cur_goal_is = 3;
                     }
 
                     else{
                         // cout<<('aaa')
-                        int f = self.find_xy(self.cur_goal_x, self.cur_goal_y, self.list_x, self.list_y);
+                        int f = find_xy(cur_goal_x, cur_goal_y, list_x, list_y);
                         if (f == -1){
-                            if (self.list_id[0] != 0.0){
-                                int temp = self.find_point_special(self.cur_goal_x,self.cur_goal_y,self.list_x[0],self.list_y[0],self.check_goArc);
+                            if (list_id[0] != 0.0){
+                                int temp = find_point_special(cur_goal_x,cur_goal_y,list_x[0],list_y[0],check_goArc);
                                 if (temp == 2){
-                                    self.cur_goal_is = 2;
+                                    cur_goal_is = 2;
                                 }
                                     
                                 else if (temp == 1){
-                                    self.cur_goal_is = 1;
-                                    self.point_goal_start_x = self.cur_goal_x;
-                                    self.point_goal_start_y = self.cur_goal_y;
-                                    self.cur_goal_x = self.list_x[0];
-                                    self.cur_goal_y = self.list_y[0];
-                                    self.id_fl = self.list_id[0];
-                                    self.vel_fl = self.list_vel[0];
+                                    cur_goal_is = 1;
+                                    point_goal_start_x = cur_goal_x;
+                                    point_goal_start_y = cur_goal_y;
+                                    cur_goal_x = list_x[0];
+                                    cur_goal_y = list_y[0];
+                                    id_fl = list_id[0];
+                                    vel_fl = list_vel[0];
                                 }
                                     
                                 else if (temp == 3){
                                     ROS_INFO("CHECK NEXT POINT GO ARC!!!");
-                                    if (self.list_id[1] != 0.0){
-                                        double dist = self.fnCalcDistPoints(self.cur_goal_x, self.list_x[1], self.cur_goal_y, self.list_y[1]);
-                                        double goc = self.calAngleThreePoint(self.cur_goal_x, self.cur_goal_y, self.list_x[0], self.list_y[0], self.list_x[1], self.list_y[1]);
+                                    if (list_id[1] != 0.0){
+                                        double dist = fnCalcDistPoints(cur_goal_x, list_x[1], cur_goal_y, list_y[1]);
+                                        double goc = calAngleThreePoint(cur_goal_x, cur_goal_y, list_x[0], list_y[0], list_x[1], list_y[1]);
                                         if (dist > 3.0 && goc > 165.0*M_PI/180.0){
-                                            self.cur_goal_is = 1;
-                                            self.point_goal_start_x = self.cur_goal_x;
-                                            self.point_goal_start_y = self.cur_goal_y;
-                                            self.cur_goal_x = self.list_x[1];
-                                            self.cur_goal_y = self.list_y[1];
-                                            self.id_fl = self.list_id[1];
-                                            self.vel_fl = self.list_vel[1];
+                                            cur_goal_is = 1;
+                                            point_goal_start_x = cur_goal_x;
+                                            point_goal_start_y = cur_goal_y;
+                                            cur_goal_x = list_x[1];
+                                            cur_goal_y = list_y[1];
+                                            id_fl = list_id[1];
+                                            vel_fl = list_vel[1];
                                         }
                                     }
                                     else{
@@ -1630,49 +1476,49 @@ int main(int argc, char **argv)
                                 }
                             }
                             else{
-                                self.cur_goal_is = 2;
-                                self.end_of_list = true;
+                                cur_goal_is = 2;
+                                end_of_list = true;
                             }
                         }
 
                         else{
                             if (f >= 4){
-                                self.cur_goal_is = 2;
-                                self.end_of_list = true;
+                                cur_goal_is = 2;
+                                end_of_list = true;
                             }
 
                             else{
                                 int f_next = f + 1; // diem tiep theo
                                 // if f_next > 4){
                                 //     f_next = 4
-                                if (self.list_id[f_next] != 0.0){   
-                                    int temp = self.find_point_special(self.cur_goal_x,self.cur_goal_y,self.list_x[f_next],self.list_y[f_next],self.check_goArc);
+                                if (list_id[f_next] != 0.0){   
+                                    int temp = find_point_special(cur_goal_x,cur_goal_y,list_x[f_next],list_y[f_next],check_goArc);
                                     if (temp == 2){
-                                        self.cur_goal_is = 2;
+                                        cur_goal_is = 2;
                                     }
                                     else if (temp == 1){
-                                        self.point_goal_start_x = self.cur_goal_x;
-                                        self.point_goal_start_y = self.cur_goal_y;
+                                        point_goal_start_x = cur_goal_x;
+                                        point_goal_start_y = cur_goal_y;
 
-                                        self.cur_goal_x = self.list_x[f_next];
-                                        self.cur_goal_y = self.list_y[f_next];
-                                        self.id_fl = self.list_id[f_next];
-                                        self.vel_fl = self.list_vel[f_next];
+                                        cur_goal_x = list_x[f_next];
+                                        cur_goal_y = list_y[f_next];
+                                        id_fl = list_id[f_next];
+                                        vel_fl = list_vel[f_next];
                                     }
                                         
                                     else if (temp == 3){
                                         ROS_INFO("CHECK NEXT POINT GO ARC!!!");
-                                        if (f_next <= 3 && self.list_id[f_next + 1] != 0.0){
-                                            double dist = self.fnCalcDistPoints(self.cur_goal_x, self.list_x[f_next + 1], self.cur_goal_y, self.list_y[f_next + 1]);
-                                            double goc = self.calAngleThreePoint(self.cur_goal_x, self.cur_goal_y, self.list_x[f_next], self.list_y[f_next], self.list_x[f_next + 1], self.list_y[f_next + 1]);
+                                        if (f_next <= 3 && list_id[f_next + 1] != 0.0){
+                                            double dist = fnCalcDistPoints(cur_goal_x, list_x[f_next + 1], cur_goal_y, list_y[f_next + 1]);
+                                            double goc = calAngleThreePoint(cur_goal_x, cur_goal_y, list_x[f_next], list_y[f_next], list_x[f_next + 1], list_y[f_next + 1]);
                                             if (dist > 3.0 && goc > 170.0*M_PI/180.0){
-                                                self.cur_goal_is = 1;
-                                                self.point_goal_start_x = self.cur_goal_x;
-                                                self.point_goal_start_y = self.cur_goal_y;
-                                                self.cur_goal_x = self.list_x[f_next + 1];
-                                                self.cur_goal_y = self.list_y[f_next + 1];
-                                                self.id_fl = self.list_id[f_next + 1];
-                                                self.vel_fl = self.list_vel[f_next + 1];
+                                                cur_goal_is = 1;
+                                                point_goal_start_x = cur_goal_x;
+                                                point_goal_start_y = cur_goal_y;
+                                                cur_goal_x = list_x[f_next + 1];
+                                                cur_goal_y = list_y[f_next + 1];
+                                                id_fl = list_id[f_next + 1];
+                                                vel_fl = list_vel[f_next + 1];
                                             }
                                         }
                                         else{
@@ -1687,53 +1533,53 @@ int main(int argc, char **argv)
 
                                 else{
                                     // cout<<("phat cuoi vao day")
-                                    self.cur_goal_is = 2;
-                                    self.end_of_list = true;
+                                    cur_goal_is = 2;
+                                    end_of_list = true;
                                 }
                             }
                         }
                     }
                                     
-                    self.check_goArc = 0;
+                    check_goArc = 0;
                 }
                 
-                self.process = 6;
+                process = 6;
             }
 
-            else if (self.stt_agv == 3 ){
-                self.process = 6;
+            else if (stt_agv == 3 ){
+                process = 6;
             }
         }
 
-        else if (self.process == 6){   // quay trước khi di chuyển
-            if (self.id_fl != 0.0){
-                self.error = 0;
-                if (self.is_need_turn_step1 == 1){
-                    self.stt_agv = 3;
+        else if (process == 6){   // quay trước khi di chuyển
+            if (id_fl != 0.0){
+                error = 0;
+                if (is_need_turn_step1 == 1){
+                    stt_agv = 3;
                     // quay agv toi goal
-                    double theta_poin = atan2(self.cur_goal_y - self.poseRbMa.position.y, \
-                                        self.cur_goal_x - self.poseRbMa.position.x );
+                    double theta_poin = atan2(cur_goal_y - poseRbMa.position.y, \
+                                        cur_goal_x - poseRbMa.position.x );
 
-                    double a = self.poseRbMa.position.y - self.cur_goal_y;
-                    double b = self.cur_goal_x - self.poseRbMa.position.x;
+                    double a = poseRbMa.position.y - cur_goal_y;
+                    double b = cur_goal_x - poseRbMa.position.x;
 
-                    double theta = self.find_angle_between(a, b, self.theta_rb_ht);
-                    // cout << "theta Angle is " << theta << " " << self.tolerance_rot_step1 << "  " << self.vel_rot_step1 << endl;
+                    double theta = find_angle_between(a, b, theta_rb_ht);
+                    // cout << "theta Angle is " << theta << " " << tolerance_rot_step1 << "  " << vel_rot_step1 << endl;
 
-                    if (self.zone_lidar.zone_sick_ahead == 1 || self.zone_lidar.zone_sick_behind != 0){
-                        self.war_agv = 1;
+                    if (zone_lidar.zone_sick_ahead == 1 || zone_lidar.zone_sick_behind != 0){
+                        war_agv = 1;
                         ROS_INFO("co vat can o vung tron truoc sau");
-                        self.stop();
+                        stop();
                     }
                     else{
-                        self.war_agv = 0;
-                        double gt = self.turn_ar(theta, self.tolerance_rot_step1, self.vel_rot_step1);
+                        war_agv = 0;
+                        double gt = turn_ar(theta, tolerance_rot_step1, vel_rot_step1);
                         if (gt == -10){
-                            self.stop();
+                            stop();
                             ros::Duration(0.3).sleep();
-                            self.stt_agv = 1;
-                            self.is_need_turn_step1 = 0;
-                            self.time_start_navi = ros::Time::now().toSec();
+                            stt_agv = 1;
+                            is_need_turn_step1 = 0;
+                            time_start_navi = ros::Time::now().toSec();
                             // cout<< "Im here !----------------gt = - 10------------------" << endl;
                         }
 
@@ -1741,119 +1587,119 @@ int main(int argc, char **argv)
                             geometry_msgs::Twist twist;
                             twist.angular.z = gt;
                             // cout<< "Im here !----------------AGV đang thuc hien quay------------------" << endl;
-                            self.pub_cmdVel(twist, self.rate_cmdvel);
+                            pub_cmdVel(twist, rate_cmdvel);
                         }
                     }
 
-                    self.process = 2;
+                    process = 2;
                 }
                         
                 else{
-                    self.process = 7;
+                    process = 7;
                 }
             }
 
             else{
-                self.stop();
-                cout<<"Stop send Goal because Now Goal Unknown" << self.cur_goal_x << endl; 
-                self.error = 2;
-                self.process = 2;
+                stop();
+                cout<<"Stop send Goal because Now Goal Unknown" << cur_goal_x << endl; 
+                error = 2;
+                process = 2;
             }
         }
         //----- dieu huong AGV
-        else if (self.process == 7){
+        else if (process == 7){
 
-            self.path_plan.poses.push_back(self.point_path(self.poseRbMa.position.x, self.poseRbMa.position.y));
-            self.path_plan.poses.push_back(self.point_path(self.cur_goal_x,self.cur_goal_y));
-            self.pub_path_local.publish(self.path_plan);
-            self.path_plan.poses.empty();
+            path_plan.poses.push_back(point_path(poseRbMa.position.x, poseRbMa.position.y));
+            path_plan.poses.push_back(point_path(cur_goal_x,cur_goal_y));
+            pub_path_local.publish(path_plan);
+            path_plan.poses.empty();
 
             double arg, b_rg;
-            tie(self.X_n, self.Y_n, self.a_qd, self.b_qd, self.c_qd, self.dis_hc, arg, b_rg) = self.find_hc(self.point_goal_start_x,\
-                                                                                            self.point_goal_start_y,\
-                                                                                            self.cur_goal_x,\
-                                                                                            self.cur_goal_y);
+            tie(X_n, Y_n, a_qd, b_qd, c_qd, dis_hc, arg, b_rg) = find_hc(point_goal_start_x,\
+                                                                                            point_goal_start_y,\
+                                                                                            cur_goal_x,\
+                                                                                            cur_goal_y);
 
-            self.theta = self.find_angle_between(self.a_qd, self.b_qd, self.theta_rb_ht);
-            // cout<<(self.theta)
-            // cout<<("Theta= %s, agnle_find_vel= %s" %(fabs(self.theta) ,self.angle_find_vel))
-            self.is_target = 0;
-            if ((self.round_3decimal(self.cur_goal_x) != self.round_3decimal(self.target_x)) && (self.round_3decimal(self.cur_goal_y) != self.round_3decimal(self.target_y))){
-                self.is_target = 0;
+            theta = find_angle_between(a_qd, b_qd, theta_rb_ht);
+            // cout<<(theta)
+            // cout<<("Theta= %s, agnle_find_vel= %s" %(fabs(theta) ,angle_find_vel))
+            is_target = 0;
+            if ((round_3decimal(cur_goal_x) != round_3decimal(target_x)) && (round_3decimal(cur_goal_y) != round_3decimal(target_y))){
+                is_target = 0;
             }
             else{
-                self.is_target = 1;
+                is_target = 1;
             }
 
-            tie(self.x_td_goal, self.y_td_goal, self.kc_con_lai, self.kc_qd, self.is_over_goal) = self.find_point_goal(self.point_goal_start_x,\
-                                                                                                            self.point_goal_start_y,\
-                                                                                                            self.cur_goal_x,\
-                                                                                                            self.cur_goal_y,\
-                                                                                                            self.a_qd,self.b_qd,self.c_qd,\
-                                                                                                            self.X_n,self.Y_n,\
-                                                                                                            self.is_target);
-            // angle_Mode = atan2(self.y_td_goal,self.x_td_goal)
+            tie(x_td_goal, y_td_goal, kc_con_lai, kc_qd, is_over_goal) = find_point_goal(point_goal_start_x,\
+                                                                                                            point_goal_start_y,\
+                                                                                                            cur_goal_x,\
+                                                                                                            cur_goal_y,\
+                                                                                                            a_qd,b_qd,c_qd,\
+                                                                                                            X_n,Y_n,\
+                                                                                                            is_target);
+            // angle_Mode = atan2(y_td_goal,x_td_goal)
             // if fabs(angle_Mode) > M_PI/2.0){
 
-            self.distance_goal = self.fnCalcDistPoints(self.poseRbMa.position.x,\
-                                                                self.cur_goal_x,\
-                                                                self.poseRbMa.position.y,\
-                                                                self.cur_goal_y);
+            distance_goal = fnCalcDistPoints(poseRbMa.position.x,\
+                                                                cur_goal_x,\
+                                                                poseRbMa.position.y,\
+                                                                cur_goal_y);
 
-            // cout<<("Mode Target= %s, dis_hc= %s , x_now= %s, y_now= %s, distance_goal= %s, kc_conlai= %s" %(self.is_target ,self.dis_hc, self.poseRbMa.position.x, self.poseRbMa.position.y, self.distance_goal, self.kc_con_lai))
-            cout << "Mode Target= " << self.is_target << " dis_hc " << self.dis_hc << " x_now= " << self.poseRbMa.position.x << " y_now= " << self.poseRbMa.position.y << " distance_goal= " << self.distance_goal << " kc_conlai= " << self.kc_con_lai << endl;
-            // self.theta = theta_poin - self.theta_rb_ht
+            // cout<<("Mode Target= %s, dis_hc= %s , x_now= %s, y_now= %s, distance_goal= %s, kc_conlai= %s" %(is_target ,dis_hc, poseRbMa.position.x, poseRbMa.position.y, distance_goal, kc_con_lai))
+            cout << "Mode Target= " << is_target << " dis_hc " << dis_hc << " x_now= " << poseRbMa.position.x << " y_now= " << poseRbMa.position.y << " distance_goal= " << distance_goal << " kc_conlai= " << kc_con_lai << endl;
+            // theta = theta_poin - theta_rb_ht
             
-            // self.vel_x_control = 0.45
+            // vel_x_control = 0.45
             // new traffic
-            if (self.vel_fl == 0){ // roi vao th khong xac dinh
-                self.vel_x_control = 0.3;
+            if (vel_fl == 0){ // roi vao th khong xac dinh
+                vel_x_control = 0.3;
             }
                 
             else{
-                self.vel_x_control = self.round_3decimal((self.vel_fl/120.0)*self.vel_x_max);
+                vel_x_control = round_3decimal((vel_fl/120.0)*vel_x_max);
             }
                 
-            if (self.vel_x_control > self.vel_x_max){
-                self.vel_x_control = self.vel_x_max;
+            if (vel_x_control > vel_x_max){
+                vel_x_control = vel_x_max;
             }
 
             float v_x = 0.0;
-            if (fabs(self.theta) > self.angle_find_vel){
-                v_x = self.min_vel_x_gh;
+            if (fabs(theta) > angle_find_vel){
+                v_x = min_vel_x_gh;
             }
 
-            else if (self.round_3decimal(fabs(self.theta)) == 0.0){
-                v_x = self.vel_x_control;
+            else if (round_3decimal(fabs(theta)) == 0.0){
+                v_x = vel_x_control;
             }
 
             else{
-                v_x = self.min_vel_x_gh + ((self.angle_find_vel - fabs(self.theta))/self.angle_find_vel)*(self.vel_x_control - self.min_vel_x_gh);
+                v_x = min_vel_x_gh + ((angle_find_vel - fabs(theta))/angle_find_vel)*(vel_x_control - min_vel_x_gh);
             }
 
             // cout<<(v_x)
             float v_x_send = 0.0;
-            if (self.is_need_pttt == 1 && self.distance_goal > self.dis_gt){
-                self.is_pre_pttt = 1;
-                self.vel_x_now = self.ptgt(4.0,self.time_start_navi,0.0, v_x);
-                v_x_send = self.vel_x_now;
+            if (is_need_pttt == 1 && distance_goal > dis_gt){
+                is_pre_pttt = 1;
+                vel_x_now = ptgt(4.0,time_start_navi,0.0, v_x);
+                v_x_send = vel_x_now;
                 if (v_x_send >= v_x){
-                    self.is_need_pttt = 0;
-                    self.is_pre_pttt = 0;
+                    is_need_pttt = 0;
+                    is_pre_pttt = 0;
                     v_x_send = v_x;
                     // cout<<("1")
                 }
             }
 
             else{
-                self.is_need_pttt = 0;
-                if (self.is_pre_pttt == 1 && self.vel_x_now >= 0.3){
-                    v_x_send = self.vel_x_now*(self.distance_goal/self.dis_gt);
+                is_need_pttt = 0;
+                if (is_pre_pttt == 1 && vel_x_now >= 0.3){
+                    v_x_send = vel_x_now*(distance_goal/dis_gt);
                     // cout<<("2")
                 }
                 else{
-                    self.is_pre_pttt = 0;
-                    v_x_send = v_x*(self.distance_goal/self.dis_gt);
+                    is_pre_pttt = 0;
+                    v_x_send = v_x*(distance_goal/dis_gt);
                     // cout<<("3")
                 }
                     
@@ -1865,101 +1711,101 @@ int main(int argc, char **argv)
             // cout<<("v_x= %s, vel_x= %s" %(v_x,v_x_send))
 
 
-            if (self.cur_goal_is == 2 && (self.distance_goal <= self.tol_simple || self.kc_con_lai <= self.tol_simple || self.is_over_goal == true) ){
-                self.cur_goal_is = 0;
-                self.is_over_goal = false;
-                self.is_need_pttt = 0;
-                self.is_pre_pttt = 0;
+            if (cur_goal_is == 2 && (distance_goal <= tol_simple || kc_con_lai <= tol_simple || is_over_goal == true) ){
+                cur_goal_is = 0;
+                is_over_goal = false;
+                is_need_pttt = 0;
+                is_pre_pttt = 0;
                 ROS_INFO("da den goal trung gian roi!!!!!!");
-                self.stop();
+                stop();
 
-                self.stt_agv = 0;
-                self.process = 2;
+                stt_agv = 0;
+                process = 2;
             }
 
-            else if (self.cur_goal_is == 3 && (self.distance_goal <= self.tol_target || self.kc_con_lai <= self.tol_target || self.is_over_goal == true) ){
+            else if (cur_goal_is == 3 && (distance_goal <= tol_target || kc_con_lai <= tol_target || is_over_goal == true) ){
                 //----- them xoay dap ung goc cuoi
-                self.is_target = 0;
-                self.is_over_goal = false;
-                self.is_need_pttt = 0;
-                self.is_pre_pttt = 0;
+                is_target = 0;
+                is_over_goal = false;
+                is_need_pttt = 0;
+                is_pre_pttt = 0;
                 ROS_INFO("da den goal cuoi roi roi!!!!!!");
-                self.stop();
-                self.completed_simple = 1;
-                self.process = 8;
+                stop();
+                completed_simple = 1;
+                process = 8;
                 usleep(600000);
             }
 
             else{
-                self.stt_agv = 1;
+                stt_agv = 1;
 
-                int8_t zonetim = self.check_safetyTIM(self.timeRecieveTIM, self.timeWaitTIM);
-                int8_t zonenav = self.check_safetyNAV(self.timeRecieveNAV, self.timeWaitNAV);
+                int8_t zonetim = check_safetyTIM(timeRecieveTIM, timeWaitTIM);
+                int8_t zonenav = check_safetyNAV(timeRecieveNAV, timeWaitNAV);
                 // cout<<(zonetim)
                 if (zonetim == -1 || zonenav == -1){
-                    self.stop();
+                    stop();
                     // ROS_INFO('khong nhan duoc du lieu laser')
-                    self.error = 3;
-                    self.process = 2;
+                    error = 3;
+                    process = 2;
                 }
 
                 else{
-                    self.error = 0;
+                    error = 0;
                     // if zonetim == 1 || zonenav == 1){
-                    if (self.zone_lidar.zone_sick_ahead == 1 || self.zone_lidar.zone_sick_ahead == 2 || zonenav == 1){
-                        self.stop();
-                        self.is_need_pttt = 1;
-                        self.is_pre_pttt = 0;
-                        self.time_start_navi = ros::Time::now().toSec();
-                        self.war_agv = 1;
+                    if (zone_lidar.zone_sick_ahead == 1 || zone_lidar.zone_sick_ahead == 2 || zonenav == 1){
+                        stop();
+                        is_need_pttt = 1;
+                        is_pre_pttt = 0;
+                        time_start_navi = ros::Time::now().toSec();
+                        war_agv = 1;
                     }
 
                     else{
                         float vel_x = 0.0;
                         // if zonetim == 3){
-                        if (self.zone_lidar.zone_sick_ahead == 3){
-                            self.war_agv = 2;
+                        if (zone_lidar.zone_sick_ahead == 3){
+                            war_agv = 2;
                             vel_x = v_x_send*0.45;
                         }
 
                         else{
-                            self.war_agv = 0;
+                            war_agv = 0;
                             vel_x = v_x_send;
                         }
 
-                        if (vel_x >= self.vel_x_max){
-                            vel_x = self.vel_x_max;
+                        if (vel_x >= vel_x_max){
+                            vel_x = vel_x_max;
                         }
 
-                        if (vel_x <= self.min_vel_x){
-                            vel_x = self.min_vel_x;
+                        if (vel_x <= min_vel_x){
+                            vel_x = min_vel_x;
                         }
                             
                         // cout<<("v_x_send= %s, vel_x= %s" %(v_x_send,vel_x))
                             
                         float v_th_send = 0.0;
-                        if (self.is_target == 0){ 
-                            v_th_send = self.control_navigation(self.x_td_goal, self.y_td_goal,vel_x,self.theta, self.dis_hc);
+                        if (is_target == 0){ 
+                            v_th_send = control_navigation(x_td_goal, y_td_goal,vel_x,theta, dis_hc);
                         }
                         else{
-                            v_th_send = self.control_naviTarget(self.x_td_goal, self.y_td_goal);
+                            v_th_send = control_naviTarget(x_td_goal, y_td_goal);
                         }
                         // cout<<('v_dai = %f, v_goc = %f' %(vel_x,v_th_send))
                         geometry_msgs::Twist twist;
                         twist.linear.x = vel_x;
                         twist.angular.z = v_th_send;
-                        self.pub_cmdVel(twist,self.rate_cmdvel);
+                        pub_cmdVel(twist,rate_cmdvel);
                     }
-                    self.process = 2;
+                    process = 2;
                 }
             }
         }
 
 
-        else if (self.process == 8){
+        else if (process == 8){
                 
-            if (self.needRotatyFinish == 1){
-                double theta = self.target_z - self.theta_rb_ht;
+            if (needRotatyFinish == 1){
+                double theta = target_z - theta_rb_ht;
                 // cout<<(angle_bt, angle_fn)
                 if (fabs(theta) >= M_PI){
                     double theta_t = (2*M_PI - fabs(theta));
@@ -1971,140 +1817,140 @@ int main(int argc, char **argv)
                     }
                 }
 
-                if (self.zone_lidar.zone_sick_ahead == 1 || self.zone_lidar.zone_sick_behind != 0){
-                    self.war_agv = 1;
+                if (zone_lidar.zone_sick_ahead == 1 || zone_lidar.zone_sick_behind != 0){
+                    war_agv = 1;
                     // ROS_INFO('co vat can o vung tron')
-                    self.stop();
+                    stop();
                 }
 
                 else{
                         
-                    self.war_agv = 0;
-                    double gt = self.turn_ar(theta,self.tolerance_theta,self.vel_rot_step_f);
+                    war_agv = 0;
+                    double gt = turn_ar(theta,tolerance_theta,vel_rot_step_f);
                     if (gt == -10){
-                        self.stop();
+                        stop();
                         ros::Duration(0.3).sleep();
-                        self.stt_agv = 0;
-                        self.completed_all = 1;
-                        self.path_plan.poses.empty();
-                        self.pub_path_global.publish(self.path_plan);
-                        self.process = 2;
+                        stt_agv = 0;
+                        completed_all = 1;
+                        path_plan.poses.empty();
+                        pub_path_global.publish(path_plan);
+                        process = 2;
                     }
                     else{
                         geometry_msgs::Twist twist;
                         twist.angular.z = gt;
-                        self.pub_cmdVel(twist,self.rate_cmdvel);
-                        self.stt_agv = 3;
+                        pub_cmdVel(twist,rate_cmdvel);
+                        stt_agv = 3;
                     }
                 }
             }
             else{
                     
-                self.war_agv = 0;
-                self.stop();
-                self.stt_agv = 0;
-                self.completed_all = 1;
-                self.path_plan.poses.empty();
-                self.pub_path_global.publish(self.path_plan);
-                self.process = 2;
+                war_agv = 0;
+                stop();
+                stt_agv = 0;
+                completed_all = 1;
+                path_plan.poses.empty();
+                pub_path_global.publish(path_plan);
+                process = 2;
             }
 
-            self.process = 2;
+            process = 2;
         }
         
-        else if (self.process == -3){   // RESET: khong cho phep di chuyen -reset all.
-            if (self.completed_reset == 0){
-                self.stop();
-                self.reset_all();
-                self.completed_reset = 1;
-                self.process = 2;
+        else if (process == -3){   // RESET: khong cho phep di chuyen -reset all.
+            if (completed_reset == 0){
+                stop();
+                reset_all();
+                completed_reset = 1;
+                process = 2;
                 // cout<< "Im here ! ------------------------reset at mode -3------------------------" << endl;
             }
 
             else{
-                self.stt_agv = 0;
+                stt_agv = 0;
                 cout<< "Wait new misson" << endl;
-                self.process = 2;
+                process = 2;
             }
         }
                 
-        else if (self.process == 50){
-            if (self.completed_backward == 0){
-                self.completed_reset = 0;
-                if (self.stt_agv == 0){ // agv chua di chuyen
-                    if (self.req_move.target_x < 500 && self.req_move.target_y < 500){
-                        self.error = 0;
-                        self.selectfield(0);
+        else if (process == 50){
+            if (completed_backward == 0){
+                completed_reset = 0;
+                if (stt_agv == 0){ // agv chua di chuyen
+                    if (req_move.target_x < 500 && req_move.target_y < 500){
+                        error = 0;
+                        selectfield(0);
 
-                        self.kc_backward = self.fnCalcDistPoints(self.poseRbMa.position.x,\
-                                                                self.req_move.target_x,\
-                                                                self.poseRbMa.position.y,\
-                                                                self.req_move.target_y );
+                        kc_backward = fnCalcDistPoints(poseRbMa.position.x,\
+                                                                req_move.target_x,\
+                                                                poseRbMa.position.y,\
+                                                                req_move.target_y );
 
-                        if (fabs(self.kc_backward) > self.gioihan_lui ){
-                            self.kc_backward = self.gioihan_lui;
+                        if (fabs(kc_backward) > gioihan_lui ){
+                            kc_backward = gioihan_lui;
                         }
 
-                        // self.odom_x_ht = self.odom_rb.pose.pose.position.x
-                        // self.odom_y_ht = self.odom_rb.pose.pose.position.y
+                        // odom_x_ht = odom_rb.pose.pose.position.x
+                        // odom_y_ht = odom_rb.pose.pose.position.y
 
-                        self.XRobotStart = self.poseRbMa.position.x;
-                        self.YRobotStart = self.poseRbMa.position.y;
+                        XRobotStart = poseRbMa.position.x;
+                        YRobotStart = poseRbMa.position.y;
 
-                        self.process = 51;
+                        process = 51;
                     }
 
                     else{
-                        self.stop();
+                        stop();
                         // ROS_INFO('target khong hop le')
-                        self.error = 1; // loi target ko hop le
-                        self.process = 2;
+                        error = 1; // loi target ko hop le
+                        process = 2;
                     }
                 }
 
-                else if (self.stt_agv == 2){ // agv dang lui
-                    self.process = 51;
+                else if (stt_agv == 2){ // agv dang lui
+                    process = 51;
                 }
 
-                else if (self.stt_agv == -1){
-                    self.process = 2;
+                else if (stt_agv == -1){
+                    process = 2;
                 }
             }
 
             else{
-                self.stt_agv = 0;
+                stt_agv = 0;
                 // cout<<("info", "Wait new target",0)
-                self.process = 2;
+                process = 2;
             }
         }
 
-        else if (self.process == 51){
+        else if (process == 51){
             geometry_msgs::Twist twist;
-            self.error = 0;
-            // s = self.fnCalcDistPoints(self.odom_rb.pose.pose.position.x,self.odom_x_ht,self.odom_rb.pose.pose.position.y,self.odom_y_ht)
-            double s_nav = self.fnCalcDistPoints(self.poseRbMa.position.x,self.XRobotStart,self.poseRbMa.position.y,self.YRobotStart);
-            if (s_nav < fabs(self.kc_backward)){
-                self.stt_agv = 2;
-                int8_t zonetim = self.check_safetyTIM(self.timeRecieveTIM, self.timeWaitTIM);
-                int8_t zonenav = self.check_safetyNAV(self.timeRecieveNAV, self.timeWaitNAV);
+            error = 0;
+            // s = fnCalcDistPoints(odom_rb.pose.pose.position.x,odom_x_ht,odom_rb.pose.pose.position.y,odom_y_ht)
+            double s_nav = fnCalcDistPoints(poseRbMa.position.x,XRobotStart,poseRbMa.position.y,YRobotStart);
+            if (s_nav < fabs(kc_backward)){
+                stt_agv = 2;
+                int8_t zonetim = check_safetyTIM(timeRecieveTIM, timeWaitTIM);
+                int8_t zonenav = check_safetyNAV(timeRecieveNAV, timeWaitNAV);
                 // cout<<(zonetim)
 
                 // -- Edit 14/04/2022
                 // if zonetim == -1 || zonenav == -1){
-                //     self.stop()
-                //     self.error = 3
+                //     stop()
+                //     error = 3
 
                 // else){
-                // if self.zone_lidar.zone_sick_ahead == 1 || self.zone_lidar.zone_sick_ahead == 2 || zonenav == 1){
-                if (self.zone_lidar.zone_sick_ahead == 1 || zonenav == 1){
+                // if zone_lidar.zone_sick_ahead == 1 || zone_lidar.zone_sick_ahead == 2 || zonenav == 1){
+                if (zone_lidar.zone_sick_ahead == 1 || zonenav == 1){
                     cout<<("co vat can")<< endl;
-                    self.war_agv = 1;
-                    self.stop();
+                    war_agv = 1;
+                    stop();
                 }
 
                 else{
-                    self.war_agv = 0;
-                    float vel_lui = (fabs((fabs(self.kc_backward)- s_nav))/self.dis_gt_khilui)*0.16;
+                    war_agv = 0;
+                    float vel_lui = (fabs((fabs(kc_backward)- s_nav))/dis_gt_khilui)*0.16;
                     if (vel_lui > 0.16){
                         vel_lui = 0.16;
                     } 
@@ -2112,34 +1958,47 @@ int main(int argc, char **argv)
                         vel_lui = 0.1;
                     }
                     twist.linear.x = vel_lui;
-                    self.pub_cmdVel(twist,self.rate_cmdvel);
+                    pub_cmdVel(twist,rate_cmdvel);
                 }
             }
 
             else{
-                self.stop();
-                self.stt_agv = 0;
-                self.completed_backward = 1;
+                stop();
+                stt_agv = 0;
+                completed_backward = 1;
             }
 
-            self.process = 2;
+            process = 2;
         }
 
-        // cout << "Current mission is " << self.mission << endl;
-        if (self.mission == 0){
-            self.pub_status(self.mission,0,0,0,0,0);
+        // cout << "Current mission is " << mission << endl;
+        if (mission == 0){
+            pub_status(mission,0,0,0,0,0);
         }
 
-        else if (self.mission == 1 || self.mission == 3){
-            self.pub_status(self.mission, self.stt_agv, self.error, self.war_agv, self.completed_all, self.id_fl);
+        else if (mission == 1 || mission == 3){
+            pub_status(mission, stt_agv, error, war_agv, completed_all, id_fl);
         }
 
-        else if (self.mission == 2){
-            self.pub_status(self.mission,self.stt_agv,self.error,self.war_agv,self.completed_backward,self.id_fl);
+        else if (mission == 2){
+            pub_status(mission,stt_agv,error,war_agv,completed_backward,id_fl);
         }          
+    }
+};
 
-        // ROS_INFO("process: %s", self.process)
-        // cout << "curr process is " << self.process << endl;
+int main(int argc, char **argv)
+{
+    cout << "Program start!";
+
+    ros::init(argc, argv, "goalControl_cpp");
+    ros::NodeHandle nh;
+    ros::NodeHandle private_node_handle("~");
+    ros::Rate loop_rate(50);
+
+    goalControl self = goalControl(&nh, &private_node_handle);
+
+    while(ros::ok()){
+        self.run();
         ros::spinOnce();     // allow receiving callbacks function
         loop_rate.sleep();
     }

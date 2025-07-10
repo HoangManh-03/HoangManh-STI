@@ -1,0 +1,4 @@
+<launch>
+	<!-- <node pkg="tf2_ros" type="static_transform_publisher" name="base_pep_linker" args="-0.404 -0.0 -1 0.0 0 0 world frame_robot" /> -->
+	<node pkg="navigation_reflector" name="r2000_pose" type="get_lidarPose.py" output="screen" > </node>
+</launch>

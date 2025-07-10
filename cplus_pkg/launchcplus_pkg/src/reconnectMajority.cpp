@@ -37,19 +37,19 @@ class Reconnect
     string fileLaunch;
     string nameTopic_sub;
 
-    string nameNode;
-    bool is_nameReaded;
+    string nameNode = "";
+    bool is_nameReaded = 0;
     // -- launch
     // uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
     // roslaunch.configure_logging(uuid)
     // -- variable
-    double lastTime_waitConnect;
-    double time_readed; 
-    uint8_t enable_check;
-    int process; 
-    int numberReconnect; 
+    ros::Time lastTime_waitConnect = ros::Time::now();
+    ros::Time time_readed = ros::Time::now(); 
+    uint8_t enable_check = 0;
+    int process = 0; 
+    int numberReconnect = 0; 
     // -- 
-    double lastTime_waitShutdown;
+    ros::Time lastTime_waitShutdown = ros::Time::now();
 
     Reconnect(string nameTopicsub, double timecheckLost, double timewaitLaunch, string file_launch){
 		time_checkLost = timecheckLost;
@@ -60,7 +60,7 @@ class Reconnect
 
 	string read_nameNode(string topic){
 		try{
-			output = subprocess.check_output("rostopic info {}".format(topic), shell= True);
+			output = subprocess.check_output("rostopic info {}".format(topic), shell = True);
 			// print("out: ", output)
 
 			pos1 = str(output).find("Publishers:"); // tuyet doi ko sua linh tinh.

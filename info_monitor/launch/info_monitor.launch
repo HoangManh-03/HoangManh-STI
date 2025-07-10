@@ -1,0 +1,4 @@
+<launch>
+    <node name="info_monitor" pkg="info_monitor" type="pub_vel.py" args="" output="screen" />
+</launch>
+

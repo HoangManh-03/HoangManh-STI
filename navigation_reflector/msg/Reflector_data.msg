@@ -1,0 +1,12 @@
+int16 Cart
+float64 Cart_X
+float64 Cart_Y
+int16 Polar
+float64 Polar_Dist
+float64 Polar_Phi
+int16 LocalID
+int16 GlobalID
+int16 Reflector_type
+int16 Size
+int16 Index_Begin
+int16 Index_End

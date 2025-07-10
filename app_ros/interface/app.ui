@@ -300,45 +300,6 @@ Giải pháp  kỹ thuật Công nghiệp Việt Nam</string>
     <bool>false</bool>
    </property>
   </widget>
-  <widget class="QLabel" name="lb_v">
-   <property name="geometry">
-    <rect>
-     <x>862</x>
-     <y>10</y>
-     <width>16</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>12</pointsize>
-    </font>
-   </property>
-   <property name="autoFillBackground">
-    <bool>false</bool>
-   </property>
-   <property name="frameShape">
-    <enum>QFrame::NoFrame</enum>
-   </property>
-   <property name="lineWidth">
-    <number>1</number>
-   </property>
-   <property name="midLineWidth">
-    <number>0</number>
-   </property>
-   <property name="text">
-    <string>V</string>
-   </property>
-   <property name="scaledContents">
-    <bool>false</bool>
-   </property>
-   <property name="wordWrap">
-    <bool>false</bool>
-   </property>
-   <property name="openExternalLinks">
-    <bool>false</bool>
-   </property>
-  </widget>
   <widget class="QFrame" name="fr_launch">
    <property name="geometry">
     <rect>
@@ -3999,7 +3960,7 @@ trái</string>
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>350</y>
+        <y>360</y>
         <width>101</width>
         <height>61</height>
        </rect>
@@ -4014,6 +3975,19 @@ trái</string>
       <property name="text">
        <string>Lấy tọa
 độ điểm</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cb_remote">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>320</y>
+        <width>92</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Remote</string>
       </property>
      </widget>
     </widget>
@@ -5183,10 +5157,10 @@ cách lùi</string>
       </property>
      </widget>
     </widget>
-    <zorder>fr_tryTarget</zorder>
-    <zorder>fr_handMode_move</zorder>
     <zorder>fr_listTask</zorder>
     <zorder>fr_handMode_conveyor</zorder>
+    <zorder>fr_tryTarget</zorder>
+    <zorder>fr_handMode_move</zorder>
     <zorder>fr_password</zorder>
     <zorder>fr_agv</zorder>
    </widget>
@@ -6717,6 +6691,87 @@ an toàn</string>
 gương</string>
      </property>
     </widget>
+    <widget class="QLabel" name="lbv_temp">
+     <property name="geometry">
+      <rect>
+       <x>460</x>
+       <y>240</y>
+       <width>51</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="lineWidth">
+      <number>1</number>
+     </property>
+     <property name="midLineWidth">
+      <number>0</number>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+     <property name="scaledContents">
+      <bool>false</bool>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
+     <property name="openExternalLinks">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lb_temp">
+     <property name="geometry">
+      <rect>
+       <x>360</x>
+       <y>240</y>
+       <width>101</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="lineWidth">
+      <number>1</number>
+     </property>
+     <property name="midLineWidth">
+      <number>0</number>
+     </property>
+     <property name="text">
+      <string>Nhiệt độ:</string>
+     </property>
+     <property name="scaledContents">
+      <bool>false</bool>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
+     <property name="openExternalLinks">
+      <bool>false</bool>
+     </property>
+    </widget>
    </widget>
    <widget class="QFrame" name="fr_nav350">
     <property name="geometry">
@@ -7675,7 +7730,6 @@ phát hiện</string>
   <zorder>fr_launch</zorder>
   <zorder>fr_run</zorder>
   <zorder>lbv_battery</zorder>
-  <zorder>lb_v</zorder>
   <zorder>lbv_ip</zorder>
   <zorder>lbv_date</zorder>
   <zorder>lb_logo</zorder>

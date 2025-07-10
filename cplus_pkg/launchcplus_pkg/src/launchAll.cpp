@@ -37,17 +37,22 @@ class Launch{
     public:
     string filelaunch;
     string command;
-    int process;
-    time_t time_pre;
+    int process = 0;
+    time_t time_pre = time(NULL);
     // char buf[100];
 
-    Launch(string file_launch){
-        filelaunch = file_launch;
-        // command = "roslaunch " + filelaunch;
-        process = 0;
-        time_pre = time(NULL);
-        // std::cout << time_pre;
+    // Launch(string file_launch){
+    //     filelaunch = file_launch;
+    //     // command = "roslaunch " + filelaunch;
+    //     process = 0;
+    //     time_pre = time(NULL);
+    //     // std::cout << time_pre;
         
+    // }
+
+    void getFileLaunch(string file_launch)
+    {
+        filelaunch = file_launch;
     }
 
     void start(){
@@ -96,9 +101,9 @@ class Launch{
 };
 
 
-class Program{
-            
-    public:
+class Program
+{            
+public:
     string path_firstWork;
     string path_checkPort;
     string path_reconnectBase;
@@ -123,512 +128,506 @@ class Program{
     string path_posePublisher;
     string path_dataApp;
 
-    string notification;
-    uint8_t count_node;
-    uint8_t step;
-    float timeWait;
+    string notification = "";
+    uint8_t count_node = 0;
+    uint8_t step = 0;
+    float timeWait = 0.4;
 
-    uint8_t is_firstWork;
-    uint8_t is_checkPort;
-    uint8_t is_reconnectBase;
-    uint8_t is_reconnectDriver;
-    uint8_t is_main;
-    uint8_t is_driverLeft;
-    uint8_t is_driverRight;
-    uint8_t is_nav350;
-    uint8_t is_hc;
-    uint8_t is_oc;
-    uint8_t is_imu;
-    uint8_t is_loadcell;
-    uint8_t is_imuFilter;
-    uint8_t is_kinematic;
-    uint8_t is_robotPoseNav;
-    uint8_t is_ekf;
-    uint8_t is_safetyNav350;
-    uint8_t is_goalControl;
-    uint8_t is_parkingControl;
-    uint8_t is_client;
-    uint8_t is_control;
-    uint8_t is_posePublisher;
+    // publish topic 
+    ros::Publisher pub_statusLaunch;
+    message_pkg::Status_launch statusLaunch;
 
-    Program(){
-        count_node = 0;
-        step = 0;
-        timeWait = 0.4;   // s
+    //subscribe topic
+    ros::Subscriber sub_firstWork;
+    Launch launch_firstWork;
+    uint8_t is_firstWork = 0;
+
+    ros::Subscriber sub_checkPort;
+    Launch launch_checkPort;
+    uint8_t is_checkPort = 0;
+
+    ros::Subscriber sub_reconnectBase;
+    Launch launch_reconnectBase;
+    uint8_t is_reconnectBase = 0;
+
+    ros::Subscriber sub_reconnectDriver;
+    Launch launch_reconnectDriver;
+    uint8_t is_reconnectDriver = 0;
+
+    ros::Subscriber sub_main;
+    Launch launch_main;
+    uint8_t is_main = 0;
+
+    ros::Subscriber sub_driver1;
+    ros::Subscriber sub_driver2;
+    Launch launch_driverReconnect;
+    uint8_t is_driverLeft = 0;
+    uint8_t is_driverRight = 0;
+
+    ros::Subscriber sub_nav350;
+    Launch launch_nav350;
+    uint8_t is_nav350 = 0;
+
+    ros::Subscriber sub_hc;
+    Launch launch_hc;
+    uint8_t is_hc = 0;
+
+    ros::Subscriber sub_oc;
+    Launch launch_oc;
+    uint8_t is_oc = 0;
+
+    ros::Subscriber sub_imu;
+    Launch launch_imu;
+    uint8_t is_imu = 0;
+
+    ros::Subscriber sub_loadcell;
+    Launch launch_loadcell;
+    uint8_t is_loadcell = 0;
+
+    ros::Subscriber sub_imuFilter;
+    Launch launch_imuFilter;
+    uint8_t is_imuFilter = 0;
+
+    ros::Subscriber sub_kinematic;
+    Launch launch_kinematic;
+    uint8_t is_kinematic = 0;
+
+    ros::Subscriber sub_robotPoseNav;
+    Launch launch_robotPoseNav;
+    uint8_t is_robotPoseNav = 0;
+
+    ros::Subscriber sub_ekf;
+    Launch launch_ekf;
+    uint8_t is_ekf = 0;
+
+    ros::Subscriber sub_safetyNav350;
+    Launch launch_safetyNav350;
+    uint8_t is_safetyNav350 = 0;
+
+    ros::Subscriber sub_goalControl;
+    Launch launch_goalControl;
+    uint8_t is_goalControl = 0;
+
+    ros::Subscriber sub_parkingControl;
+    Launch launch_parkingControl;
+    uint8_t is_parkingControl = 0;
+
+    ros::Subscriber sub_client;
+    Launch launch_client;
+    uint8_t is_client = 0;
+
+    ros::Subscriber sub_control;
+    Launch launch_control;
+    uint8_t is_control = 0;
+
+    ros::Subscriber sub_dataApp;
+    Launch launch_dataApp;
+
+    ros::Subscriber sub_posePublisher;
+    Launch launch_posePublisher;
+    uint8_t is_posePublisher = 0;
+
+    Program(ros::NodeHandle *nh, ros::NodeHandle *npr){
+        ros::param::get("path_firstWork", path_firstWork);
+        launch_firstWork.getFileLaunch(path_firstWork);
+        sub_firstWork = nh->subscribe("/first_work/run", 10, &Program::callBack_firstWork, this);
+
+        ros::param::get("path_checkPort", path_checkPort);
+        launch_checkPort.getFileLaunch(path_checkPort);
+        sub_checkPort = nh->subscribe("/status_port", 10, &Program::callBack_checkPort, this);
+
+        ros::param::get("path_reconnectBase", path_reconnectBase);
+        launch_reconnectBase.getFileLaunch(path_reconnectBase);
+        sub_reconnectBase = nh->subscribe("/status_reconnect", 10, &Program::callBack_reconnectBase, this);
+
+        ros::param::get("path_reconnectDriver", path_reconnectDriver);
+        launch_reconnectDriver.getFileLaunch(path_reconnectDriver);
+        sub_reconnectDriver = nh->subscribe("/status_reconnectDriver", 10, &Program::callBack_reconnectDriver, this);
+
+        ros::param::get("path_main", path_main);
+        launch_main.getFileLaunch(path_main);
+        sub_main = nh->subscribe("/POWER_info", 10, &Program::callBack_main, this);
+
+        ros::param::get("path_driverReconnect", path_driverReconnect);
+        launch_driverReconnect.getFileLaunch(path_driverReconnect);
+        sub_driver1 = nh->subscribe("/driver1_respond", 10, &Program::callBack_driverLeft, this);
+        sub_driver2 = nh->subscribe("/driver2_respond", 10, &Program::callBack_driverRight, this);
+
+        ros::param::get("path_nav350", path_nav350);
+        launch_nav350.getFileLaunch(path_nav350);
+        sub_nav350 = nh->subscribe("/scan", 10, &Program::callBack_nav350, this);
+
+        ros::param::get("path_hc", path_hc);
+        launch_hc.getFileLaunch(path_hc);
+        sub_hc = nh->subscribe("/HC_info", 10, &Program::callBack_hc, this);
+    
+        ros::param::get("path_oc", path_oc);
+        launch_oc.getFileLaunch(path_oc);
+        sub_oc = nh->subscribe("/OC_info", 10, &Program::callBack_oc, this);
+
+        ros::param::get("path_imu", path_imu);
+        launch_imu.getFileLaunch(path_imu);
+        sub_imu = nh->subscribe("/imu/data", 10, &Program::callBack_imu, this);
+
+        ros::param::get("path_loadcell", path_loadcell);
+        launch_loadcell.getFileLaunch(path_loadcell);
+        sub_loadcell = nh->subscribe("/loadcell_respond", 10, &Program::callBack_loadcell, this);
+
+        ros::param::get("path_imuFilter", path_imuFilter);
+        launch_imuFilter.getFileLaunch(path_imuFilter);
+        sub_imuFilter = nh->subscribe("/imu_filter", 10, &Program::callBack_imuFilter, this);
+
+        ros::param::get("path_kinematic", path_kinematic);
+        launch_kinematic.getFileLaunch(path_kinematic);
+        sub_kinematic = nh->subscribe("/driver1_query", 10, &Program::callBack_kinematic, this);
+
+        ros::param::get("path_robotPoseNav", path_robotPoseNav);
+        launch_robotPoseNav.getFileLaunch(path_robotPoseNav);
+        sub_robotPoseNav = nh->subscribe("/robotPose_nav", 10, &Program::callBack_robotPoseNav, this);
+
+        ros::param::get("path_ekf", path_ekf);
+        launch_ekf.getFileLaunch(path_ekf);
+        sub_ekf = nh->subscribe("/odometry", 10, &Program::callBack_ekf, this);
+
+        ros::param::get("path_safetyNav350", path_safetyNav350);
+        launch_safetyNav350.getFileLaunch(path_safetyNav350);
+        sub_safetyNav350 = nh->subscribe("/safety_NAV", 10, &Program::callBack_safetyNav350, this);
+
+        ros::param::get("path_goalControl", path_goalControl);
+        launch_goalControl.getFileLaunch(path_goalControl);
+        sub_goalControl = nh->subscribe("/status_goal_control", 10, &Program::callBack_goalControl, this);
+
+        ros::param::get("path_parkingControl", path_parkingControl);
+        launch_parkingControl.getFileLaunch(path_parkingControl);
+        sub_parkingControl = nh->subscribe("/parking_respond", 10, &Program::callBack_parkingControl, this);
+
+        ros::param::get("path_client", path_client);
+        launch_client.getFileLaunch(path_client);
+        sub_client = nh->subscribe("/NN_infoRequest", 10, &Program::callBack_client, this);
+
+        ros::param::get("path_control", path_control);
+        launch_control.getFileLaunch(path_control);
+        sub_control = nh->subscribe("/NN_infoRespond", 10, &Program::callBack_control, this);
+
+        ros::param::get("path_dataApp", path_dataApp);
+        launch_dataApp.getFileLaunch(path_dataApp);
+
+        ros::param::get("path_posePublisher", path_posePublisher);
+        launch_posePublisher.getFileLaunch(path_posePublisher);
+        sub_posePublisher = nh->subscribe("/robot_pose", 10, &Program::callBack_posePublisher, this);
+
+        pub_statusLaunch = nh->advertise<message_pkg::Status_launch>("/status_launch", 10);
 
     }
 
-    void callBack_firstWork(const std_msgs::Int16::ConstPtr& msg){
+    ~Program(){};
+
+    void callBack_firstWork(const std_msgs::Int16& msg){
         is_firstWork = 1;
-        ROS_INFO("firstWork value = %d", is_firstWork);
+        // ROS_INFO("firstWork value = %d", is_firstWork);
     }
 
-    void callBack_checkPort(const message_pkg::Status_port::ConstPtr& msg){
+    void callBack_checkPort(const message_pkg::Status_port& msg){
         is_checkPort = 1;
-        ROS_INFO("checkPort value = %d", is_checkPort);
+        // ROS_INFO("checkPort value = %d", is_checkPort);
     }
 
-    void callBack_reconnectBase(const message_pkg::Status_reconnect::ConstPtr& msg){
+    void callBack_reconnectBase(const message_pkg::Status_reconnect& msg){
         is_reconnectBase = 1;
+        // ROS_INFO("reconnectBase value = %d", is_reconnectBase);
     }
 
-    void callBack_reconnectDriver(const message_pkg::Status_reconnect::ConstPtr& msg){
-        is_reconnectBase = 1;
+    void callBack_reconnectDriver(const message_pkg::Status_reconnect& msg){
+        is_reconnectDriver = 1;
+        // ROS_INFO("reconnectDriver value = %d", is_reconnectDriver);
     }
 
-    void callBack_main(const sti_msgs::POWER_info::ConstPtr& msg){
+    void callBack_main(const sti_msgs::POWER_info& msg){
         is_main = 1;
     }
 
-    void callBack_driverLeft(const message_pkg::Driver_respond::ConstPtr& msg){
+    void callBack_driverLeft(const message_pkg::Driver_respond& msg){
         is_driverLeft = 1;
     }
 
-    void callBack_driverRight(const message_pkg::Driver_respond::ConstPtr& msg){
+    void callBack_driverRight(const message_pkg::Driver_respond& msg){
         is_driverRight = 1;
     }
 
-    void callBack_nav350(const sensor_msgs::LaserScan::ConstPtr& msg){
+    void callBack_nav350(const sensor_msgs::LaserScan& msg){
         is_nav350 = 1;
     }
 
-    void callBack_hc(const sti_msgs::HC_info::ConstPtr& msg){
+    void callBack_hc(const sti_msgs::HC_info& msg){
         is_hc = 1;
     }
 
-    void callBack_oc(const sti_msgs::Lift_status::ConstPtr& msg){
+    void callBack_oc(const sti_msgs::Lift_status& msg){
         is_oc = 1;
     }
 
-    void callBack_imu(const sensor_msgs::Imu::ConstPtr& msg){
+    void callBack_imu(const sensor_msgs::Imu& msg){
         is_imu = 1;
     }
 
-    void callBack_loadcell(const message_pkg::Loadcell_respond::ConstPtr& msg){
+    void callBack_loadcell(const message_pkg::Loadcell_respond& msg){
         is_loadcell = 1;
     }
 
-    void callBack_imuFilter(const sensor_msgs::Imu::ConstPtr& msg){
+    void callBack_imuFilter(const sensor_msgs::Imu& msg){
         is_imuFilter = 1;
     }
 
-    void callBack_kinematic(const message_pkg::Driver_query::ConstPtr& msg){
+    void callBack_kinematic(const message_pkg::Driver_query& msg){
         is_kinematic = 1;
     }
 
-    void callBack_robotPoseNav(const geometry_msgs::PoseStamped::ConstPtr& msg){
+    void callBack_robotPoseNav(const geometry_msgs::PoseStamped& msg){
         is_robotPoseNav = 1;
     }
 
-    void callBack_ekf(const nav_msgs::Odometry::ConstPtr& msg){
+    void callBack_ekf(const nav_msgs::Odometry& msg){
         is_ekf = 1;
     }
 
-    void callBack_safetyNav350(const std_msgs::Int8::ConstPtr& msg){
+    void callBack_safetyNav350(const std_msgs::Int8& msg){
         is_safetyNav350 = 1;
     }
 
-    void callBack_goalControl(const sti_msgs::Status_goal_control::ConstPtr& msg){
+    void callBack_goalControl(const sti_msgs::Status_goal_control& msg){
         is_goalControl = 1;
     }
 
-    void callBack_parkingControl(const message_pkg::Parking_respond::ConstPtr& msg){
+    void callBack_parkingControl(const message_pkg::Parking_respond& msg){
         is_parkingControl = 1;
     }
 
-    void callBack_client(const sti_msgs::NN_infoRequest::ConstPtr& msg){
+    void callBack_client(const sti_msgs::NN_infoRequest& msg){
         is_client = 1;
     }
 
-    void callBack_control(const sti_msgs::NN_infoRespond::ConstPtr& msg){
+    void callBack_control(const sti_msgs::NN_infoRespond& msg){
         is_control = 1;
     }
 
-    void callBack_posePublisher(const geometry_msgs::Pose::ConstPtr& msg){
+    void callBack_posePublisher(const geometry_msgs::Pose& msg){
         is_posePublisher = 1;
     }
 
-};
-
-int main(int argc, char **argv){
-    std::cout << "Program start!";
-
-    Program program;
-    message_pkg::Status_launch statusLaunch;
-
-    ROS_INFO("ROS Initial!");
-    ros::init(argc, argv, "Program_launch");
-    ros::NodeHandle n;
-    ros::Rate loop_rate(10);
-
-    ros::Publisher pub_statusLaunch = n.advertise<message_pkg::Status_launch>("/status_launch", 1000);
-
-    // -- module - firstWork.
-    ros::param::get("/path_firstWork", program.path_firstWork);
-    Launch launch_firstWork(program.path_firstWork);
-    ros::Subscriber sub_firstWork = n.subscribe("/first_work/run", 1000, &Program::callBack_firstWork, &program);
-    program.is_firstWork = 0;
-    program.count_node += 1;
-
-    // -- module - checkPort.
-    ros::param::get("/path_checkPort", program.path_checkPort);
-    std::cout << program.path_checkPort;
-
-    Launch launch_checkPort(program.path_checkPort);
-    ros::Subscriber sub_checkPort = n.subscribe("/status_port", 1000, &Program::callBack_checkPort, &program);
-    program.is_checkPort = 0;
-    program.count_node += 1;
-
-    // -- module - reconnectBase.
-    ros::param::get("/path_reconnectBase", program.path_reconnectBase);
-    Launch launch_reconnectBase(program.path_reconnectBase);
-    // launch_reconnectBase.start();
-    ros::Subscriber sub_reconnectBase = n.subscribe("/status_reconnectBase", 1000, &Program::callBack_reconnectBase, &program);
-    program.is_reconnectBase = 1;
-    program.count_node += 1;
-
-    // -- module - reconnectDriver.
-    ros::param::get("/path_reconnectDriver", program.path_reconnectDriver);
-    Launch launch_reconnectDriver(program.path_reconnectDriver);
-    // launch_reconnectDriver.start();
-    ros::Subscriber sub_reconnectDriver = n.subscribe("/status_reconnectDriver", 1000, &Program::callBack_reconnectDriver, &program);
-    program.is_reconnectDriver = 1;
-    program.count_node += 1;
-
-    // -- module - Main.
-    ros::param::get("/path_main", program.path_main);
-    Launch launch_main(program.path_main);
-    ros::Subscriber sub_main = n.subscribe("/POWER_info", 1000, &Program::callBack_main, &program);
-    program.is_main = 0;
-    program.count_node += 1;
-
-    // -- module - driverAll.
-    ros::param::get("/path_driverReconnect", program.path_driverReconnect);
-    Launch launch_driverReconnect(program.path_driverReconnect);
-    // ros::Subscriber sub_driverLeft = n.subscribe("/driver1_respond", 1000, &Program::callBack_driverLeft, &program);
-    // ros::Subscriber sub_driverRight = n.subscribe("/driver2_respond", 1000, &Program::callBack_driverRight, &program);
-    program.is_driverLeft = 0;
-    program.is_driverRight = 0;
-    program.count_node += 1;
-
-    // -- module - nav350.
-    ros::param::get("/path_nav350", program.path_nav350);
-    Launch launch_nav350(program.path_nav350);
-    // ros::Subscriber sub_nav350 = n.subscribe("/scan", 1000, &Program::callBack_nav350, &program);
-    program.is_nav350 = 0;
-    program.count_node += 1;
-
-    // -- module - HC.
-    ros::param::get("/path_hc", program.path_hc);
-    Launch launch_hc(program.path_hc);
-    // ros::Subscriber sub_hc = n.subscribe("/HC_info", 1000, &Program::callBack_hc, &program);
-    program.is_hc = 0;
-    program.count_node += 1;
-
-    // -- module - OC.
-    ros::param::get("/path_oc", program.path_oc);
-    Launch launch_oc(program.path_oc);
-    // ros::Subscriber sub_oc = n.subscribe("/lift_status", 1000, &Program::callBack_oc, &program);
-    program.is_oc = 0;
-    program.count_node += 1;
-
-    // -- module - imu.
-    ros::param::get("/path_imu", program.path_imu);
-    Launch launch_imu(program.path_imu);
-    // ros::Subscriber sub_imu = n.subscribe("/imu/data", 1000, &Program::callBack_imu, &program);
-    program.is_imu = 0;
-    program.count_node += 1;
-
-    // -- module - loadcell
-    ros::param::get("/path_loadcell", program.path_loadcell);
-    Launch launch_loadcell(program.path_loadcell);
-    // ros::Subscriber sub_loadcell = n.subscribe("/loadcell_respond", 1000, &Program::callBack_loadcell, &program);
-    program.is_loadcell = 0;
-    program.count_node += 1;
-
-    // -- module - imuFilter.
-    ros::param::get("/path_imuFilter", program.path_imuFilter);
-    Launch launch_imuFilter(program.path_imuFilter);
-    // ros::Subscriber sub_imuFilter = n.subscribe("/imu_filter", 1000, &Program::callBack_imuFilter, &program);
-    program.is_imuFilter = 0;
-    program.count_node += 1;
-
-    // -- module - kinematic.
-    ros::param::get("/path_kinematic", program.path_kinematic);
-    Launch launch_kinematic(program.path_kinematic);
-    // ros::Subscriber sub_kinematic = n.subscribe("/driver1_query", 1000, &Program::callBack_kinematic, &program);
-    program.is_kinematic = 0;
-    program.count_node += 1;
-
-    // -- get pose robot from nav.
-    ros::param::get("/path_robotPoseNav", program.path_robotPoseNav);
-    Launch launch_robotPoseNav(program.path_robotPoseNav);
-    // ros::Subscriber sub_robotPoseNav = n.subscribe("/robotPose_nav", 1000, &Program::callBack_robotPoseNav, &program);
-    program.is_robotPoseNav = 0;
-    program.count_node += 1;
-
-    // -- module - ekf.
-    ros::param::get("/path_ekf", program.path_ekf);
-    Launch launch_ekf(program.path_ekf);
-    // ros::Subscriber sub_ekf = n.subscribe("/odometry", 1000, &Program::callBack_ekf, &program);
-    program.is_ekf = 0;
-    program.count_node += 1;
-
-    // -- module - safety zone Nav350.
-    ros::param::get("/path_safetyNav350", program.path_safetyNav350);
-    Launch launch_safetyNav350(program.path_safetyNav350);
-    // ros::Subscriber sub_safetyNav350 = n.subscribe("/safety_NAV", 1000, &Program::callBack_safetyNav350, &program);
-    program.is_safetyNav350 = 0;
-    program.count_node += 1;
-
-    // -- module - goalControl.
-    ros::param::get("/path_goalControl", program.path_goalControl);
-    Launch launch_goalControl(program.path_goalControl);
-    // ros::Subscriber sub_goalControl = n.subscribe("/status_goal_control", 1000, &Program::callBack_goalControl, &program);
-    program.is_goalControl = 0;
-    program.count_node += 1;
-
-    // -- module - parkingControl.
-    ros::param::get("/path_parkingControl", program.path_parkingControl);
-    Launch launch_parkingControl(program.path_parkingControl);
-    // ros::Subscriber sub_parkingControl = n.subscribe("/parking_respond", 1000, &Program::callBack_parkingControl, &program);
-    program.is_parkingControl = 0;
-    program.count_node += 1;
-
-    // -- module - stiClient.
-    ros::param::get("/path_client", program.path_client);
-    Launch launch_client(program.path_client);
-    // ros::Subscriber sub_client = n.subscribe("/NN_infoRequest", 1000, &Program::callBack_client, &program);
-    program.is_client = 0;
-    program.count_node += 1;
-
-    // -- module - stiControl.
-    ros::param::get("/path_control", program.path_control);
-    Launch launch_control(program.path_control);
-    // ros::Subscriber sub_control = n.subscribe("/NN_infoRespond", 1000, &Program::callBack_control, &program);
-    program.is_control = 0;
-    program.count_node += 1;
-    
-    // -- module - data App.
-    ros::param::get("/path_dataApp", program.path_dataApp);
-    Launch launch_dataApp(program.path_dataApp);
-    program.count_node += 1;
-
-    // -- module - posePublisher.
-    ros::param::get("/path_posePublisher", program.path_posePublisher);
-    Launch launch_posePublisher(program.path_posePublisher);
-    // ros::Subscriber sub_posePublisher = n.subscribe("/robot_pose", 1000, &Program::callBack_posePublisher, &program);
-    program.is_posePublisher = 0;
-    program.count_node += 1;
-
-    // -- ko dc xoa
-    program.count_node += 1;
-
-    while (ros::ok()){
-        // -- firstWork
-        if (program.step == 0){
-            program.notification = "launch_firstWork";
+    void run()
+    {
+        if (step == 0){
+            notification = "launch_firstWork";
             launch_firstWork.start();
-            if (program.is_firstWork == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);
+            if (is_firstWork == 1){
+                step += 1;
+                usleep(timeWait*1000000);
             }
         }
         // -- checkPort
-        else if (program.step == 1){
-            program.notification = "launch_checkPort";
+        else if (step == 1){
+            notification = "launch_checkPort";
             launch_checkPort.start();
-            if (program.is_checkPort == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);
+            if (is_checkPort == 1){
+                step += 1;
+                usleep(timeWait*1000000);
             }
         }
 
         // -- reconnectBase
-        else if (program.step == 2){
-            program.notification = "launch_reconnectBase";
+        else if (step == 2){
+            notification = "launch_reconnectBase";
             launch_reconnectBase.start();
-            if (program.is_reconnectBase == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);
+            if (is_reconnectBase == 1){
+                step += 1;
+                usleep(timeWait*1000000);
             }
         }
 
         // -- reconnectDriver
-        else if (program.step == 3){
-            program.notification = "launch_reconnectDriver";
-            program.step += 1;
+        else if (step == 3){
+            notification = "launch_reconnectDriver";
+            step += 1;
             launch_reconnectDriver.start();
-            if (program.is_reconnectDriver == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);
+            if (is_reconnectDriver == 1){
+                step += 1;
+                usleep(timeWait*1000000);
             }
         }
 
         // -- data APP
-        else if (program.step == 4){
-            program.notification = "launch_dataApp";
-            program.step += 1;
+        else if (step == 4){
+            notification = "launch_dataApp";
+            step += 1;
         }
 
         // -- main
-        else if (program.step == 5){
-            program.notification = "launch_main";
+        else if (step == 5){
+            notification = "launch_main";
             launch_main.start();
-            if (program.is_main == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);
+            if (is_main == 1){
+                step += 1;
+                usleep(timeWait*1000000);
             }
         }
 
         // -- hc
-        else if (program.step == 6){
-            program.notification = "launch_hc";
-            program.step = 7;
+        else if (step == 6){
+            notification = "launch_hc";
+            step = 7;
         }
         // -- oc
         // -- imu
-        else if (program.step == 7){
-            program.notification = "launch_imu";
-            program.step = 8;
+        else if (step == 7){
+            notification = "launch_imu";
+            step = 8;
         }
 
         // -- driverAll
-        else if (program.step == 8){
-            program.notification = "launch_driverReconnect";
+        else if (step == 8){
+            notification = "launch_driverReconnect";
             int sts_driver = launch_driverReconnect.start_and_wait(3.);
             if(sts_driver == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);                    
+                step += 1;
+                usleep(timeWait*1000000);                    
             }
         }
         
         // -- nav350
-        else if (program.step == 9){
-            program.notification = "launch_nav350";
+        else if (step == 9){
+            notification = "launch_nav350";
             launch_nav350.start();
-            if(program.is_nav350 == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);                    
+            if(is_nav350 == 1){
+                step += 1;
+                usleep(timeWait*1000000);                    
             }
         }
 
         // -- data APP
-        else if (program.step == 10){
-            program.notification = "launch_dataApp";
+        else if (step == 10){
+            notification = "launch_dataApp";
             try{
                 int sts_app = launch_dataApp.start_and_wait(2.);
                 if(sts_app == 1){
-                    program.step += 1;
-                    usleep(program.timeWait*1000000); 
+                    step += 1;
+                    usleep(timeWait*1000000); 
                 }
             }
             catch(...){
-                program.step += 1;
+                step += 1;
             }
         }
 
         // -- kinematic
-        else if (program.step == 11){
-            program.notification = "launch_kinematic";
+        else if (step == 11){
+            notification = "launch_kinematic";
             launch_kinematic.start();
-            if(program.is_kinematic == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);                    
+            if(is_kinematic == 1){
+                step += 1;
+                usleep(timeWait*1000000);                    
             }
         }
 
         // -- get pose robot from nav.
-        else if (program.step == 12){
-            program.notification = "launch_robotPoseNav";
+        else if (step == 12){
+            notification = "launch_robotPoseNav";
             launch_robotPoseNav.start();
-            if(program.is_robotPoseNav == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);                    
+            if(is_robotPoseNav == 1){
+                step += 1;
+                usleep(timeWait*1000000);                    
             }
         }
 
         // -- ekf
-        else if (program.step == 13){
-            program.notification = "launch_ekf";
+        else if (step == 13){
+            notification = "launch_ekf";
             int sts_ekf = launch_ekf.start_and_wait(3.);
-            if(program.is_ekf == 1 || sts_ekf == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);                    
+            if(is_ekf == 1 || sts_ekf == 1){
+                step += 1;
+                usleep(timeWait*1000000);                    
             }
         }
 
         // -- safety zone Nav350
-        else if (program.step == 14){
-            program.notification = "launch_safetyNav350";
+        else if (step == 14){
+            notification = "launch_safetyNav350";
             launch_safetyNav350.start();
-            if(program.is_safetyNav350 == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);                    
+            if(is_safetyNav350 == 1){
+                step += 1;
+                usleep(timeWait*1000000);                    
             }
         }
 
         // -- goal control
-        else if (program.step == 15){
-            program.notification = "launch_goalControl";
+        else if (step == 15){
+            notification = "launch_goalControl";
             launch_goalControl.start();
-            if(program.is_goalControl == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);                    
+            if(is_goalControl == 1){
+                step += 1;
+                usleep(timeWait*1000000);                    
             }
         }
 
         // -- parking control
-        else if (program.step == 16){
-            program.notification = "launch_parkingControl";
+        else if (step == 16){
+            notification = "launch_parkingControl";
             launch_parkingControl.start();
-            if(program.is_parkingControl == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);                    
+            if(is_parkingControl == 1){
+                step += 1;
+                usleep(timeWait*1000000);                    
             }
         }
 
         // -- client
-        else if (program.step == 17){
-            program.notification = "launch_StiClient";
+        else if (step == 17){
+            notification = "launch_StiClient";
             int sts_client = launch_client.start_and_wait(3.);
-            if(program.is_client == 1 || sts_client == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);                    
+            if(is_client == 1 || sts_client == 1){
+                step += 1;
+                usleep(timeWait*1000000);                    
             }
         }
 
         // -- control
-        else if (program.step == 18){
-            program.notification = "launch_StiControl";
+        else if (step == 18){
+            notification = "launch_StiControl";
             launch_control.start();
-            if(program.is_control == 1){
-                program.step += 1;
-                usleep(program.timeWait*1000000);                    
+            if(is_control == 1){
+                step += 1;
+                usleep(timeWait*1000000);                    
             }
         }
 
         // -- posePublisher
         // -- completed
-        else if (program.step == 19){
-            program.notification = "Completed!";
+        else if (step == 19){
+            notification = "Completed!";
         }
 
         // -- -- PUBLISH STATUS
-        statusLaunch.persent = int((program.step/19)*100.);
-        statusLaunch.position = program.step;
-        statusLaunch.notification = program.notification;
-        pub_statusLaunch.publish(statusLaunch);
-
-        ros::spinOnce();
-        loop_rate.sleep();
+        statusLaunch.persent = int((step/19)*100.);
+        statusLaunch.position = step;
+        statusLaunch.notification = notification;
+        pub_statusLaunch.publish(statusLaunch);   
     }
-    
-    // }
-    // catch(...){
 
-    // }
-    std::cout << "Program stop!";
+};
+
+int main (int argc, char **argv)
+{
+    cout << "Program start" << endl;
+    ros::init(argc, argv, "Launch_nodepp");
+    ros::NodeHandle nh;
+    ros::NodeHandle private_node_handle("~");
+    ros::Rate rate(10); // ROS Rate at 5Hz
+
+    Program self = Program(&nh, &private_node_handle);
+
+    while (ros::ok()) {
+        self.run();
+        rate.sleep();
+        ros::spinOnce(); 
+    }
     return 0;
 }
 

@@ -9,7 +9,7 @@
     <arg name="use_magnetometer" default="false" />
     <arg name="use_temperature" default="false" /> 
     
-    <node pkg="tf2_ros" type="static_transform_publisher" name="robot_imu_linker" args="0.4152 0 0 0 0 0 1 frame_robot1 $(arg frame_id)" />    
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="robot_imu_linker" args="0.4152 0 0 0 0 0 1 frame_robot1 $(arg frame_id)" />     -->
 
     <node pkg="ros_imu_bno055" type="imu_ros.py" name="ros_imu_bno055_node" output="screen">
         <param name="serial_port" value="$(arg serial_port)" />

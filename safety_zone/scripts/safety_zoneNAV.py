@@ -34,7 +34,6 @@ class safety_zone():
         self.data_scan = data
         self.is_scanNav = True
         
-            
     def raa(self):
         while not rospy.is_shutdown():
             if self.is_scanNav == True:
@@ -54,7 +53,6 @@ class safety_zone():
                     numberPointinCircle = 500
                     print ("Something wrong!!!")
 
-                # print(numberPointinCircle)
                 if numberPointinCircle >= 15:
                     self.dPubZone.data = 1
 
@@ -63,10 +61,9 @@ class safety_zone():
 
                 self.zone_lidarNAV.publish(self.dPubZone) 
             self.rate.sleep()
-        # print('Thread #%s stopped' % self.threadID)
 
 def main():
-    
+
     try:
         m = safety_zone()
         m.raa()

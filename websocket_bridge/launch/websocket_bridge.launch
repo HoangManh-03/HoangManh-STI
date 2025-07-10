@@ -1,0 +1,11 @@
+<launch>
+    <!-- Start rosbridge_websocket -->
+    <node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
+        <!-- Cấu hình cổng WebSocket (mặc định 9090) -->
+        <param name="port" value="9090" />
+    </node>
+    
+    <!-- Start rosapi -->
+    <node name="rosapi" pkg="rosapi" type="rosapi_node" output="screen" />
+</launch>
+

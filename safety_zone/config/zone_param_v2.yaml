@@ -1,0 +1,13 @@
+# param cho agv shiv34 
+# 19/03/2024
+
+# param
+dis_circle_max: 0.35
+dis_circle_min: 0.1
+
+dis_ahead_max: 1.2
+dis_ahead_min: 0.1
+
+dis_behind_max: 0.9
+dis_behind_min: 0.1
+dis_width: 0.1

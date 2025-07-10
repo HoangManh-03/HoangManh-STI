@@ -1,9 +1,9 @@
 
 #use for node   : goal_control_v1.py
 rate : 70
-vel_x_max : 0.65
+vel_x_max : 1.0        # 0.6
 vel_x_min : 0.1
-vel_theta_max : 0.5
+vel_theta_max : 1.0     #0.5
 vel_theta_min : 0.1
 tolerance_xy_max : 0.2
 tolerance_xy_min : 0.02

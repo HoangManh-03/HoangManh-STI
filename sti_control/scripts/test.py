@@ -1,69 +1,84 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-import socket
-import roslib
-
-# get ip
-import os                                                                                                                                                           
-import re 
-
-import sys
-import struct
+import websocket
+import threading
 import time
-from decimal import *
-import math
-import rospy
-from datetime import datetime
 
-def int_to_bytes( val, n): # int to n bytes
-	ss = b''
-	x = 0
-	t = 0
-	for i in range(0, n):
-		t += pow(256, n - i)*x
-		print ("-----------i: ", i)
-		print ("tt: ", t)
-		x = int((val - t)/pow(256, n - i - 1) )
-		print ("xx: ", x)
-		# ss += self.int_to_byte(x)
-	return ss
+class WebSocketClient:
+    def __init__(self, url):
+        self.url = url
+        self.ws = None
+        self.is_connected = False
 
-def int_to_byte(val): # int to a bytes
-	if val > 255:
-		# rospy.logerr("int_to_byte: Val error: %s", val)
-		val = 255
-	elif val < 0:
-		# rospy.logerr("int_to_byte: Val error: %s", val)
-		val = 0
-	return struct.pack("B", int(val)) # bytes(chr(int(val)), 'ascii')
+    def on_open(self, ws):
+        """Xử lý sự kiện khi kết nối WebSocket được mở."""
+        print("Kết nối WebSocket đã mở.")
+        self.is_connected = True
 
-def intA_to_bytes(val, n): # int to n bytes
-	ss = b''
-	x = 0
-	t = 0
+    def on_message(self, ws, message):
+        """Xử lý sự kiện khi nhận được tin nhắn."""
+        print("Tin nhắn nhận được:", message)
 
-	if (val >= 0):
-		val_1 = val
-	else:
-		val_1 = pow(256, 4) + val
+    def on_error(self, ws, error):
+        """Xử lý sự kiện khi có lỗi xảy ra."""
+        print("Đã xảy ra lỗi:", error)
 
-	for i in range(0, n):
-		t += pow(256, n - i)*x
-		x = int((val_1 - t)/pow(256, n - i - 1) )
-		ss += int_to_byte(x)
+    def on_close(self, ws, close_status_code, close_msg):
+        """Xử lý sự kiện khi kết nối WebSocket bị đóng."""
+        print("Kết nối WebSocket đã đóng.")
+        self.is_connected = False
+        self.reconnect()  # Gọi phương thức để kết nối lại
 
-	print(ss)
-	return ss
+    def reconnect(self):
+        """Cố gắng kết nối lại."""
+        while not self.is_connected:
+            print("Đang cố gắng kết nối lại...")
+            time.sleep(5)  # Đợi 5 giây trước khi cố gắng kết nối lại
+            self.run()
 
-# int_to_bytes(15000, 4)
+    def run(self):
+        """Chạy WebSocket và giữ kết nối liên tục."""
+        self.ws = websocket.WebSocketApp(
+            self.url,
+            on_open=self.on_open,
+            on_message=self.on_message,
+            on_error=self.on_error,
+            on_close=self.on_close
+        )
+        self.ws.run_forever()
 
-a = intA_to_bytes(500, 2)
+    def send_message(self, message):
+        """Gửi tin nhắn tới máy chủ nếu kết nối đang hoạt động."""
+        if self.is_connected:
+            self.ws.send(message)
+        else:
+            print("Không thể gửi tin nhắn. WebSocket chưa kết nối.")
 
-for i in a:
-	print(i)
+    def close(self):
+        """Đóng kết nối WebSocket."""
+        if self.ws:
+            self.ws.close()
 
-# t = 0
-# x = (150000 - t)/pow(256, 4 - 1 - 1) 
 
-# print ("x: ", x)
+def main():
+    url = "ws://192.168.1.54:8765"  # Thay đổi URL này cho phù hợp với máy chủ WebSocket của bạn
+    client = WebSocketClient(url)
+
+    # Tạo một luồng để chạy WebSocket
+    ws_thread = threading.Thread(target=client.run)
+    ws_thread.start()
+
+    time.sleep(1)  # Đợi một chút để đảm bảo kết nối được thiết lập
+	
+
+    # Gửi tin nhắn liên tục
+    try:
+        while True:
+            message = "Xin chào từ WebSocket Client!"
+            client.send_message(message)
+            time.sleep(0.1)  # Thay đổi thời gian giữa các lần gửi tin nhắn ở đây
+    except KeyboardInterrupt:
+        print("Đóng kết nối...")
+        client.close()
+        ws_thread.join()  # Đợi cho luồng WebSocket kết thúc
+
+if __name__ == "__main__":
+    main()

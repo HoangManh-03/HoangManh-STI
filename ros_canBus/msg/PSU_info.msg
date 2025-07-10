@@ -1,0 +1,8 @@
+bool stsRev_CAN
+float32 voltages
+uint16 voltages_analog
+float32 charge_current
+uint16 charge_analog
+bool stsButton_power
+bool status_input1
+uint8 temperture

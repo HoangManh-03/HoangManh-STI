@@ -1,0 +1,7 @@
+<launch>
+  <node
+    name="app"
+    pkg="app"
+    type="main_app.py"
+    output="screen"/>
+</launch>

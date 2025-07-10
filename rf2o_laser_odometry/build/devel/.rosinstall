@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/hoang/catkin_ws/src/rf2o_laser_odometry/build/devel/setup.sh

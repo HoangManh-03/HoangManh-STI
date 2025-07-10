@@ -1,0 +1,9 @@
+<launch>	
+	<node pkg="navigation_reflector" name="r2000_detectedref_node" type="evaluate_reflector_info_v3.py" output="screen" >
+		<param name="radius_reflector" value="0.03"/>
+		<param name="min_scanningRadius" value="0.1"/>
+		<param name="max_scanningRadius" value="30"/>
+		<param name="min_reflectionIntensity" value="700"/>
+		<param name="max_reflectionIntensity" value="5000"/>
+	</node>
+</launch>

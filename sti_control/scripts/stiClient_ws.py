@@ -1,0 +1,430 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import time
+import json
+import threading
+import asyncio
+
+import websockets  # Thư viện websockets (pip install websockets)
+from urllib.parse import urlparse
+
+import rospy
+from sti_msgs.msg import NN_cmdRequest
+from sti_msgs.msg import NN_infoRequest
+from sti_msgs.msg import NN_infoRespond
+from geometry_msgs.msg import Pose, Point
+
+from math import degrees, radians
+import struct
+import subprocess
+import re
+
+class FrameSendServer:
+    def __init__(self, type_agv = 0):
+        self._data = {
+            "type": type_agv,
+            "info": {
+                "ip": "",
+                "mac": "",
+                "x": 0,
+                "y": 0,
+                "r": 0,
+                "rfid_lastcode": 0,
+                "rfid_code": 0,
+                "direction": 0,
+                "battery": 0,
+                "status": 0,
+                "offset": 0,
+                "mode": 0,
+                "task_status": 0,
+                "error_code": 0
+            }
+        }
+
+    # Magic method để truy cập giá trị bằng obj["key"]
+    def __getitem__(self, key):
+        return self._data[key]
+
+    # Magic method để gán giá trị bằng obj["key"] = value
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
+    # Tùy chọn: Hàm in đẹp
+    def __repr__(self):
+        return str(self._data)
+
+    def to_dict(self):
+        return self._data
+
+class WebSocketClient:
+    def __init__(self, url, ip_client, port):
+        self.url = url
+        self.ip_client = ip_client
+        self.port = port
+
+        self.is_connected = False
+        self.closeByProgram = False
+        self.data_recieved = ""
+
+        # Tạo event loop riêng cho client, chạy trong thread
+        self.loop = asyncio.new_event_loop()
+
+    def run(self):
+        asyncio.set_event_loop(self.loop)
+        while not self.closeByProgram:
+            try:
+                # Gọi connect() (async) - chạy trong event loop
+                self.loop.run_until_complete(self.connect())
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                print("WebSocket error:", e)
+            # Tạm chờ 1.5s trước khi thử kết nối lại (nếu server đóng)
+            time.sleep(1.5)
+
+        # Kết thúc vòng while => đóng hẳn
+        self.loop.close()
+        print("Event loop closed")
+
+    async def connect(self):
+        parsed_url = urlparse(self.url)
+        ip_server = parsed_url.hostname
+        port_server = parsed_url.port
+
+        try:
+            async with websockets.connect(
+                uri=self.url,
+                local_addr=(self.ip_client, self.port)  # bind IP/cổng cục bộ
+            ) as ws:
+                self._websocket = ws
+
+                self.is_connected = True
+                self.on_open(ip_server, port_server)
+
+                # Vòng lặp chờ tin nhắn từ server
+                while not self.closeByProgram:
+                    try:
+                        message = await ws.recv()
+                    except websockets.ConnectionClosed:
+                        # Server đóng
+                        break
+                    self.on_message(message)
+
+        except Exception as e:
+            self.on_error(e)
+        finally:
+            self.is_connected = False
+            self.on_close()
+
+    def on_open(self, ip_server, port_server):
+        print(f"Connected to WebSocket server at {ip_server}:{port_server}")
+
+    def on_message(self, message):
+        # print("Data receive:", message)
+        self.data_recieved = message
+
+    def on_error(self, error):
+        print("Have an Error Websocket:", error)
+
+    def on_close(self):
+        print("WebSocket connection closed")
+
+    def send_message(self, message):
+        if self.is_connected:
+            # Đẩy coroutine send vào event loop đang chạy trong thread
+            asyncio.run_coroutine_threadsafe(self._async_send(message), self.loop)
+        else:
+            pass  # hoặc in ra "Chưa connect"
+
+    async def _async_send(self, message):
+        """Coroutine thực hiện lệnh ws.send(...)"""
+        if hasattr(self, "_websocket") and self._websocket:
+            await self._websocket.send(message)
+
+    def close(self):
+        """Yêu cầu dừng kết nối & dừng luôn vòng lặp run()."""
+        self.closeByProgram = True
+
+
+class ROSCommunication():
+    def __init__(self):
+        rospy.init_node('stiClient_ws', anonymous=False)
+        self.rate = rospy.Rate(30)
+
+        self.type_agv = 2
+
+        # Param Server
+        self.ip_server = rospy.get_param("~ip_server", '192.168.1.32')
+        self.port_server = rospy.get_param("~port_server", '8080')
+
+        self.ip_server = '192.168.1.2'
+        self.port_server = 8080
+
+        # Tham số ROS
+        self.name_card = rospy.get_param("~name_card", "wlp0s20f3")
+        self.name_card = 'wlo2'
+
+        self.topic_NNcmdRequest = rospy.get_param("~topic_NNcmdRequest", "NN_cmdRequest")
+        self.topic_NNinfoRespond = rospy.get_param("~topic_NNinfoRespond", "NN_infoRespond")
+        self.topic_NNinfoRequest = rospy.get_param("~topic_NNinfoRequest", "NN_infoRequest")
+
+        rospy.Subscriber(self.topic_NNinfoRespond, NN_infoRespond, self.NN_infoCallback)
+        self.NN_infoRespond = NN_infoRespond()
+        self.NN_is_infoReceived = 0
+
+        self.NN_cmdPub = rospy.Publisher(self.topic_NNcmdRequest, NN_cmdRequest, queue_size=50)
+        self.NN_cmdRequest = NN_cmdRequest()
+        self.NN_infoRequestPub = rospy.Publisher(self.topic_NNinfoRequest, NN_infoRequest, queue_size=50)
+        self.NN_infoRequest = NN_infoRequest()
+
+        self.NN_cmdRequest.list_id = [0, 0, 0 ,0 , 0]
+        self.NN_cmdRequest.list_x = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.NN_cmdRequest.list_y = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.NN_cmdRequest.list_speed = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+        self.telegram_count = 0
+        # --
+        self.ip_robot, self.mac_robot = self.get_ip_and_mac(self.name_card)
+        while self.ip_robot == "-1":
+            print("Connection not available, reconnect after 1 second")
+            time.sleep(1.)
+            self.ip_robot, self.mac_robot = self.get_ip_and_mac(self.name_card)
+
+        print("IP: %s, MAC: %s" %(self.ip_robot, self.mac_robot))
+
+    def NN_infoCallback(self, dat):
+        self.NN_infoRespond = dat
+        self.NN_is_infoReceived = 1
+
+    def convert_angleSendServer(self, angle_rad):
+        angle_deg = degrees(angle_rad)
+        if angle_deg < 0:
+            converted_angle = 180 + (-angle_deg)
+        else:
+            converted_angle = angle_deg
+        return converted_angle
+
+    def get_ip_and_mac(self, interface):
+        try:
+            output = subprocess.check_output(["ip", "addr", "show", interface], text=True)
+            ip_match = re.search(r'inet\s+(\d+\.\d+\.\d+\.\d+)', output)
+            ip_address = ip_match.group(1) if ip_match else None
+
+            mac_match = re.search(r'link/ether\s+([\da-fA-F:]+)', output)
+            mac_address = mac_match.group(1) if mac_match else None
+
+            return ip_address if ip_address else "-1", mac_address if mac_address else "-1"
+
+        except Exception as e:
+            print(f"Error: {e}")
+            return "-1", "-1"
+
+    def convert_positionRecieveServer(self, data):
+        return data/1000.
+
+    def convert_offsetRecieveServer(self, data):
+        return data/1000.
+
+    def convert_angleRecieveServer(self, data):
+        angle = data/100.
+        if angle > 180:
+            angle = 360 - angle
+            return round(radians(angle)*(-1), 3)
+
+        return round(radians(angle), 3)
+
+    def convert_error(self, list_error):
+        x = list_error[0] if len(list_error) > 0 else 0
+        switcher={
+            # NN
+            0:0,   # ALL RIGHT
+            111:1,  # Va vào Blsock.
+            121:2, # Ấn EMG.
+            131:3, # Ra khỏi đường từ.
+            141:4, # Bàn nâng.
+            211:5, # Camera:Mất kết nối vật lý.
+            212:6, # Camera: Không giao tiếp truyền thông.
+            221:7, # Lidar. Phía trước.
+            222:8, # Lidar. Phía sau.
+            223:9, # Lidar. Cả 2.
+            231:10, # IMU Không giao tiếp truyền thông.
+            241:11, # PS2 Không giao tiếp truyền thông.
+            251:12, # DRIVER 1 (trái) NN – Natual Navigatiroson.
+            261:13, # DRIVER 2 (phải) NN – Natual Navigation.
+            271:14, # Mangnetic line: NN - RS232 – PC lỗi (phía trước).
+            272:15, # Mangnetic line: NN - RS232 – PC lỗi (phía sau).
+            311:16, # Mạch MC - NN.	Mất kết nối vật lý Serial.
+            312:17, # Mạch MC - NN. Không giao tiếp truyền thông Serial.
+            321:18, # Mạch Main - NN:	Mất kết nối vật lý Serial.
+            322:19, # Mạch Main - NN: Không giao tiếp truyền thông Serial.
+            331:20, # Mạch SC: Mất kết nối vật lý Serial.
+            332:21, # Mạch SC: Không giao tiếp truyền thông Serial.
+            341:22,	# Mạch OC: Mất kết nối vật lý Serial.
+            342:23,	# Mạch OC: Không giao tiếp truyền thông Serial.
+            351:24,	# Mạch HC: Mất kết nối vật lý Serial.
+            352:25,	# Mạch HC: Không giao tiếp truyền thông Serial.
+            411:201, # Di chuyển NN (không vạch từ)- Không thể đến được đích.
+            421:202, # Có vật cản.
+            431:203, # Mất kết nối server.
+            441:204, # Không thể thấy Tag.
+            451:205, # Điện Áp Thấp.
+            461:206, # Có vật cản khi vào kệ.
+            471:207  # không có kệ hoặc lệch kệ khi nâng.
+        }
+        return switcher.get(x, 0)
+
+    def NN_cmdAnalysis(self, data_receive):
+        """
+        Xử lý JSON server gửi xuống (data_receive) => publish lên ROS topic
+        """
+        try:
+            self.NN_infoRequest.id_agv       = data_receive["id"]
+            self.NN_infoRequest.name_agv     = data_receive["name"]
+            self.NN_infoRequestPub.publish(self.NN_infoRequest)
+
+            self.NN_cmdRequest.id_command    = data_receive["tran_id"]
+            self.NN_cmdRequest.process       = data_receive["process"]
+            self.NN_cmdRequest.tag           = data_receive["offset"]
+            self.NN_cmdRequest.target_id     = data_receive["target"]
+            self.NN_cmdRequest.target_x      = self.convert_positionRecieveServer(data_receive["target_x"])
+            self.NN_cmdRequest.target_y      = self.convert_positionRecieveServer(data_receive["target_y"])
+            self.NN_cmdRequest.target_z      = self.convert_angleRecieveServer(data_receive["target_angle"])
+            self.NN_cmdRequest.offset        = self.convert_offsetRecieveServer(data_receive["target_offset"])
+
+            num_point = len(data_receive["routes"])
+            for l in range(5):
+                if l < num_point:
+                    point = data_receive["routes"][l]
+                    self.NN_cmdRequest.list_id[l]    = point["name"]
+                    self.NN_cmdRequest.list_x[l]     = self.convert_positionRecieveServer(point["x"])
+                    self.NN_cmdRequest.list_y[l]     = self.convert_positionRecieveServer(point["y"])
+                    self.NN_cmdRequest.list_speed[l] = point["speed"]
+                else:
+                    self.NN_cmdRequest.list_id[l]    = 0
+                    self.NN_cmdRequest.list_x[l]     = 0.0
+                    self.NN_cmdRequest.list_y[l]     = 0.0
+                    self.NN_cmdRequest.list_speed[l] = 0
+
+            self.NN_cmdRequest.before_mission = data_receive["precode"]
+            self.NN_cmdRequest.after_mission  = data_receive["subcode"]
+            self.NN_cmdRequest.command        = data_receive["mes"]
+
+            self.NN_cmdPub.publish(self.NN_cmdRequest)
+
+        except Exception as e:
+            print("Lỗi khi bóc tách dữ liệu JSON:", e)
+            print(data_receive)
+
+    def convertDataRosToServer(self):
+        """Lấy dữ liệu từ self.NN_infoRespond => đóng gói JSON gửi lên server."""
+        if self.NN_is_infoReceived == 0:
+            print("waiting data from sti_control")
+            return ''
+
+        x = int(self.NN_infoRespond.x*1000)
+        y = int(self.NN_infoRespond.y*1000)
+        z_rad = self.NN_infoRespond.z
+        cv_angle = self.convert_angleSendServer(z_rad)
+
+        frame_send = FrameSendServer(self.type_agv)
+        frame_send["info"]["ip"]            = self.ip_robot
+        frame_send["info"]["mac"]           = self.mac_robot
+        frame_send["info"]["x"]             = x
+        frame_send["info"]["y"]             = y
+        frame_send["info"]["r"]             = cv_angle
+        frame_send["info"]["battery"]       = self.NN_infoRespond.battery
+        frame_send["info"]["status"]        = self.NN_infoRespond.status
+        frame_send["info"]["offset"]        = int(self.NN_infoRespond.tag)
+        frame_send["info"]["mode"]          = self.NN_infoRespond.mode
+        frame_send["info"]["task_status"]   = self.NN_infoRespond.task_status
+        frame_send["info"]["error_code"]    = self.convert_error(self.NN_infoRespond.listError)
+
+        try:
+            return json.dumps(frame_send.to_dict())
+        except Exception as e:
+            print("Lỗi khi convert dict->json:", e)
+            return ''
+
+def main():
+    # Khởi tạo ROS
+    ros_comm = ROSCommunication()
+
+    # Địa chỉ server & cổng
+    ip_server = ros_comm.ip_server
+    port_server = ros_comm.port_server
+
+    websocket_uri = f"ws://{ip_server}:{port_server}/agv"
+    print("websocket uri:", websocket_uri)
+
+    # Tạo WebSocketClient (dùng websockets)
+    client = WebSocketClient(
+        url=websocket_uri,
+        ip_client=ros_comm.ip_robot,  # bind IP cục bộ
+        port=0                     # bind cổng cục bộ
+    )
+
+    # Tạo một thread để chạy client.run() (chứa event loop)
+    ws_thread = threading.Thread(target=client.run, daemon=True)
+    ws_thread.start()
+    time.sleep(1.0)
+
+    process = 1
+    data_recieve = ''
+
+    savetime_sendServer = time.time()
+
+    try:
+        while not rospy.is_shutdown():
+            if time.time() - savetime_sendServer > 0.5:
+                savetime_sendServer = time.time()
+                json_str = ros_comm.convertDataRosToServer()
+                # print(json_str)
+                if json_str:
+                    client.send_message(json_str)
+
+            if process == 1 and client.is_connected:
+                # kiểm tra data_recv
+                data_recv = client.data_recieved
+                if data_recv:
+                    try:
+                        data_recieve = json.loads(data_recv)
+                        process = 2
+                    except Exception as e:
+                        print("Lỗi parse JSON từ server:", e)
+                    client.data_recieved = ''
+
+            elif process == 2:
+                ros_comm.NN_cmdAnalysis(data_recieve)
+                process = 1
+
+            ros_comm.rate.sleep()
+
+        print("Close Program by ROS")
+        client.close()
+        ws_thread.join()
+
+    except KeyboardInterrupt:
+        print("Close program by KeyboardInterrupt...")
+        client.close()
+        ws_thread.join()
+
+if __name__ == "__main__":
+    main()
+
+
+# {
+#   "type":2,         # kiểu frame
+#   "info":{          # thông tin AGV
+#     "ip":"",        # ip AGV
+#     "mac":"",       # mac AGV
+#     "x":0.0,        # toạ độ x
+#     "y":0.0,        # toạ độ y
+#     "r":0.0,        # góc
+#     "battery":0.0,  # pin hiện tại
+#     "status":0,     #
+#     "mode":0,
+#     "task_status":0,
+#     "error_code":0
+#   }
+# }
